@@ -139,6 +139,8 @@ input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
 }
 /* ---- Cam rehberi ---- */
 .mainTabs{margin-bottom:10px}
+.corr{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;background:var(--surface)}
+.corr summary{cursor:pointer;font-weight:600;font-size:13px}
 select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%;min-width:0}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .mb0{margin:0}
@@ -369,6 +371,17 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
             <label class="f">Köprü DBL (mm)<input type="text" inputmode="decimal" id="fD" value="18" autocomplete="off"></label>
           </div>
         </div>
+        <details class="corr" id="corrBox"><summary>Çekim düzeltmesi (isteğe bağlı, daha doğru ölçü)</summary>
+          <p class="muted small">Kameraya olan mesafe ve baş duruşu ölçüyü saptırır. Değerleri tekerlekle girin; sonuçlar buna göre düzeltilir. Bilmiyorsanız olduğu gibi bırakın.</p>
+          <div class="grid2">
+            <label class="f">Kameraya mesafe (kart hizası)<select id="cD"><option value="0" selected>Bilinmiyor</option><option value="20">20 cm</option><option value="25">25 cm</option><option value="30">30 cm</option><option value="35">35 cm</option><option value="40">40 cm</option><option value="45">45 cm</option><option value="50">50 cm</option><option value="55">55 cm</option><option value="60">60 cm</option><option value="65">65 cm</option><option value="70">70 cm</option><option value="75">75 cm</option><option value="80">80 cm</option></select></label>
+            <label class="f">Kart ile göz bebeği derinlik farkı<select id="cZ"><option value="0">0 mm</option><option value="2">2 mm</option><option value="4">4 mm</option><option value="6">6 mm</option><option value="8">8 mm</option><option value="10" selected>10 mm</option><option value="12">12 mm</option><option value="14">14 mm</option><option value="16">16 mm</option><option value="18">18 mm</option><option value="20">20 mm</option></select></label>
+            <label class="f">Baş sağa / sola dönük<select id="cY"><option value="-15">Sola 15°</option><option value="-14">Sola 14°</option><option value="-13">Sola 13°</option><option value="-12">Sola 12°</option><option value="-11">Sola 11°</option><option value="-10">Sola 10°</option><option value="-9">Sola 9°</option><option value="-8">Sola 8°</option><option value="-7">Sola 7°</option><option value="-6">Sola 6°</option><option value="-5">Sola 5°</option><option value="-4">Sola 4°</option><option value="-3">Sola 3°</option><option value="-2">Sola 2°</option><option value="-1">Sola 1°</option><option value="0" selected>0°</option><option value="1">Sağa 1°</option><option value="2">Sağa 2°</option><option value="3">Sağa 3°</option><option value="4">Sağa 4°</option><option value="5">Sağa 5°</option><option value="6">Sağa 6°</option><option value="7">Sağa 7°</option><option value="8">Sağa 8°</option><option value="9">Sağa 9°</option><option value="10">Sağa 10°</option><option value="11">Sağa 11°</option><option value="12">Sağa 12°</option><option value="13">Sağa 13°</option><option value="14">Sağa 14°</option><option value="15">Sağa 15°</option></select></label>
+            <label class="f">Baş yukarı / aşağı eğik<select id="cP"><option value="-15">Aşağı 15°</option><option value="-14">Aşağı 14°</option><option value="-13">Aşağı 13°</option><option value="-12">Aşağı 12°</option><option value="-11">Aşağı 11°</option><option value="-10">Aşağı 10°</option><option value="-9">Aşağı 9°</option><option value="-8">Aşağı 8°</option><option value="-7">Aşağı 7°</option><option value="-6">Aşağı 6°</option><option value="-5">Aşağı 5°</option><option value="-4">Aşağı 4°</option><option value="-3">Aşağı 3°</option><option value="-2">Aşağı 2°</option><option value="-1">Aşağı 1°</option><option value="0" selected>0°</option><option value="1">Yukarı 1°</option><option value="2">Yukarı 2°</option><option value="3">Yukarı 3°</option><option value="4">Yukarı 4°</option><option value="5">Yukarı 5°</option><option value="6">Yukarı 6°</option><option value="7">Yukarı 7°</option><option value="8">Yukarı 8°</option><option value="9">Yukarı 9°</option><option value="10">Yukarı 10°</option><option value="11">Yukarı 11°</option><option value="12">Yukarı 12°</option><option value="13">Yukarı 13°</option><option value="14">Yukarı 14°</option><option value="15">Yukarı 15°</option></select></label>
+          </div>
+          <p class="muted small">Yana yatma (omuza doğru eğik) için 2. adım Hizala kullanılır. Telefon yüz hizasında ve dik tutulmalıdır.</p>
+          <div class="muted small" id="corrNote"></div>
+        </details>
         <div class="row"><button class="btn primary" id="applyScale">Ölçeği uygula</button></div>
       </div>
       <!-- 4 -->
@@ -867,6 +880,13 @@ function mmPerPx(){
   var tot=2*S.frameA+S.frameD;
   return (span>1 && S.frameA>0 && S.frameD>=0) ? tot/span : null;
 }
+function corrF(){
+  var D=parseFloat($('cD').value)||0, dz=parseFloat($('cZ').value)||0, yw=parseFloat($('cY').value)||0, pt=parseFloat($('cP').value)||0, rad=Math.PI/180;
+  var d = D>0 ? (D*10+dz)/(D*10) : 1;
+  var x = 1/Math.cos(yw*rad), y = 1/Math.cos(pt*rad);
+  var on = (D>0 || yw!==0 || pt!==0) && S.calMode==='card';
+  return {on:on,d:d,x:x,y:y};
+}
 function compute(){
   var mm=mmPerPx(); if(!mm || !isFinite(mm)) return null;
   var A=S.box.a, B=S.box.b, pa=S.pup.a, pb=S.pup.b, n=S.noseX, r={mm:mm};
@@ -874,12 +894,14 @@ function compute(){
   r.a={ mono:Math.abs(pa.x-n)*mm, h:(A.y2-pa.y)*mm, w:(A.x2-A.x1)*mm, bb:(A.y2-A.y1)*mm, dec:(pa.x-(A.x1+A.x2)/2)*mm };
   r.b={ mono:Math.abs(pb.x-n)*mm, h:(B.y2-pb.y)*mm, w:(B.x2-B.x1)*mm, bb:(B.y2-B.y1)*mm, dec:((B.x1+B.x2)/2-pb.x)*mm };
   r.dbl=(B.x1-A.x2)*mm;
+  var cf=corrF(); if(cf.on){ r.pd*=cf.x*cf.d; r.a.mono*=cf.x*cf.d; r.b.mono*=cf.x*cf.d; r.a.w*=cf.x; r.b.w*=cf.x; r.a.dec*=cf.x; r.b.dec*=cf.x; r.dbl*=cf.x; r.a.h*=cf.y; r.b.h*=cf.y; r.a.bb*=cf.y; r.b.bb*=cf.y; }
   r.tilt=Math.atan2(((B.y1+B.y2)-(A.y1+A.y2))/2, ((B.x1+B.x2)-(A.x1+A.x2))/2)*180/Math.PI;
   return r;
 }
 function decText(v){ var x=R(v); if(x==null) return '—'; return x>=0 ? f1(x)+' içe' : f1(-x)+' dışa'; }
 function results(){
   if(S.mode==='side'){ resultsSide(); return; }
+  (function(){ var cf=corrF(), n=$('corrNote'); if(n) n.textContent = cf.on ? 'Düzeltme uygulanıyor: yatay ×'+(cf.x*cf.d).toFixed(3).replace('.',',')+', dikey ×'+cf.y.toFixed(3).replace('.',',') : (S.calMode==='frame' ? 'Çerçeve etiketi yönteminde düzeltme uygulanmaz (ölçek zaten çerçeveden alınır).' : ''); })();
   var r=compute(), ok=S.calibrated && r;
   $('calNote').hidden = !!S.calibrated;
   var key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'};
@@ -1347,6 +1369,7 @@ $('applyScale').addEventListener('click',function(){
   if(!mmPerPx()){ toast('Ölçek hesaplanamadı. Değerleri ve noktaları kontrol edin.'); return; }
   S.calibrated=true; results(); go(S.mode==='side' ? 'vertex' : 'box');
 });
+['cD','cZ','cY','cP'].forEach(function(id){ $(id).addEventListener('change',function(){ results(); schedule(); }); $(id).addEventListener('input',function(){ results(); schedule(); }); });
 $('mirror').addEventListener('change',function(){ S.mirror=$('mirror').checked; syncBoxSeg(); $('selName').textContent=descLabel(S.sel); results(); schedule(); });
 $('boxReset').addEventListener('click',function(){ defaultBoxes(); results(); schedule(); });
 $('noseReset').addEventListener('click',function(){ S.noseCustom=false; S.noseX=(S.box.a.x2+S.box.b.x1)/2; results(); schedule(); });
