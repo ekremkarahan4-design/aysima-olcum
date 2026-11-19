@@ -420,6 +420,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <h2>Camları kutulayın</h2>
         <p class="muted">Her camın en dışa çıkan dört noktasına kutunun kenarları değsin. Köşeleri veya kenarları sürükleyin, kutuyu içinden tutup taşıyın.</p>
         <div class="seg" id="boxWho" role="group" aria-label="Hangi kutu" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sağ göz kutusu</button><button data-i="b" aria-pressed="false">Sol göz kutusu</button></div>
+        <div class="row"><button class="btn sm primary" id="autoFind1">Otomatik bul (internet varsa)</button></div>
         <div class="seg wrapseg" id="boxPart" role="group" aria-label="Kutunun hangi noktası" style="margin-bottom:8px"><button data-p="tl" aria-pressed="true">Sol üst</button><button data-p="tr" aria-pressed="false">Sağ üst</button><button data-p="bl" aria-pressed="false">Sol alt</button><button data-p="br" aria-pressed="false">Sağ alt</button><button data-p="move" aria-pressed="false">Tüm kutu</button></div>
         <p class="muted small">Yakınlaştırınca diğer göz ekran dışında kalabilir: yukarıdaki düğmelerle kutuyu ve noktayı seçin, ok tuşlarıyla ince ayar yapın.</p>
         <label class="chk"><input type="checkbox" id="mirror"> Görüntü ayna (ön kamera sol-sağ ters kaydetti)</label>
@@ -431,6 +432,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <h2>Göz bebeklerini işaretleyin</h2>
         <p class="muted"><b>1.</b> Aşağıdan bir göz seçin. <b>2.</b> Fotoğrafta o göz bebeğinin ortasına <b>dokunun</b>: artı oraya gelir. Parmağınızı kaydırarak ince ayar yapın. Sonra diğer gözü işaretleyin.</p>
         <div class="seg" id="pupWho" role="group" aria-label="Hangi göz bebeği" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sağ göz bebeği</button><button data-i="b" aria-pressed="false">Sol göz bebeği</button></div>
+        <div class="row"><button class="btn sm primary" id="autoFind2">Otomatik bul (internet varsa)</button></div>
         <div class="row"><button class="btn sm" id="pupAuto">Kutuların ortasına otomatik koy</button><button class="btn sm" id="noseReset">Burun çizgisini ortala</button></div>
         <p class="muted small">Flaş yansıması varsa artıyı yansımaya getirin. Beyaz dikey çizgi burun köprüsünün ortası olsun.</p>
       </div>
@@ -438,6 +440,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="sp" data-for="vertex" hidden>
         <h2 id="vTitle">Adım 1/2 · Kornea ucunu işaretleyin</h2>
         <p class="muted" id="vTxt"></p>
+        <div class="row"><button class="btn sm primary" id="autoFind3">Otomatik bul (internet varsa)</button></div>
         <div class="seg vsub" id="vSub" role="group" aria-label="Verteks adımları">
           <button data-v="apex" aria-pressed="true">1 Kornea ucu</button>
           <button data-v="back" aria-pressed="false">2 Cam arkası</button>
@@ -1321,6 +1324,72 @@ $('pupAuto').addEventListener('click',function(){
   ['a','b'].forEach(function(i){ var b=S.box[i]; S.pup[i]={x:(b.x1+b.x2)/2, y:b.y1+(b.y2-b.y1)*0.46}; });
   pickPup('a'); results(); schedule();
 });
+
+/* ---------- otomatik bul: internet varsa yüz/iris modeli, yoksa ölçüye göre ortala ---------- */
+var AF={lm:null,p:null,busy:false};
+function afLoad(){
+  if(AF.lm) return Promise.resolve(AF.lm);
+  if(!AF.p){
+    var V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    AF.p=import(V+'/vision_bundle.mjs').then(function(m){
+      return m.FilesetResolver.forVisionTasks(V+'/wasm').then(function(fs){
+        return m.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},runningMode:'IMAGE',numFaces:1});
+      });
+    }).then(function(l){ AF.lm=l; return l; });
+    AF.p.catch(function(){ AF.p=null; });
+  }
+  return Promise.race([AF.p,new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('zaman')); },20000); })]);
+}
+function afBoxes(cxs,cys,pxPerMm){
+  var w=S.frameA*pxPerMm, h=w*0.8;
+  ['a','b'].forEach(function(i,k){ S.box[i]={x1:cxs[k]-w/2,y1:cys[k]-h/2,x2:cxs[k]+w/2,y2:cys[k]+h/2}; });
+}
+function afApply(P,irisPx){
+  S.pup.a={x:P[0].x,y:P[0].y}; S.pup.b={x:P[1].x,y:P[1].y};
+  var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
+  var pxmm=cardOk ? 1/mmPerPx() : (irisPx>4 ? irisPx/11.7 : null);
+  if(pxmm) afBoxes([P[0].x,P[1].x],[P[0].y,P[1].y],pxmm);
+  if(!S.noseCustom) S.noseX=(P[0].x+P[1].x)/2;
+}
+function afOffline(){
+  var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
+  if(cardOk){
+    var cx=[0,0].map(function(_,k){ var b=S.box[k?'b':'a']; return (b.x1+b.x2)/2; }), cy=[0,0].map(function(_,k){ var b=S.box[k?'b':'a']; return (b.y1+b.y2)/2; });
+    afBoxes(cx,cy,1/mmPerPx());
+  }
+  ['a','b'].forEach(function(i){ var b=S.box[i]; S.pup[i]={x:(b.x1+b.x2)/2,y:b.y1+(b.y2-b.y1)*0.46}; });
+}
+function afSide(eye){
+  var f=S.sd.facing, W=S.W, H=S.H, mm=(S.calibrated&&mmPerPx())||(200/W), px=1/mm;
+  var ax=eye?eye.x+f*3.5*px:W*(f>0?0.42:0.58), ay=eye?eye.y:H*0.5;
+  var vd=12*px, hh=25*px, t=Math.tan(8*Math.PI/180)*hh;
+  S.sd.apex={x:ax,y:ay}; S.sd.back={x:ax+f*vd,y:ay};
+  S.sd.top={x:ax+f*vd+f*t,y:ay-hh}; S.sd.bot={x:ax+f*vd-f*t,y:ay+hh};
+}
+function autoFind(){
+  if(AF.busy) return;
+  if(S.demo){ toast('Örnek görüntüde kapalı. Kendi fotoğrafınızı yükleyin.'); return; }
+  var side=(S.mode==='side');
+  AF.busy=true; var bs=[$('autoFind1'),$('autoFind2'),$('autoFind3')], old=bs[0].textContent;
+  bs.forEach(function(b){ b.disabled=true; b.textContent='Aranıyor…'; });
+  function done(){ AF.busy=false; bs.forEach(function(b){ b.disabled=false; b.textContent=old; }); if(side){ S.sd.pant=true; S.sel=defaultSel(); syncSideUI(); } else pickPup('a'); results(); schedule(); }
+  if(!navigator.onLine){ if(side) afSide(null); else afOffline(); done(); toast('İnternet yok: ölçüye göre ortalandı. Elle kontrol edin.'); return; }
+  afLoad().then(function(lm){
+    var img=S.base||S.src, r=lm.detect(img), L=r&&r.faceLandmarks&&r.faceLandmarks[0];
+    if(side){ var ey=null; if(L&&L.length>=478){ var q=[L[468],L[473]]; ey=q[0].x*S.W<q[1].x*S.W?q[0]:q[1]; if(S.sd.facing<0) ey=q[0].x>q[1].x?q[0]:q[1]; ey={x:ey.x*S.W,y:ey.y*S.H}; } afSide(ey); done(); toast(ey?'Göz seviyesi bulundu, noktalar tipik değerlerle yerleşti. Kornea ucu ve cam arkasını kontrol edin.':'Profilde yüz bulunamadı: noktalar tipik değerlerle yerleşti. Elle düzeltin.'); return; }
+    if(!L||L.length<478) throw new Error('yüz yok');
+    function pt(i){ return {x:L[i].x*S.W,y:L[i].y*S.H}; }
+    function dia(ids){ var m=0; for(var i=0;i<ids.length;i++) for(var j=i+1;j<ids.length;j++){ var a=pt(ids[i]),b=pt(ids[j]); m=Math.max(m,Math.hypot(a.x-b.x,a.y-b.y)); } return m; }
+    var P=[pt(468),pt(473)], D=[dia([469,470,471,472]),dia([474,475,476,477])];
+    if(P[0].x>P[1].x){ P.reverse(); D.reverse(); }
+    afApply(P,(D[0]+D[1])/2); done();
+    toast('Bulundu. Göz bebeği ve kutuları gözle kontrol edin, gerekirse düzeltin.');
+  }).catch(function(){
+    if(side){ afSide(null); done(); toast('Model yüklenemedi: noktalar tipik değerlerle yerleşti. Elle düzeltin.'); return; }
+    afOffline(); done(); toast('Model yüklenemedi: ölçüye göre ortalandı. Elle kontrol edin.');
+  });
+}
+$('autoFind3').addEventListener('click',autoFind); $('autoFind1').addEventListener('click',autoFind); $('autoFind2').addEventListener('click',autoFind);
 function pickBox(i,part){
   var d={k:'box',i:i||(S.sel&&S.sel.k==='box'?S.sel.i:'a'),part:part||(S.sel&&S.sel.k==='box'?S.sel.part:'tl')};
   S.sel=d; $('selName').textContent=descLabel(d); syncBoxSeg();
