@@ -44,7 +44,17 @@ header.top{display:flex;align-items:baseline;justify-content:space-between;gap:1
 h1{font-size:20px;line-height:1.2;font-weight:600;margin:0;letter-spacing:-.01em}
 h2{font-size:15px;font-weight:600;margin:0}
 .sub{color:var(--muted);font-size:12px}
-.easy .steps,.easy .nav{display:none!important}
+.easy .steps,.easy .nav,.easy .viewbar,.easy #demoTag,.easy .results[aria-live],.easy #recsWrap,.edit .results[aria-live],.edit #recsWrap,.edit .nav,.noPhoto .stage{display:none!important}
+.easy.showrecs #recsWrap{display:block!important}
+body.easy,body.edit{padding-bottom:104px}
+#bar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;gap:8px;padding:12px max(14px,env(safe-area-inset-left,0px)) calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 28%)}
+.easy #bar,.edit #bar{display:grid}.inCam #bar{display:none!important}
+#bar button{border-radius:16px;padding:16px 4px;font:inherit;font-weight:700;font-size:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+#bar .gr{background:#16a34a;border:0;color:#fff;font-size:17px}#bar .bl{background:var(--accent);border:0;color:#fff;font-size:17px}
+#editLive{display:none;text-align:center;font-family:var(--mono);font-weight:700;color:var(--accent)}.edit #editLive{display:block}
+.epd{text-align:center;margin:10px 0 6px}.epd small{display:block;color:var(--muted);font-size:13px;letter-spacing:.08em}.epd b{font-family:var(--mono);font-size:62px;line-height:1.05;color:var(--ink)}.epd em{font-style:normal;font-size:20px;color:var(--muted);margin-left:4px}
+.etbl{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 12px}.etr{display:grid;grid-template-columns:1.3fr 1fr 1fr;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.etr:last-child{border:0}.etr b{font-family:var(--mono);font-size:21px}.ea{color:var(--a)}.eb2{color:var(--b)}.eh{font-size:12px;color:var(--muted)}
+.ecam{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:200px;border:2px dashed var(--line);border-radius:18px;text-align:center;color:var(--muted);margin-top:6px}.ecam span{font-size:54px}
 .eb{width:100%;padding:17px;font-size:17px;font-weight:700;font-family:var(--font);margin-top:10px}
 .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}.tile{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}.tile small{display:block;color:var(--muted);font-size:11.5px}.tile b{font-size:22px;font-family:var(--mono);color:var(--accent)}
 .steps{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:10px;scrollbar-width:none}
@@ -313,7 +323,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v28</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v29</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -348,24 +358,28 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
     </section>
 
     <aside class="panel">
+      <div id="editLive" class="tile" style="margin-bottom:8px"></div>
       <!-- kolay -->
       <div class="sp" data-for="easy" hidden>
         <div id="easyA">
-          <h2>Hastanın fotoğrafını çekin</h2>
-          <button class="btn primary eb" id="easyCam">📷 Kamerayı aç</button>
-          <button class="btn eb" id="easyGal">🖼 Galeriden seç</button>
-          <div class="seg" id="easyFace" style="margin-top:10px"><button data-f="environment" aria-pressed="true">Arka kamera</button><button data-f="user" aria-pressed="false">Ön kamera</button></div>
-          <p class="muted small">Çekince göz bebekleri ve cam kutuları kendiliğinden bulunur, sonuç hemen görünür.</p>
+          <div class="ecam"><span>📷</span><div id="easyAtxt">Hastanın düz fotoğrafını çekin</div><small>Çekince göz bebekleri kendiliğinden bulunur</small></div>
+          <div class="seg" id="easyFace" style="margin-top:12px"><button data-f="environment" aria-pressed="true">Arka kamera</button><button data-f="user" aria-pressed="false">Ön kamera</button></div>
         </div>
         <div id="easyB" hidden>
-          <div class="tile" style="margin:8px 0"><small>PD</small><b id="eP" style="font-size:30px">—</b></div>
-          <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><small>Sağ PD</small><b id="eR">—</b></div><div class="tile"><small>Sol PD</small><b id="eL">—</b></div></div>
-          <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><small>Sağ yükseklik</small><b id="eRH" style="font-size:18px">—</b></div><div class="tile"><small>Sol yükseklik</small><b id="eLH" style="font-size:18px">—</b></div></div>
-          <p class="muted small" id="easyNote"></p>
-          <div class="tiles" style="grid-template-columns:1fr 1fr"><button class="btn eb" id="easyFix" style="margin:0">✏️ Düzelt</button><button class="btn eb" id="easySave" style="margin:0;background:#16a34a;border:0;color:#fff">✔ Kaydet</button></div>
-          <div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><button class="btn sm" id="easyFind">✨ Otomatik bul</button><button class="btn sm" id="easyCard">📏 Kartla kesinleştir</button><button class="btn sm" id="easyNew">📷 Yeni foto</button></div>
+          <div id="easyF">
+            <div class="epd"><small>PD TOPLAM</small><b id="eP">—</b><em>mm</em></div>
+            <div class="etbl"><div class="etr"><span></span><span class="eh ea">SAĞ</span><span class="eh eb2">SOL</span></div><div class="etr"><span>Monoküler PD</span><b class="ea" id="eR">—</b><b class="eb2" id="eL">—</b></div><div class="etr"><span>Yükseklik</span><b class="ea" id="eRH">—</b><b class="eb2" id="eLH">—</b></div></div>
+          </div>
+          <div id="easyS" hidden>
+            <div class="epd"><small>VERTEKS MESAFESİ</small><b id="eV">—</b><em>mm</em></div>
+            <div class="etbl"><div class="etr" style="grid-template-columns:1.5fr 1fr"><span>Pantoskopik açı</span><b id="eT">—</b></div></div>
+            <div class="seg" id="easyDir" style="margin-top:10px"><button data-d="1" aria-pressed="true">Hasta sağa bakıyor</button><button data-d="-1" aria-pressed="false">Hasta sola bakıyor</button></div>
+          </div>
+          <p class="muted small" id="easyNote" style="text-align:center;margin:8px 0"></p>
+          <input type="text" class="plain" id="easyName" maxlength="60" placeholder="Hasta adı soyadı (kaydetmek için)" autocomplete="off" list="patList" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+          <div class="tiles" style="grid-template-columns:1fr 1fr"><button class="btn sm" id="easyFind">✨ Otomatik bul</button><button class="btn sm" id="easyCard">📏 Kartla kesinleştir</button></div>
         </div>
-        <button class="btn sm" id="easyAdv" style="margin-top:12px">Gelişmiş adımlar</button>
+        <div class="tiles" style="grid-template-columns:1fr 1fr;margin-top:10px"><button class="btn sm" id="easyRecs">🗂 Hastalar</button><button class="btn sm" id="easyAdv">Gelişmiş adımlar</button></div>
       </div>
       <!-- 1 -->
       <div class="sp" data-for="photo">
@@ -575,6 +589,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
     </aside>
   </div>
   </div>
+<div id="bar"></div>
 
 <div id="viewLive" hidden>
   <div class="results">
@@ -906,8 +921,11 @@ var STEP_SETS = {
   front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['align','Hizala']],
   side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['vertex','Verteks']]
 };
-function easyOn(){ return S.mode==='front' && !S.adv; }
-function ids(){ return easyOn() ? ['easy'] : STEP_SETS[S.mode].map(function(s){ return s[0]; }); }
+var EDITSETS={front:[['pupil','Göz bebeği'],['box','Kutu'],['scale','Kart']],side:[['vertex','Nokta'],['scale','Kart']]};
+function easyOn(){ return !S.adv && !S.edit; }
+function stepList(){ return (S.edit&&!S.adv)?EDITSETS[S.mode]:STEP_SETS[S.mode]; }
+function ids(){ return easyOn() ? ['easy'] : stepList().map(function(s){ return s[0]; }); }
+function syncUiClasses(){ var c=document.body.classList, e=easyOn(); c.toggle('easy',e); c.toggle('edit',!!S.edit&&!S.adv); c.toggle('noPhoto',e&&!!S.demo); }
 var KEY = 'pd-olcum-kayitlari-v1';
 
 var S = {
@@ -918,7 +936,7 @@ var S = {
   pup:{a:{x:0,y:0}, b:{x:0,y:0}},
   noseX:0, noseCustom:false,
   mirror:false, facing:'environment', round:false,
-  step:'photo', demo:true, mode:'front', adv:false,
+  step:'photo', demo:true, mode:'front', adv:false, edit:false,
   sd:{apex:{x:0,y:0},back:{x:0,y:0},top:{x:0,y:0},bot:{x:0,y:0},facing:1,pant:true}, vsub:'apex',
   z:1, vx:0, vy:0, sel:null
 };
@@ -1395,7 +1413,7 @@ function afSide(eye){
   S.sd.apex={x:ax,y:ay}; S.sd.back={x:ax+f*vd,y:ay};
   S.sd.top={x:ax+f*vd+f*t,y:ay-hh}; S.sd.bot={x:ax+f*vd-f*t,y:ay+hh};
 }
-function afAuto(){ setTimeout(function(){ try{ if(S.mode==='front' && !S.demo && navigator.onLine) autoFind(function(){ go(easyOn()?'easy':'pupil'); }); }catch(e){} },900); }
+function afAuto(){ setTimeout(function(){ try{ if(!S.demo && (S.mode==='side' || navigator.onLine)) autoFind(function(){ go(easyOn()?'easy':'pupil'); }); }catch(e){} },900); }
 function autoFind(cb){
   if(AF.busy) return;
   if(S.demo){ toast('Örnek görüntüde kapalı. Kendi fotoğrafınızı yükleyin.'); return; }
@@ -1423,26 +1441,67 @@ $('autoFind3').addEventListener('click',function(){autoFind();}); $('autoFind1')
 $('autoGo').addEventListener('click',function(){ autoFind(function(){ go('pupil'); }); });
 
 /* ---------- kolay mod ---------- */
+function barUpdate(){
+  var bar=$('bar'), h='', cols='1fr';
+  if(S.edit && !S.adv){ h='<button class="gr" data-act="done">✔ Tamam</button>'; }
+  else if(easyOn()){
+    if(S.demo){ h='<button class="bl" data-act="cam">📷 Kamerayı aç</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
+    else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">✔ Kaydet</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
+  }
+  if(bar.dataset.h!==h){ bar.innerHTML=h; bar.dataset.h=h; }
+  bar.style.gridTemplateColumns=cols;
+}
 function easyUpdate(){
   if(!$('easyB')) return;
-  var has=!S.demo; $('easyA').hidden=has; $('easyB').hidden=!has; if(!has) return;
-  var r=compute(), ok=S.calibrated && r, key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'};
-  $('eP').textContent = ok ? f1(R(r.pd)) : '—';
-  $('eR').textContent = ok ? f1(R(r[key.R].mono)) : '—'; $('eL').textContent = ok ? f1(R(r[key.L].mono)) : '—';
-  $('eRH').textContent = ok ? f1(R(r[key.R].h)) : '—'; $('eLH').textContent = ok ? f1(R(r[key.L].h)) : '—';
-  $('easyNote').textContent = !S.calibrated ? 'Ölçek yok. "Kartla kesinleştir"e dokunun.' : (S.calMode==='iris' ? 'Yaklaşık sonuç (iris ölçeği). Kesin sonuç için kartla kesinleştirin.' : '✓ Kart ölçeğiyle ölçüldü.');
+  var has=!S.demo, side=S.mode==='side';
+  $('easyA').hidden=has; $('easyB').hidden=!has;
+  $('easyAtxt').textContent = side ? 'Hastanın yan (profil) fotoğrafını çekin' : 'Hastanın düz fotoğrafını çekin';
+  $('easyF').hidden=side; $('easyS').hidden=!side; $('easyCard').textContent = '📏 Kartla kesinleştir'; $('easyCard').classList.toggle('primary',!S.calibrated);
+  if(has){
+    var live='', note='';
+    if(!side){
+      var r=compute(), ok=S.calibrated && r, key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'};
+      $('eP').textContent = ok ? f1(R(r.pd)) : '—';
+      $('eR').textContent = ok ? f1(R(r[key.R].mono)) : '—'; $('eL').textContent = ok ? f1(R(r[key.L].mono)) : '—';
+      $('eRH').textContent = ok ? f1(R(r[key.R].h)) : '—'; $('eLH').textContent = ok ? f1(R(r[key.L].h)) : '—';
+      note = !S.calibrated ? 'Ölçek yok. "Kartla kesinleştir"e dokunun.' : (S.calMode==='iris' ? 'Yaklaşık sonuç (iris ölçeği). Kesin sonuç için kartla kesinleştirin.' : '✓ Kart ölçeğiyle ölçüldü.');
+      live = ok ? 'PD '+f1(R(r.pd))+' · '+f1(R(r[key.R].mono))+' / '+f1(R(r[key.L].mono)) : 'Ölçek yok';
+    } else {
+      var q=computeSide(), ok2=S.calibrated && q;
+      $('eV').textContent = ok2 ? f1(R(q.vd)) : '—';
+      $('eT').textContent = (ok2 && S.sd.pant) ? f1(R(q.tilt))+'°' : '—';
+      Array.prototype.forEach.call($('easyDir').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(parseInt(x.dataset.d,10)===S.sd.facing)); });
+      var vn=$('vdNote');
+      note = !S.calibrated ? 'Ölçek yok. "Kartla kesinleştir"e dokunup kart ölçeğini uygulayın.' : ((vn && !vn.hidden) ? vn.textContent : '✓ Kart ölçeğiyle ölçüldü.');
+      live = ok2 ? 'Verteks '+f1(R(q.vd))+' mm'+(S.sd.pant?' · '+f1(R(q.tilt))+'°':'') : 'Ölçek yok';
+    }
+    $('easyNote').textContent=note; $('editLive').textContent=live;
+    if(document.activeElement!==$('easyName') && $('easyName').value!==$('name').value) $('easyName').value=$('name').value;
+  }
+  barUpdate();
 }
 var _res0=results; results=function(){ _res0.apply(this,arguments); try{ easyUpdate(); }catch(e){} };
-function advGo(step){ S.adv=true; renderSteps(); go(step); }
-$('easyCam').addEventListener('click',function(){ $('btnCam').click(); });
-$('easyGal').addEventListener('click',function(){ $('btnGal').click(); });
-$('easyNew').addEventListener('click',function(){ $('btnCam').click(); });
+function enterEdit(step){ S.edit=true; S.adv=false; renderSteps(); go(step); }
+function doneEdit(){ S.edit=false; S.adv=false; renderSteps(); go('easy'); }
+$('bar').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return; var a=b.dataset.act;
+  if(a==='cam') $('btnCam').click();
+  else if(a==='gal') $('btnGal').click();
+  else if(a==='fix') enterEdit(S.mode==='side'?'vertex':'pupil');
+  else if(a==='done') doneEdit();
+  else if(a==='save'){
+    if(!$('easyName').value.trim()){ toast('Kaydetmek için hasta adını yazın.'); $('easyName').focus(); return; }
+    $('btnSave').click();
+  }
+});
+$('easyName').addEventListener('input',function(){ $('name').value=$('easyName').value; $('name').dispatchEvent(new Event('input')); });
 $('easyFace').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; var t=document.querySelector('#facing button[data-f="'+b.dataset.f+'"]'); if(t) t.click(); Array.prototype.forEach.call($('easyFace').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); });
+$('easyDir').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; var t=document.querySelector('#faceDir button[data-d="'+b.dataset.d+'"]'); if(t) t.click(); });
 $('easyFind').addEventListener('click',function(){ autoFind(function(){ go('easy'); }); });
-$('easyFix').addEventListener('click',function(){ advGo('pupil'); });
-$('easyCard').addEventListener('click',function(){ S.calMode='card'; syncMode(); advGo('scale'); });
-$('easySave').addEventListener('click',function(){ $('btnSave').click(); });
-$('easyAdv').addEventListener('click',function(){ advGo('photo'); });
+$('easyCard').addEventListener('click',function(){ S.calMode='card'; syncMode(); enterEdit('scale'); });
+$('easyRecs').addEventListener('click',function(){ document.body.classList.toggle('showrecs'); var r=$('recsWrap'); if(document.body.classList.contains('showrecs') && r) r.scrollIntoView({behavior:'smooth'}); });
+$('easyAdv').addEventListener('click',function(){ S.adv=true; S.edit=false; renderSteps(); go('photo'); });
+document.body.appendChild($('toast'));
 function pickBox(i,part){
   var d={k:'box',i:i||(S.sel&&S.sel.k==='box'?S.sel.i:'a'),part:part||(S.sel&&S.sel.k==='box'?S.sel.part:'tl')};
   S.sel=d; $('selName').textContent=descLabel(d); syncBoxSeg();
@@ -1476,7 +1535,7 @@ Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b
 
 /* ---------- steps ---------- */
 function go(step){
-  S.step=step;
+  S.step=step; syncUiClasses();
   Array.prototype.forEach.call(document.querySelectorAll('.sp'),function(el){ el.hidden = el.dataset['for']!==step; });
   Array.prototype.forEach.call(document.querySelectorAll('#steps button'),function(b){
     if(b.dataset.step===step) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
@@ -1491,9 +1550,10 @@ function go(step){
   $('demoNote').hidden = !S.demo;
   if(step==='vertex' && typeof VTXT!=='undefined' && VTXT){ var _t=VTXT[S.vsub||'apex']; $('vTitle').textContent=_t[0]; $('vTxt').textContent=_t[1]; Array.prototype.forEach.call(document.querySelectorAll('#vSub button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===(S.vsub||'apex'))); }); }
   if(S.sel && S.z>1) centerOn(handlePos(S.sel));
+  try{ easyUpdate(); }catch(e){}
   schedule();
 }
-$('steps').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.dataset.step==='easy'){ S.adv=false; renderSteps(); go('easy'); } else go(b.dataset.step); });
+$('steps').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.dataset.step==='easy'){ S.adv=false; S.edit=false; renderSteps(); go('easy'); } else go(b.dataset.step); });
 $('prev').addEventListener('click',function(){ var l=ids(); go(l[Math.max(0,l.indexOf(S.step)-1)]); });
 $('next').addEventListener('click',function(){ var l=ids(); go(l[Math.min(l.length-1,l.indexOf(S.step)+1)]); });
 $('zoomChips').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) setZoom(parseFloat(b.dataset.z)); });
@@ -1526,7 +1586,7 @@ function demoMarks(){
   S.pup.a={x:440,y:455}; S.pup.b={x:763,y:452}; S.noseX=600; S.noseCustom=false;
 }
 function setImage(canvas,demo){
-  S.src=canvas; S.W=canvas.width; S.H=canvas.height; S.demo=demo; S.rot=0;
+  S.src=canvas; S.W=canvas.width; S.H=canvas.height; S.demo=demo; S.rot=0; syncUiClasses();
   $('rot').value=0; $('rotVal').textContent='0,0°';
   rebuildBase(); S.z=1; S.vx=0; S.vy=0; setZoom(1);
   var sideM = S.mode==='side';
@@ -2200,14 +2260,14 @@ function applyView(o){
   layout();
 }
 function renderSteps(){
-  document.body.classList.toggle('easy',easyOn());
+  syncUiClasses();
   var nav=$('steps'); nav.textContent='';
-  STEP_SETS[S.mode].forEach(function(s,i){
+  stepList().forEach(function(s,i){
     var b=document.createElement('button'); b.dataset.step=s[0];
     var n=document.createElement('span'); n.className='n'; n.textContent=String(i+1);
     b.appendChild(n); b.appendChild(document.createTextNode(s[1])); nav.appendChild(b);
   });
-  if(S.mode==='front' && S.adv){ var e=document.createElement('button'); e.dataset.step='easy'; e.textContent='Kolay'; e.style.flex='0 0 60px'; nav.appendChild(e); }
+  if(S.adv){ var e=document.createElement('button'); e.dataset.step='easy'; e.textContent='Kolay'; e.style.flex='0 0 60px'; nav.appendChild(e); }
 }
 function renderModeUI(){
   var side=S.mode==='side';
@@ -2295,7 +2355,7 @@ function showMain(name){
   $('viewOlcum').hidden = name!=='olcum';
   $('viewCam').hidden = name!=='cam';
   var _lv=document.getElementById('viewLive'); if(_lv) _lv.hidden = name!=='live';
-  if(name!=='live' && window.__lvStop) window.__lvStop();
+  if(name!=='live' && window.__lvStop) window.__lvStop(); document.body.classList.toggle('inCam',name!=='olcum');
   Array.prototype.forEach.call($('mainTabs').querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===name)); });
   try{ window.dispatchEvent(new Event('resize')); }catch(e){}
 }
