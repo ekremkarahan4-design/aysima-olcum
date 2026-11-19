@@ -44,6 +44,9 @@ header.top{display:flex;align-items:baseline;justify-content:space-between;gap:1
 h1{font-size:20px;line-height:1.2;font-weight:600;margin:0;letter-spacing:-.01em}
 h2{font-size:15px;font-weight:600;margin:0}
 .sub{color:var(--muted);font-size:12px}
+.easy .steps,.easy .nav{display:none!important}
+.eb{width:100%;padding:17px;font-size:17px;font-weight:700;font-family:var(--font);margin-top:10px}
+.tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}.tile{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}.tile small{display:block;color:var(--muted);font-size:11.5px}.tile b{font-size:22px;font-family:var(--mono);color:var(--accent)}
 .steps{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:10px;scrollbar-width:none}
 .steps::-webkit-scrollbar{display:none}
 .steps button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;padding:4px 2px;font-size:12.5px;border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}
@@ -310,7 +313,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v26</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v28</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -345,6 +348,25 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
     </section>
 
     <aside class="panel">
+      <!-- kolay -->
+      <div class="sp" data-for="easy" hidden>
+        <div id="easyA">
+          <h2>Hastanın fotoğrafını çekin</h2>
+          <button class="btn primary eb" id="easyCam">📷 Kamerayı aç</button>
+          <button class="btn eb" id="easyGal">🖼 Galeriden seç</button>
+          <div class="seg" id="easyFace" style="margin-top:10px"><button data-f="environment" aria-pressed="true">Arka kamera</button><button data-f="user" aria-pressed="false">Ön kamera</button></div>
+          <p class="muted small">Çekince göz bebekleri ve cam kutuları kendiliğinden bulunur, sonuç hemen görünür.</p>
+        </div>
+        <div id="easyB" hidden>
+          <div class="tile" style="margin:8px 0"><small>PD</small><b id="eP" style="font-size:30px">—</b></div>
+          <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><small>Sağ PD</small><b id="eR">—</b></div><div class="tile"><small>Sol PD</small><b id="eL">—</b></div></div>
+          <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><small>Sağ yükseklik</small><b id="eRH" style="font-size:18px">—</b></div><div class="tile"><small>Sol yükseklik</small><b id="eLH" style="font-size:18px">—</b></div></div>
+          <p class="muted small" id="easyNote"></p>
+          <div class="tiles" style="grid-template-columns:1fr 1fr"><button class="btn eb" id="easyFix" style="margin:0">✏️ Düzelt</button><button class="btn eb" id="easySave" style="margin:0;background:#16a34a;border:0;color:#fff">✔ Kaydet</button></div>
+          <div class="tiles" style="grid-template-columns:1fr 1fr 1fr"><button class="btn sm" id="easyFind">✨ Otomatik bul</button><button class="btn sm" id="easyCard">📏 Kartla kesinleştir</button><button class="btn sm" id="easyNew">📷 Yeni foto</button></div>
+        </div>
+        <button class="btn sm" id="easyAdv" style="margin-top:12px">Gelişmiş adımlar</button>
+      </div>
       <!-- 1 -->
       <div class="sp" data-for="photo">
         <h2 id="photoTitle">Hastanın fotoğrafını çekin</h2>
@@ -884,7 +906,8 @@ var STEP_SETS = {
   front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['align','Hizala']],
   side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['vertex','Verteks']]
 };
-function ids(){ return STEP_SETS[S.mode].map(function(s){ return s[0]; }); }
+function easyOn(){ return S.mode==='front' && !S.adv; }
+function ids(){ return easyOn() ? ['easy'] : STEP_SETS[S.mode].map(function(s){ return s[0]; }); }
 var KEY = 'pd-olcum-kayitlari-v1';
 
 var S = {
@@ -895,7 +918,7 @@ var S = {
   pup:{a:{x:0,y:0}, b:{x:0,y:0}},
   noseX:0, noseCustom:false,
   mirror:false, facing:'environment', round:false,
-  step:'photo', demo:true, mode:'front',
+  step:'photo', demo:true, mode:'front', adv:false,
   sd:{apex:{x:0,y:0},back:{x:0,y:0},top:{x:0,y:0},bot:{x:0,y:0},facing:1,pant:true}, vsub:'apex',
   z:1, vx:0, vy:0, sel:null
 };
@@ -1138,7 +1161,7 @@ function sqHandle(c,p,s,color){
 function ov(c,TT,k,mode){
   var ex = mode==='export', step = ex ? 'export' : S.step;
   var r = (S.calibrated && S.mode==='front') ? compute() : null;
-  var tags = ex || S.demo || step==='pupil';
+  var tags = ex || S.demo || step==='pupil' || step==='easy';
   var lw = 2*k;
   var i, p, q;
   if(!ex && step==='align'){
@@ -1372,7 +1395,7 @@ function afSide(eye){
   S.sd.apex={x:ax,y:ay}; S.sd.back={x:ax+f*vd,y:ay};
   S.sd.top={x:ax+f*vd+f*t,y:ay-hh}; S.sd.bot={x:ax+f*vd-f*t,y:ay+hh};
 }
-function afAuto(){ setTimeout(function(){ try{ if(S.mode==='front' && !S.demo && navigator.onLine) autoFind(function(){ go('pupil'); }); }catch(e){} },900); }
+function afAuto(){ setTimeout(function(){ try{ if(S.mode==='front' && !S.demo && navigator.onLine) autoFind(function(){ go(easyOn()?'easy':'pupil'); }); }catch(e){} },900); }
 function autoFind(cb){
   if(AF.busy) return;
   if(S.demo){ toast('Örnek görüntüde kapalı. Kendi fotoğrafınızı yükleyin.'); return; }
@@ -1398,6 +1421,28 @@ function autoFind(cb){
 }
 $('autoFind3').addEventListener('click',function(){autoFind();}); $('autoFind1').addEventListener('click',function(){autoFind();}); $('autoFind2').addEventListener('click',function(){autoFind();});
 $('autoGo').addEventListener('click',function(){ autoFind(function(){ go('pupil'); }); });
+
+/* ---------- kolay mod ---------- */
+function easyUpdate(){
+  if(!$('easyB')) return;
+  var has=!S.demo; $('easyA').hidden=has; $('easyB').hidden=!has; if(!has) return;
+  var r=compute(), ok=S.calibrated && r, key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'};
+  $('eP').textContent = ok ? f1(R(r.pd)) : '—';
+  $('eR').textContent = ok ? f1(R(r[key.R].mono)) : '—'; $('eL').textContent = ok ? f1(R(r[key.L].mono)) : '—';
+  $('eRH').textContent = ok ? f1(R(r[key.R].h)) : '—'; $('eLH').textContent = ok ? f1(R(r[key.L].h)) : '—';
+  $('easyNote').textContent = !S.calibrated ? 'Ölçek yok. "Kartla kesinleştir"e dokunun.' : (S.calMode==='iris' ? 'Yaklaşık sonuç (iris ölçeği). Kesin sonuç için kartla kesinleştirin.' : '✓ Kart ölçeğiyle ölçüldü.');
+}
+var _res0=results; results=function(){ _res0.apply(this,arguments); try{ easyUpdate(); }catch(e){} };
+function advGo(step){ S.adv=true; renderSteps(); go(step); }
+$('easyCam').addEventListener('click',function(){ $('btnCam').click(); });
+$('easyGal').addEventListener('click',function(){ $('btnGal').click(); });
+$('easyNew').addEventListener('click',function(){ $('btnCam').click(); });
+$('easyFace').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; var t=document.querySelector('#facing button[data-f="'+b.dataset.f+'"]'); if(t) t.click(); Array.prototype.forEach.call($('easyFace').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); });
+$('easyFind').addEventListener('click',function(){ autoFind(function(){ go('easy'); }); });
+$('easyFix').addEventListener('click',function(){ advGo('pupil'); });
+$('easyCard').addEventListener('click',function(){ S.calMode='card'; syncMode(); advGo('scale'); });
+$('easySave').addEventListener('click',function(){ $('btnSave').click(); });
+$('easyAdv').addEventListener('click',function(){ advGo('photo'); });
 function pickBox(i,part){
   var d={k:'box',i:i||(S.sel&&S.sel.k==='box'?S.sel.i:'a'),part:part||(S.sel&&S.sel.k==='box'?S.sel.part:'tl')};
   S.sel=d; $('selName').textContent=descLabel(d); syncBoxSeg();
@@ -1448,7 +1493,7 @@ function go(step){
   if(S.sel && S.z>1) centerOn(handlePos(S.sel));
   schedule();
 }
-$('steps').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) go(b.dataset.step); });
+$('steps').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.dataset.step==='easy'){ S.adv=false; renderSteps(); go('easy'); } else go(b.dataset.step); });
 $('prev').addEventListener('click',function(){ var l=ids(); go(l[Math.max(0,l.indexOf(S.step)-1)]); });
 $('next').addEventListener('click',function(){ var l=ids(); go(l[Math.min(l.length-1,l.indexOf(S.step)+1)]); });
 $('zoomChips').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) setZoom(parseFloat(b.dataset.z)); });
@@ -1501,7 +1546,7 @@ function loadFile(file){
     var c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
     c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     URL.revokeObjectURL(url);
-    setImage(c,false); go(ids()[1]); afAuto();
+    setImage(c,false); go(easyOn()?'easy':ids()[1]); afAuto();
     toast('Fotoğraf yüklendi. Otomatik bulunuyor…');
   };
   im.onerror=function(){ URL.revokeObjectURL(url); toast('Fotoğraf açılamadı. Başka bir kare deneyin.'); };
@@ -1553,7 +1598,7 @@ function ovShoot(){
   c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k);
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   ovClose();
-  setImage(c,false); go(ids()[1]); afAuto();
+  setImage(c,false); go(easyOn()?'easy':ids()[1]); afAuto();
   toast('Fotoğraf çekildi. Otomatik bulunuyor…');
 }
 function nativeCam(){ inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); }
@@ -2155,12 +2200,14 @@ function applyView(o){
   layout();
 }
 function renderSteps(){
+  document.body.classList.toggle('easy',easyOn());
   var nav=$('steps'); nav.textContent='';
   STEP_SETS[S.mode].forEach(function(s,i){
     var b=document.createElement('button'); b.dataset.step=s[0];
     var n=document.createElement('span'); n.className='n'; n.textContent=String(i+1);
     b.appendChild(n); b.appendChild(document.createTextNode(s[1])); nav.appendChild(b);
   });
+  if(S.mode==='front' && S.adv){ var e=document.createElement('button'); e.dataset.step='easy'; e.textContent='Kolay'; e.style.flex='0 0 60px'; nav.appendChild(e); }
 }
 function renderModeUI(){
   var side=S.mode==='side';
@@ -2179,7 +2226,7 @@ function setMode(m){
   V[S.mode]=pickView(); S.mode=m;
   if(V[m]) applyView(V[m]);
   else { S.cal={p1:{x:0,y:0},p2:{x:0,y:0}}; S.calMode='card'; S.calMm=85.6; setImage(m==='side'?drawDemoSide():drawDemo(),true); }
-  renderModeUI(); go('photo'); schedule();
+  renderModeUI(); go(ids()[0]); schedule();
 }
 $('modeSeg').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
 $('faceDir').addEventListener('click',function(e){
@@ -2212,7 +2259,7 @@ window.addEventListener('orientationchange',function(){ setTimeout(layout,250); 
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
 setImage(drawDemo(),true);
 renderModeUI();
-go('photo');
+go(ids()[0]);
 renderRecs();
 try{
   if(window.claude && window.claude.use){
