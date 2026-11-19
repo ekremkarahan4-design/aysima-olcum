@@ -1,0 +1,23 @@
+AYSIMA ÖLÇÜM - TELEFON UYGULAMASI (PWA) PAKETİ
+
+Bu klasörü bir web adresine (https) koymanız gerekir. Kamera, dosya olarak açılınca çalışmaz.
+
+NETLIFY (en kolayı)
+1. app.netlify.com adresinde ücretsiz hesap açın.
+2. "Add new site" > "Deploy manually" seçin.
+3. Bu klasörü (zip'ten çıkardıktan sonra) sayfaya sürükleyip bırakın.
+4. Size verilen adresi telefondan açın.
+
+GITHUB PAGES
+1. Yeni bir depo açın, klasördeki tüm dosyaları yükleyin.
+2. Settings > Pages > Branch: main > Save.
+3. Çıkan adresi telefondan açın.
+
+TELEFONA KURMA
+- iPhone: Safari'de adresi açın > Paylaş > "Ana Ekrana Ekle".
+- Android: Chrome'da adresi açın > menü > "Uygulamayı yükle" / "Ana ekrana ekle".
+
+NOTLAR
+- Hasta kayıtları yalnızca o telefonun tarayıcısında durur. Düzenli yedek alın.
+- Adresi bilen herkes sayfayı açabilir ama kayıtlarınıza erişemez; kayıtlar cihazda kalır.
+- Canlı cam simülasyonu yaklaşık bir anlatım aracıdır, ölçüm yerine kullanılmaz.
