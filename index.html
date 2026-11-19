@@ -375,6 +375,9 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="sp" data-for="box" hidden>
         <h2>Camları kutulayın</h2>
         <p class="muted">Her camın en dışa çıkan dört noktasına kutunun kenarları değsin. Köşeleri veya kenarları sürükleyin, kutuyu içinden tutup taşıyın.</p>
+        <div class="seg" id="boxWho" role="group" aria-label="Hangi kutu" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sağ göz kutusu</button><button data-i="b" aria-pressed="false">Sol göz kutusu</button></div>
+        <div class="seg wrapseg" id="boxPart" role="group" aria-label="Kutunun hangi noktası" style="margin-bottom:8px"><button data-p="tl" aria-pressed="true">Sol üst</button><button data-p="tr" aria-pressed="false">Sağ üst</button><button data-p="bl" aria-pressed="false">Sol alt</button><button data-p="br" aria-pressed="false">Sağ alt</button><button data-p="move" aria-pressed="false">Tüm kutu</button></div>
+        <p class="muted small">Yakınlaştırınca diğer göz ekran dışında kalabilir: yukarıdaki düğmelerle kutuyu ve noktayı seçin, ok tuşlarıyla ince ayar yapın.</p>
         <label class="chk"><input type="checkbox" id="mirror"> Görüntü ayna (ön kamera sol-sağ ters kaydetti)</label>
         <p class="muted small">Normalde görüntüde solda kalan göz hastanın sağ gözüdür.</p>
         <div class="row"><button class="btn sm" id="boxReset">Kutuları sıfırla</button></div>
@@ -1159,7 +1162,7 @@ cv.addEventListener('pointerdown',function(e){
   var pt=cpt(e), hit=hitTest(pt,e.pointerType);
   try{ cv.setPointerCapture(e.pointerId); }catch(x){}
   if(hit){
-    S.sel=hit; $('selName').textContent=descLabel(hit);
+    S.sel=hit; $('selName').textContent=descLabel(hit); syncBoxSeg();
     var ip=U(pt.x,pt.y);
     drag={id:e.pointerId,type:'h',d:hit,s0:snap(hit),ip0:ip};
     var info=loupeInfo(hit,ip); showLoupe(info,handleColor(hit),pt.x);
@@ -1194,6 +1197,19 @@ function defaultSel(){
   if(S.step==='vertex') return {k:'vx',i:'apex'};
   return null;
 }
+function syncBoxSeg(){
+  var d=S.sel, on=!!(d && d.k==='box');
+  Array.prototype.forEach.call($('boxWho').querySelectorAll('button'),function(b){ b.textContent=lensName(b.dataset.i)+' göz kutusu'; b.setAttribute('aria-pressed',String(on && b.dataset.i===d.i)); });
+  Array.prototype.forEach.call($('boxPart').querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',String(on && b.dataset.p===d.part)); });
+}
+function pickBox(i,part){
+  var d={k:'box',i:i||(S.sel&&S.sel.k==='box'?S.sel.i:'a'),part:part||(S.sel&&S.sel.k==='box'?S.sel.part:'tl')};
+  S.sel=d; $('selName').textContent=descLabel(d); syncBoxSeg();
+  if(S.z>1) centerOn(handlePos(d,{x:S.noseX,y:S.H/2}));
+  schedule();
+}
+$('boxWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) pickBox(b.dataset.i,null); });
+$('boxPart').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) pickBox(null,b.dataset.p); });
 function nudge(dx,dy){
   if(!S.sel) S.sel=defaultSel();
   if(!S.sel) return;
@@ -1227,7 +1243,7 @@ function go(step){
   var showN = step==='box' || step==='pupil' || step==='vertex' || (step==='scale' && S.calMode==='card');
   $('nudge').hidden=!showN;
   S.sel = showN ? defaultSel() : null;
-  $('selName').textContent=descLabel(S.sel);
+  $('selName').textContent=descLabel(S.sel); syncBoxSeg();
   var list=ids(), i=list.indexOf(step);
   $('prev').disabled = i<=0; $('next').disabled = i===list.length-1;
   $('demoNote').hidden = !S.demo;
@@ -1331,7 +1347,7 @@ $('applyScale').addEventListener('click',function(){
   if(!mmPerPx()){ toast('Ölçek hesaplanamadı. Değerleri ve noktaları kontrol edin.'); return; }
   S.calibrated=true; results(); go(S.mode==='side' ? 'vertex' : 'box');
 });
-$('mirror').addEventListener('change',function(){ S.mirror=$('mirror').checked; results(); schedule(); });
+$('mirror').addEventListener('change',function(){ S.mirror=$('mirror').checked; syncBoxSeg(); $('selName').textContent=descLabel(S.sel); results(); schedule(); });
 $('boxReset').addEventListener('click',function(){ defaultBoxes(); results(); schedule(); });
 $('noseReset').addEventListener('click',function(){ S.noseCustom=false; S.noseX=(S.box.a.x2+S.box.b.x1)/2; results(); schedule(); });
 $('round').addEventListener('change',function(){ S.round=$('round').checked; results(); renderRecs(); schedule(); });
