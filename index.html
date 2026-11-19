@@ -310,7 +310,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v24</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -356,11 +356,14 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <button data-f="environment" aria-pressed="true">Arka kamera</button>
           <button data-f="user" aria-pressed="false">Ön kamera</button>
         </div>
+        <div id="autoGoBox" hidden><button class="btn primary" id="autoGo" style="width:100%;padding:16px;font-size:17px;margin:4px 0 8px">✨ Otomatik bul ve sonucu göster</button><p class="muted small">Göz bebekleri ve cam kutuları kendiliğinden yerleşir, sonuç hemen görünür. Doğruluğu için sonra kartla ölçeği kesinleştirin.</p></div>
+        <details><summary class="muted small" style="margin:6px 0">Çekim ipuçları</summary>
         <ul class="tips" id="tipsF">
           <li>Gözlük hastanın yüzünde, hasta düz karşıya baksın, baş dik olsun.</li>
           <li>Kamera göz hizasında ve yaklaşık 40 cm uzakta, yüze tam karşıdan.</li>
           <li>Ölçek için bir kredi kartını alna veya gözlüğün üstüne, yüz düzleminde ve yatay tutun.</li>
         </ul>
+        </details>
         <ul class="tips" id="tipsS" hidden>
           <li>Hasta gözlüğü takmış, tam profilden dursun ve düz karşıya baksın.</li>
           <li>Kamera göz hizasında, yüzün tam yanında olsun; telefon yukarı veya aşağı eğik olmasın.</li>
@@ -482,6 +485,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <h2>Sonuçlar</h2>
           <label class="chk"><input type="checkbox" id="round"> 0,5 mm'ye yuvarla</label>
         </div>
+        <div class="note" id="approxNote" hidden>Yaklaşık sonuç: ölçek iristen (11,7 mm) alındı. Kesinleştirmek için 3. adımda kartla ölçeği uygulayın.</div>
         <div class="note" id="calNote" hidden>Ölçek henüz uygulanmadı. 3. adımda ölçeği uygulayın.</div>
         <div id="frontRes" class="stack">
         <div class="readout"><span class="k">PD toplam</span><span class="big"><span id="rPD">—</span><small>mm</small></span></div>
@@ -885,7 +889,7 @@ var KEY = 'pd-olcum-kayitlari-v1';
 
 var S = {
   src:null, base:null, W:1200, H:900, rot:0,
-  calibrated:true, calMode:'card', calMm:85.6, frameA:52, frameD:18,
+  calibrated:true, irisMm:0, calMode:'card', calMm:85.6, frameA:52, frameD:18,
   cal:{p1:{x:0,y:0}, p2:{x:0,y:0}},
   box:{a:{x1:0,y1:0,x2:0,y2:0}, b:{x1:0,y1:0,x2:0,y2:0}},
   pup:{a:{x:0,y:0}, b:{x:0,y:0}},
@@ -946,6 +950,7 @@ function layout(){
 
 /* ---------- measurement ---------- */
 function mmPerPx(){
+  if(S.calMode==='iris' && S.irisMm>0) return S.irisMm;
   if(S.calMode==='card'){
     var d=Math.hypot(S.cal.p2.x-S.cal.p1.x, S.cal.p2.y-S.cal.p1.y);
     return (d>1 && S.calMm>0) ? S.calMm/d : null;
@@ -977,7 +982,7 @@ function results(){
   if(S.mode==='side'){ resultsSide(); return; }
   (function(){ var cf=corrF(), n=$('corrNote'); if(n) n.textContent = cf.on ? 'Düzeltme uygulanıyor: yatay ×'+(cf.x*cf.d).toFixed(3).replace('.',',')+', dikey ×'+cf.y.toFixed(3).replace('.',',') : (S.calMode==='frame' ? 'Çerçeve etiketi yönteminde düzeltme uygulanmaz (ölçek zaten çerçeveden alınır).' : ''); })();
   var r=compute(), ok=S.calibrated && r;
-  $('calNote').hidden = !!S.calibrated;
+  $('calNote').hidden = !!S.calibrated; $('approxNote').hidden = S.calMode!=='iris';
   var key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'};
   $('hR').className = key.R==='a'?'ca':'cb';
   $('hL').className = key.L==='a'?'ca':'cb';
@@ -1349,6 +1354,7 @@ function afApply(P,irisPx){
   var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
   var pxmm=cardOk ? 1/mmPerPx() : (irisPx>4 ? irisPx/11.7 : null);
   if(pxmm) afBoxes([P[0].x,P[1].x],[P[0].y,P[1].y],pxmm);
+  if(!cardOk && irisPx>4){ S.calMode='iris'; S.irisMm=11.7/irisPx; S.calibrated=true; syncMode(); }
   if(!S.noseCustom) S.noseX=(P[0].x+P[1].x)/2;
 }
 function afOffline(){
@@ -1366,13 +1372,14 @@ function afSide(eye){
   S.sd.apex={x:ax,y:ay}; S.sd.back={x:ax+f*vd,y:ay};
   S.sd.top={x:ax+f*vd+f*t,y:ay-hh}; S.sd.bot={x:ax+f*vd-f*t,y:ay+hh};
 }
-function autoFind(){
+function afAuto(){ setTimeout(function(){ try{ if(S.mode==='front' && !S.demo && navigator.onLine) autoFind(function(){ go('pupil'); }); }catch(e){} },900); }
+function autoFind(cb){
   if(AF.busy) return;
   if(S.demo){ toast('Örnek görüntüde kapalı. Kendi fotoğrafınızı yükleyin.'); return; }
   var side=(S.mode==='side');
   AF.busy=true; var bs=[$('autoFind1'),$('autoFind2'),$('autoFind3')], old=bs[0].textContent;
   bs.forEach(function(b){ b.disabled=true; b.textContent='Aranıyor…'; });
-  function done(){ AF.busy=false; bs.forEach(function(b){ b.disabled=false; b.textContent=old; }); if(side){ S.sd.pant=true; S.sel=defaultSel(); syncSideUI(); } else pickPup('a'); results(); schedule(); }
+  function done(){ AF.busy=false; if(typeof cb==='function') setTimeout(cb,50); bs.forEach(function(b){ b.disabled=false; b.textContent=old; }); if(side){ S.sd.pant=true; S.sel=defaultSel(); syncSideUI(); } else pickPup('a'); results(); schedule(); }
   if(!navigator.onLine){ if(side) afSide(null); else afOffline(); done(); toast('İnternet yok: ölçüye göre ortalandı. Elle kontrol edin.'); return; }
   afLoad().then(function(lm){
     var img=S.base||S.src, r=lm.detect(img), L=r&&r.faceLandmarks&&r.faceLandmarks[0];
@@ -1389,7 +1396,8 @@ function autoFind(){
     afOffline(); done(); toast('Model yüklenemedi: ölçüye göre ortalandı. Elle kontrol edin.');
   });
 }
-$('autoFind3').addEventListener('click',autoFind); $('autoFind1').addEventListener('click',autoFind); $('autoFind2').addEventListener('click',autoFind);
+$('autoFind3').addEventListener('click',function(){autoFind();}); $('autoFind1').addEventListener('click',function(){autoFind();}); $('autoFind2').addEventListener('click',function(){autoFind();});
+$('autoGo').addEventListener('click',function(){ autoFind(function(){ go('pupil'); }); });
 function pickBox(i,part){
   var d={k:'box',i:i||(S.sel&&S.sel.k==='box'?S.sel.i:'a'),part:part||(S.sel&&S.sel.k==='box'?S.sel.part:'tl')};
   S.sel=d; $('selName').textContent=descLabel(d); syncBoxSeg();
@@ -1480,7 +1488,7 @@ function setImage(canvas,demo){
   if(demo){ if(sideM) demoSideMarks(); else demoMarks(); S.calibrated=true; }
   else { if(sideM) defaultSideMarks(); else defaultMarks(); S.calibrated=false; }
   syncSideUI();
-  $('demoTag').hidden=!demo; $('demoNote').hidden=!demo;
+  $('demoTag').hidden=!demo; $('demoNote').hidden=!demo; $('autoGoBox').hidden=!!demo||sideM;
   $('calMm').value=f1(S.calMm).replace('.',',');
   syncMode();
   layout(); results(); schedule();
@@ -1493,7 +1501,7 @@ function loadFile(file){
     var c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
     c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     URL.revokeObjectURL(url);
-    setImage(c,false); go('align');
+    setImage(c,false); go('align'); afAuto();
     toast('Fotoğraf yüklendi. Önce hizalayın, sonra ölçeği ayarlayın.');
   };
   im.onerror=function(){ URL.revokeObjectURL(url); toast('Fotoğraf açılamadı. Başka bir kare deneyin.'); };
@@ -1545,7 +1553,7 @@ function ovShoot(){
   c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k);
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   ovClose();
-  setImage(c,false); go('align');
+  setImage(c,false); go('align'); afAuto();
   toast('Fotoğraf çekildi. Önce hizalayın, sonra ölçeği ayarlayın.');
 }
 function nativeCam(){ inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); }
