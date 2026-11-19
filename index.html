@@ -283,7 +283,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 #ovHint{position:absolute;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-size:16px;font-weight:600;text-shadow:0 1px 4px #000}
 #ovBar{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:22px}
 #ovShot{width:72px;height:72px;border-radius:50%;border:6px solid var(--c);background:#fff;color:#111;font-weight:800;font-size:14px}
-#camOv.bad #ovShot{background:#556;color:#99a;opacity:.85}
+#camOv.bad #ovShot{background:#fff;color:#111}
 #ovX,#ovFree{background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:18px;padding:10px 14px;font-size:14px}
 #ovAutoL{position:absolute;left:0;right:0;bottom:calc(112px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-size:13px}
 #ovCount{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:800;color:#fff;text-shadow:0 2px 12px #000;pointer-events:none}
@@ -310,7 +310,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v24</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v26</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -399,7 +399,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           </div>
         </div>
         <div id="frameBlk" class="stack" hidden>
-          <p class="muted">Çerçevenin kol içindeki yazıdan girin (örnek 52□18). Ölçek, kutuların dış kenarları arasından hesaplanır; bu yüzden 4. adımda camları sıkı kutulayın.</p>
+          <p class="muted">Çerçevenin kol içindeki yazıdan girin (örnek 52□18). Ölçek, kutuların dış kenarları arasından hesaplanır; bu yüzden Kutu adımında camları sıkı kutulayın.</p>
           <div class="grid2">
             <label class="f">Cam genişliği A (mm)<input type="text" inputmode="decimal" id="fA" value="52" autocomplete="off"></label>
             <label class="f">Köprü DBL (mm)<input type="text" inputmode="decimal" id="fD" value="18" autocomplete="off"></label>
@@ -413,7 +413,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
             <label class="f">Baş sağa / sola dönük<select id="cY"><option value="-15">Sola 15°</option><option value="-14">Sola 14°</option><option value="-13">Sola 13°</option><option value="-12">Sola 12°</option><option value="-11">Sola 11°</option><option value="-10">Sola 10°</option><option value="-9">Sola 9°</option><option value="-8">Sola 8°</option><option value="-7">Sola 7°</option><option value="-6">Sola 6°</option><option value="-5">Sola 5°</option><option value="-4">Sola 4°</option><option value="-3">Sola 3°</option><option value="-2">Sola 2°</option><option value="-1">Sola 1°</option><option value="0" selected>0°</option><option value="1">Sağa 1°</option><option value="2">Sağa 2°</option><option value="3">Sağa 3°</option><option value="4">Sağa 4°</option><option value="5">Sağa 5°</option><option value="6">Sağa 6°</option><option value="7">Sağa 7°</option><option value="8">Sağa 8°</option><option value="9">Sağa 9°</option><option value="10">Sağa 10°</option><option value="11">Sağa 11°</option><option value="12">Sağa 12°</option><option value="13">Sağa 13°</option><option value="14">Sağa 14°</option><option value="15">Sağa 15°</option></select></label>
             <label class="f">Baş yukarı / aşağı eğik<select id="cP"><option value="-15">Aşağı 15°</option><option value="-14">Aşağı 14°</option><option value="-13">Aşağı 13°</option><option value="-12">Aşağı 12°</option><option value="-11">Aşağı 11°</option><option value="-10">Aşağı 10°</option><option value="-9">Aşağı 9°</option><option value="-8">Aşağı 8°</option><option value="-7">Aşağı 7°</option><option value="-6">Aşağı 6°</option><option value="-5">Aşağı 5°</option><option value="-4">Aşağı 4°</option><option value="-3">Aşağı 3°</option><option value="-2">Aşağı 2°</option><option value="-1">Aşağı 1°</option><option value="0" selected>0°</option><option value="1">Yukarı 1°</option><option value="2">Yukarı 2°</option><option value="3">Yukarı 3°</option><option value="4">Yukarı 4°</option><option value="5">Yukarı 5°</option><option value="6">Yukarı 6°</option><option value="7">Yukarı 7°</option><option value="8">Yukarı 8°</option><option value="9">Yukarı 9°</option><option value="10">Yukarı 10°</option><option value="11">Yukarı 11°</option><option value="12">Yukarı 12°</option><option value="13">Yukarı 13°</option><option value="14">Yukarı 14°</option><option value="15">Yukarı 15°</option></select></label>
           </div>
-          <p class="muted small">Yana yatma (omuza doğru eğik) için 2. adım Hizala kullanılır. Telefon yüz hizasında ve dik tutulmalıdır.</p>
+          <p class="muted small">Yana yatma (omuza doğru eğik) için Hizala adımı (en sonda) kullanılır. Telefon yüz hizasında ve dik tutulmalıdır.</p>
           <div class="muted small" id="corrNote"></div>
         </details>
         <div class="row"><button class="btn primary" id="applyScale">Ölçeği uygula</button></div>
@@ -485,8 +485,8 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <h2>Sonuçlar</h2>
           <label class="chk"><input type="checkbox" id="round"> 0,5 mm'ye yuvarla</label>
         </div>
-        <div class="note" id="approxNote" hidden>Yaklaşık sonuç: ölçek iristen (11,7 mm) alındı. Kesinleştirmek için 3. adımda kartla ölçeği uygulayın.</div>
-        <div class="note" id="calNote" hidden>Ölçek henüz uygulanmadı. 3. adımda ölçeği uygulayın.</div>
+        <div class="note" id="approxNote" hidden>Yaklaşık sonuç: ölçek iristen (11,7 mm) alındı. Kesinleştirmek için Ölçek adımında kartla ölçeği uygulayın.</div>
+        <div class="note" id="calNote" hidden>Ölçek henüz uygulanmadı. Ölçek adımında ölçeği uygulayın.</div>
         <div id="frontRes" class="stack">
         <div class="readout"><span class="k">PD toplam</span><span class="big"><span id="rPD">—</span><small>mm</small></span></div>
         <table class="rt">
@@ -881,7 +881,7 @@ var lp = $('loupe'), lctx = lp.getContext('2d');
 var TAU = Math.PI * 2;
 var COL = { a:'#22d3ee', b:'#fbbf24', cal:'#a3e635', pant:'#f472b6' };
 var STEP_SETS = {
-  front:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['box','Kutula'],['pupil','Göz bebeği']],
+  front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['align','Hizala']],
   side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['vertex','Verteks']]
 };
 function ids(){ return STEP_SETS[S.mode].map(function(s){ return s[0]; }); }
@@ -1501,8 +1501,8 @@ function loadFile(file){
     var c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
     c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     URL.revokeObjectURL(url);
-    setImage(c,false); go('align'); afAuto();
-    toast('Fotoğraf yüklendi. Önce hizalayın, sonra ölçeği ayarlayın.');
+    setImage(c,false); go(ids()[1]); afAuto();
+    toast('Fotoğraf yüklendi. Otomatik bulunuyor…');
   };
   im.onerror=function(){ URL.revokeObjectURL(url); toast('Fotoğraf açılamadı. Başka bir kare deneyin.'); };
   im.src=url;
@@ -1515,7 +1515,7 @@ function ovOrient(e){ if(e.beta!=null && e.gamma!=null){ OV.beta=e.beta; OV.gamm
 function ovEval(){
   var ov=$('camOv'), land=window.innerWidth>window.innerHeight, st='na', hint='', c1='', c2='';
   if(OV.has && !land){
-    var tilt=OV.beta-90, roll=OV.gamma, tOk=Math.abs(tilt)<=4, rOk=Math.abs(roll)<=3.5;
+    var tilt=OV.beta-90, roll=OV.gamma, tOk=Math.abs(tilt)<=15, rOk=Math.abs(roll)<=12;
     c1=tOk?'ok':'bad'; c2=rOk?'ok':'bad';
     st=(tOk&&rOk)?'ok':'bad';
     if(!tOk) hint= tilt>0 ? 'Kamera yukarı bakıyor: telefonu dikleştirin' : 'Kamera aşağı bakıyor: telefonu dikleştirin';
@@ -1530,7 +1530,7 @@ function ovEval(){
   $('ovC1').lastChild.textContent = c1==='bad' ? 'Telefon eğik' : 'Dik'; $('ovC2').lastChild.textContent = c2==='bad' ? 'Telefon yatık' : 'Düz';
   $('ovChips').hidden = !OV.has && !land;
   $('ovHint').textContent=hint;
-  $('ovShot').disabled = (st==='bad');
+  $('ovShot').disabled = false;
   var side=S.mode==='side'; $('ovOval').hidden=side; $('ovVline').hidden=false;
   // otomatik çekim
   var now=performance.now();
@@ -1553,8 +1553,8 @@ function ovShoot(){
   c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k);
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   ovClose();
-  setImage(c,false); go('align'); afAuto();
-  toast('Fotoğraf çekildi. Önce hizalayın, sonra ölçeği ayarlayın.');
+  setImage(c,false); go(ids()[1]); afAuto();
+  toast('Fotoğraf çekildi. Otomatik bulunuyor…');
 }
 function nativeCam(){ inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); }
 function openCamOv(){
@@ -1574,7 +1574,7 @@ function openCamOv(){
 }
 $('btnCam').addEventListener('click',openCamOv);
 $('ovX').addEventListener('click',ovClose);
-$('ovShot').addEventListener('click',function(){ if(OV.state!=='bad') ovShoot(); });
+$('ovShot').addEventListener('click',function(){ ovShoot(); });
 $('ovFree').addEventListener('click',ovShoot);
 
 $('btnGal').addEventListener('click',function(){ inGal.value=''; inGal.click(); });
