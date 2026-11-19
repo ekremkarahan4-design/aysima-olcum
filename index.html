@@ -2748,8 +2748,9 @@ function arcPath(cx,ys,bw,yb){
 }
 /* Kırılma kusuru → odaksızlık (D). e = 1/d + S ; e>0 ise göz ilave kadar azalan uyum gücüyle kapatır. */
 function parts(S,C,add,d){
-  var se=S+C/2, e=1/d+se, amp=Math.max(0,3-Math.max(0,add));
-  return {s: e>0 ? Math.max(0,e-amp) : -e, c: Math.abs(C)*0.5};
+  /* Düzeltilmemiş göz: odaksızlık = |küre + silindir/2 + 1/mesafe|; yakında ilave kadar uyum kaybı eklenir. */
+  var se=S+C/2, e=(d>=5?0:1/d)+se, near=d>=5?0:Math.max(0,Math.min(1,(1/d)/2.5));
+  return {s: Math.abs(e)+Math.max(0,add)*near, c: Math.abs(C)*0.5};
 }
 function blurD(){
   var add=num('lvAdd'), r=parts(num('lvRS'),num('lvRC'),add,st.dist), l=parts(num('lvLS'),num('lvLC'),add,st.dist);
@@ -2760,7 +2761,7 @@ function layout(){
   var bd=blurD(); $('lvBl').value=bd.toFixed(2).replace('.',',')+' D';
   var k=W/400;
   var add=num('lvAdd'), r=parts(num('lvRS'),num('lvRC'),add,st.dist), l=parts(num('lvLS'),num('lvLC'),add,st.dist);
-  var sigS=Math.min(40,(r.s+l.s)/2*7*k), cylD=(r.c+l.c)/2, sigC=Math.min(30,cylD*10*k);
+  var sigS=Math.min(40,(r.s+l.s)/2*9*k), cylD=(r.c+l.c)/2, sigC=Math.min(30,cylD*10*k);
   var axis=Math.abs(num('lvRC'))>=Math.abs(num('lvLC'))?num('lvRA'):num('lvLA');
   var rot=$('lvRot'), flt=$('lvFlt'), v0=$('lvV0');
   if(sigC>0.3){
