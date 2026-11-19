@@ -2771,13 +2771,13 @@ function layout(){
     rot.style.transform='none'; v0.style.transform='scale(1.15)';
     flt.style.filter='blur('+sigS.toFixed(1)+'px)'; flt.style.webkitFilter='blur('+sigS.toFixed(1)+'px)';
   }
-  var T=TIERS[st.tier], s=0.41*W/360, lh=240*s;
-  var oy=H*0.5-lh/2, centers=[W*0.265,W*0.735];
+  var T=TIERS[st.tier], s=0.53*W/360, lh=240*s;
+  var oy=H*0.5-lh/2, centers=[W*0.228,W*0.772];
   var fr=$('lvFrame'); while(fr.firstChild) fr.removeChild(fr.firstChild);
   fr.setAttribute('viewBox','0 0 '+W+' '+H);
   var clips=[$('lvC1'),$('lvC2')];
   var Lcm=14, ys=Math.max(40,Math.min(180,T.ys+(Lcm-14)*2.5));
-  var fw=Math.max(7,22*s), lenses=[], defs=svgEl('defs',{});
+  var fw=Math.max(8,32*s), lenses=[], defs=svgEl('defs',{});
   var g1=svgEl('linearGradient',{id:'lvFg',gradientUnits:'userSpaceOnUse',x1:0,y1:oy,x2:0,y2:oy+lh});
   [['0','#565b64'],['0.35','#262a31'],['1','#0a0c0f']].forEach(function(p){ g1.appendChild(svgEl('stop',{offset:p[0],'stop-color':p[1]})); });
   var g2=svgEl('linearGradient',{id:'lvGl',x1:0,y1:0,x2:1,y2:1});
