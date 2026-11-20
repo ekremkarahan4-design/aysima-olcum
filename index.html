@@ -4978,7 +4978,7 @@ function openSettings(){
     '<div class="row"><button class="pri" id="aoSave">Kaydet</button><button id="aoClose">Kapat</button></div><div class="msg" id="aoSm"></div>'+
     '<hr style="border:0;border-top:1px solid var(--line,#ccd4db);margin:14px 0">'+
     '<label>LİSANS ANAHTARI GİR / DEĞİŞTİR</label><textarea id="aoKey"></textarea>'+
-    '<div class="row"><button id="aoAct">Etkinleştir</button><button id="aoChk">Güncelleme kontrol et</button></div><div class="msg" id="aoMsg"></div>'+
+    '<div class="row"><button id="aoAct">Etkinleştir</button><button id="aoChk">Güncelleme kontrol et</button><button id="aoIn">📲 Ana ekrana ekle</button></div><div class="msg" id="aoMsg"></div>'+
     '<p class="mut">Sürüm '+C.build+'. Ölçümler ve fotoğraflar yalnızca bu cihazda saklanır.</p>');
     activateUi(o);
     var logo=SET.logo||'';
@@ -4994,6 +4994,7 @@ function openSettings(){
       var m=o.querySelector('#aoSm');m.className='msg ok';m.textContent='Kaydedildi.';setTimeout(function(){location.reload()},600);
     };
     o.querySelector('#aoClose').onclick=function(){o.remove()};
+    o.querySelector('#aoIn').onclick=function(){o.remove();window.__aoInstall()};
     o.querySelector('#aoChk').onclick=function(){
       var m=o.querySelector('#aoMsg');m.className='msg';m.textContent='Kontrol ediliyor…';
       fetch(C.vurl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
@@ -5039,6 +5040,47 @@ if(h.indexOf('#lisans=')===0){
 chk();
 document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()});
 setInterval(chk,30*60*1000);
+
+/* ---- ana ekrana ekle ---- */
+var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),IPAD=/iPad/.test(UA)||(IOS&&!/iPhone/.test(UA));
+var SAF=IOS&&/Safari/.test(UA)&&!/CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|Instagram|Line\//.test(UA);
+var DP=null;
+function standalone(){try{return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}catch(e){return false}}
+function instDone(){var d=document.getElementById('aoInst');if(d)d.remove()}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();DP=e;if(!standalone())setTimeout(function(){showInst(false)},2500)});
+window.addEventListener('appinstalled',function(){DP=null;instDone();s('ao_inst_ok','1')});
+function iosGuide(){
+  if(!SAF){
+    var o=overlay('<h2>Safari ile açın</h2><p>iPhone\'da ana ekrana ekleme yalnızca <b>Safari</b> ile yapılır. Bu bağlantıyı kopyalayıp Safari\'de açın.</p><div class="row"><button class="pri" id="aoCp">Bağlantıyı kopyala</button><button id="aoX">Kapat</button></div><div class="msg" id="aoCm"></div>');
+    o.querySelector('#aoX').onclick=function(){o.remove()};
+    o.querySelector('#aoCp').onclick=function(){var m=o.querySelector('#aoCm');try{navigator.clipboard.writeText(location.href.split('#')[0]).then(function(){m.className='msg ok';m.textContent='Kopyalandı. Safari\'yi açıp adres çubuğuna yapıştırın.'},function(){m.textContent=location.href})}catch(e){m.textContent=location.href}};
+    return;
+  }
+  var o2=overlay('<h2>Ana ekrana ekle</h2><ol style="padding-left:20px;margin:8px 0"><li>'+(IPAD?'Sağ üstteki':'Ekranın altındaki')+' <b>Paylaş</b> düğmesine dokunun (kare ve yukarı ok).</li><li>Listeyi kaydırıp <b>Ana Ekrana Ekle</b>\'yi seçin.</li><li>Sağ üstte <b>Ekle</b>\'ye dokunun.</li></ol><p class="mut">Ana ekranda simge oluşur, uygulama tam ekran açılır.</p><div class="row"><button class="pri" id="aoX">Anladım</button></div>');
+  o2.querySelector('#aoX').onclick=function(){o2.remove()};
+  var ar=document.createElement('div');ar.setAttribute('style','position:fixed;z-index:100000;pointer-events:none;font-size:34px;color:#fff;text-shadow:0 2px 8px #000;animation:aoB 1s infinite alternate;'+(IPAD?'top:8px;right:60px':'bottom:calc(8px + env(safe-area-inset-bottom,0px));left:50%;margin-left:-14px'));
+  ar.textContent=IPAD?'⬆':'⬇';o2.appendChild(ar);
+}
+function doInst(){
+  if(DP){var d=DP;DP=null;d.prompt();d.userChoice&&d.userChoice.then(function(){instDone()});return}
+  if(IOS){iosGuide();return}
+  var o=overlay('<h2>Ana ekrana ekle</h2><p>Tarayıcı menüsünden (⋮ veya adres çubuğundaki yükle simgesi) <b>Uygulamayı yükle</b> ya da <b>Ana ekrana ekle</b> seçeneğine dokunun.</p><div class="row"><button class="pri" id="aoX">Tamam</button></div>');
+  o.querySelector('#aoX').onclick=function(){o.remove()};
+}
+function showInst(force){
+  if(standalone()||document.getElementById('aoInst'))return;
+  if(!force){var x=+g('ao_inst_x')||0;if(Date.now()-x<7*86400000)return}
+  if(!force&&!DP&&!IOS)return;
+  var d=document.createElement('div');d.id='aoInst';
+  d.setAttribute('style','position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99997;background:var(--surface,#fff);color:var(--ink,#141c24);border:1px solid var(--line,#ccd4db);border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;font:600 14px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.25)');
+  d.innerHTML='<span style="flex:1">📲 Ana ekrana ekleyin, uygulama gibi açılsın</span><button id="aoIb" style="background:#1d4ed8;color:#fff;border:0;border-radius:10px;padding:9px 14px;font:700 13px system-ui,sans-serif;cursor:pointer">'+(IOS?'Nasıl?':'Yükle')+'</button><button id="aoIx" aria-label="Kapat" style="background:transparent;border:0;color:inherit;font-size:16px;padding:6px 8px;cursor:pointer">✕</button>';
+  document.body.appendChild(d);
+  d.querySelector('#aoIb').onclick=doInst;
+  d.querySelector('#aoIx').onclick=function(){s('ao_inst_x',String(Date.now()));d.remove()};
+}
+var st2=document.createElement('style');st2.textContent='@keyframes aoB{from{transform:translateY(0)}to{transform:translateY(10px)}}';document.head.appendChild(st2);
+if(IOS&&!standalone())setTimeout(function(){showInst(false)},4000);
+window.__aoInstall=function(){if(standalone()){overlay('<h2>Zaten kurulu</h2><p>Uygulamayı ana ekran simgesinden kullanıyorsunuz.</p><div class="row"><button class="pri" id="aoX">Tamam</button></div>').querySelector('#aoX').onclick=function(e){e.target.closest('.aoOv').remove()}}else doInst()};
 window.__ao={status:status,verify:verify,build:C.build};
 })();
 </script>
