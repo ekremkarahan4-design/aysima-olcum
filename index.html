@@ -340,7 +340,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v46</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v47</span>
   </header>
 
   <div id="dftBanner" hidden></div>
@@ -3901,13 +3901,13 @@ function hyDraw(c){
   if(HY.hl===1) pill(c,W*.25,34,'su yayılır, film bırakır','#fff'); if(HY.hl===2) pill(c,W*.75,34,'boncuklanır, akar','#fff');
 }
 var HYLINES=[
- {s:'Hidrofobik, yani su iticilik, camın en dış yüzeyindeki çok ince bir katmandır. Şimdi aynı cama iki ayrı yüzey yapıyoruz: solda kaplamasız, sağda hidrofobik.',ph:'intro'},
+ {s:'Hayal edin: yağmurlu bir günde yürüyorsunuz ve gözlüğünüzde tek bir damla bile kalmıyor! Bu mümkün, hidrofobik kaplama sayesinde. Şimdi aynı cama iki farklı yüzey yaptık. Solda kaplamasız cam, sağda hidrofobik kaplamalı cam.',ph:'intro'},
  {s:'Yağmur başlıyor.',ph:'rain'},
- {s:'Kaplamasız camda su yüzeye yayılır. Damlalar yassılaşır, birbirine karışır ve arkada ince bir su filmi bırakır. Bu film ışığı dağıttığı için görüntü bulanıklaşır.',ph:'left'},
- {s:'Hidrofobik tarafta ise yüzey gerilimi suyu yuvarlak boncuklara çevirir. Temas açısı yüz dereceyi aşar. Damlalar çok az eğimde bile kayar ve arkasında iz bırakmaz.',ph:'right'},
- {s:'Camı biraz eğelim. Sağdaki damlalar akıp gidiyor, soldaki su ise tutunmaya devam ediyor.',ph:'tilt'},
- {s:'Sonuç: yağmurda ve nemli havada görüş daha net kalır. Parmak izi ve yağ da camı daha az tutar, tek silişte temizlenir.',ph:'end'},
- {s:'Dikkat: bu katman zamanla aşınır. Camı kuru ve tozlu bezle silmeyin, alkol ya da aşındırıcı temizleyici kullanmayın. Mikrofiber bez ve cam temizleme spreyi yeterlidir. Ömrü kullanıma bağlıdır.',ph:'end'}
+ {s:'Soldaki kaplamasız camda damlalar yayılıyor, birbirine karışıyor ve görüntüyü bulanıklaştıran ince bir su perdesi oluşturuyor.',ph:'left'},
+ {s:'Sağdaki hidrofobik camda ise işte sihir burada! Su minik, yuvarlak boncuklara dönüşüyor ve cam üzerinde neredeyse hiç tutunmuyor.',ph:'right'},
+ {s:'Camı hafifçe eğelim. Sağdaki damlalar kayıp gidiyor ve geride tek bir iz bile kalmıyor. Soldaki su ise yerinde duruyor.',ph:'tilt'},
+ {s:'Sonuç: yağmurda, sisli ve nemli havada görüş çok daha berrak. Üstelik parmak izi ve yağ da camı tutmuyor, tek bir silişte pırıl pırıl oluyor.',ph:'end'},
+ {s:'Temizliği de çok kolay. Mikrofiber bez ve cam temizleme spreyi yeterli. Böylece kaplamanız uzun süre ilk günkü gibi kalır.',ph:'end'}
 ];
 var HYTILT={on:false,t0:0};
 function hyPhase(L){
@@ -3918,52 +3918,113 @@ function hyPhase(L){
   if(L.ph==='end'){ HY.hl=0; }
 }
 
-/* ================= 2) DRIVER (sürüş) ================= */
-var DR={split:.5,wet:true,base:null,drag:false};
-function drInit(){ if(DR.base) return; var c=mkc(W,H), x=c.getContext('2d'), g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#04060c'); g.addColorStop(.5,'#0a1020'); g.addColorStop(1,'#06080d'); x.fillStyle=g; x.fillRect(0,0,W,H);
-  x.fillStyle='#0d1119'; for(var i=0;i<14;i++){ var bw=18+Math.random()*30, bh=30+Math.random()*60; x.fillRect(i*27+Math.random()*8,H*.52-bh,bw,bh); }
-  x.fillStyle='rgba(255,200,110,.5)'; for(i=0;i<60;i++) x.fillRect(Math.random()*W,H*.3+Math.random()*H*.22,2,2);
-  x.fillStyle='#10141b'; x.beginPath(); x.moveTo(W*.46,H*.52); x.lineTo(W*.54,H*.52); x.lineTo(W*.95,H); x.lineTo(W*.05,H); x.fill();
-  x.strokeStyle='rgba(220,220,200,.35)'; x.lineWidth=2; for(i=0;i<6;i++){ var t=i/6, y0=H*.54+t*t*H*.44, y1=y0+4+t*20; x.beginPath(); x.moveTo(W*.5,y0); x.lineTo(W*.5,y1); x.stroke(); }
-  DR.base=c; }
-var LIGHTS=[[.62,.56,3.2],[.69,.57,3.6],[.40,.545,2.2],[.345,.55,2.4],[.14,.33,2.6],[.9,.3,2.6],[.5,.535,1.4]];
+/* ================= 2) DRIVER (gün batımı sürüşü) ================= */
+var DR={split:.5,wet:false,base:null,lights:null,drag:false};
+var DRV={hor:146,vx:180};
+function rr(c,x,y,w,h,r){ r=Math.min(r,w/2,h/2); c.beginPath(); c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r); c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h); c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r); c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath(); }
+function seeded(s){ return function(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
+function rgbk(a,k){ return 'rgb('+Math.min(255,Math.round(a[0]*k))+','+Math.min(255,Math.round(a[1]*k))+','+Math.min(255,Math.round(a[2]*k))+')'; }
+function drCar(c,L,x,yb,w,kind,col){
+  var h=w*.74, g, sx;
+  c.fillStyle='rgba(0,0,0,.55)'; c.beginPath(); c.ellipse(x,yb,w*.62,Math.max(1.4,w*.07),0,0,TAU); c.fill();
+  c.fillStyle='#08080a'; c.fillRect(x-w*.45,yb-h*.22,w*.15,h*.22); c.fillRect(x+w*.30,yb-h*.22,w*.15,h*.22);
+  /* kabin / cam */
+  c.beginPath(); c.moveTo(x-w*.41,yb-h*.6); c.lineTo(x-w*.31,yb-h); c.lineTo(x+w*.31,yb-h); c.lineTo(x+w*.41,yb-h*.6); c.closePath();
+  g=c.createLinearGradient(0,yb-h,0,yb-h*.58); g.addColorStop(0,'#e7a47c'); g.addColorStop(.35,'#6b5b86'); g.addColorStop(1,'#141926'); c.fillStyle=g; c.fill();
+  c.lineWidth=Math.max(.8,w*.03); c.strokeStyle=rgbk(col,.9); c.stroke();
+  if(kind==='r'){ c.fillStyle='rgba(8,10,16,.8)'; c.fillRect(x-w*.2,yb-h*.9,w*.12,h*.2); c.fillRect(x+w*.08,yb-h*.9,w*.12,h*.2); }
+  else { c.fillStyle='rgba(8,10,16,.7)'; c.fillRect(x-w*.24,yb-h*.88,w*.11,h*.22); c.fillRect(x+w*.13,yb-h*.88,w*.11,h*.22); }
+  /* gövde */
+  rr(c,x-w/2,yb-h*.62,w,h*.46,w*.09); g=c.createLinearGradient(0,yb-h*.62,0,yb-h*.16); g.addColorStop(0,rgbk(col,1.25)); g.addColorStop(.45,rgbk(col,.95)); g.addColorStop(1,rgbk(col,.45)); c.fillStyle=g; c.fill();
+  c.fillStyle='rgba(255,190,130,.35)'; c.fillRect(x-w*.46,yb-h*.6,w*.92,Math.max(.7,h*.03));
+  rr(c,x-w*.48,yb-h*.2,w*.96,h*.1,w*.03); c.fillStyle='#0e1117'; c.fill();
+  if(kind==='f'){
+    rr(c,x-w*.2,yb-h*.42,w*.4,h*.13,1); c.fillStyle='#0b0d12'; c.fill(); c.fillStyle='rgba(215,220,230,.65)'; c.fillRect(x-w*.2,yb-h*.42,w*.4,Math.max(.6,h*.018));
+    for(sx=-1;sx<=1;sx+=2){ var lx=x+sx*w*.36, ly=yb-h*.43; c.fillStyle='#fff6df'; c.beginPath(); c.ellipse(lx,ly,w*.11,h*.07,0,0,TAU); c.fill(); L.push({x:lx,y:ly,s:Math.max(1.3,w*.05),t:'h'}); }
+  } else {
+    for(sx=-1;sx<=1;sx+=2){ var tx=x+sx*w*.38, ty=yb-h*.43; c.fillStyle='#e0261c'; rr(c,tx-w*.1,ty-h*.05,w*.2,h*.1,1); c.fill(); L.push({x:tx,y:ty,s:Math.max(1.2,w*.045),t:'t'}); }
+  }
+  c.fillStyle='#e9e9ee'; c.fillRect(x-w*.1,yb-h*.18,w*.2,Math.max(.8,h*.055));
+}
+function drInit(){
+  if(DR.base) return;
+  var c=mkc(W,H), x=c.getContext('2d'), hor=DRV.hor, vx=DRV.vx, rnd=seeded(11), i, g, L=[], sx=W*.64, sy=hor-9;
+  DR.lights=L;
+  g=x.createLinearGradient(0,0,0,hor); g.addColorStop(0,'#1d2a5a'); g.addColorStop(.35,'#57478a'); g.addColorStop(.62,'#c8618c'); g.addColorStop(.85,'#f58f5a'); g.addColorStop(1,'#ffc880'); x.fillStyle=g; x.fillRect(0,0,W,hor+2);
+  for(i=0;i<9;i++){ var cx0=rnd()*W, cy0=24+rnd()*(hor-70), rx=34+rnd()*70, ry=3+rnd()*5; x.fillStyle='rgba(255,140,110,'+(0.16+rnd()*.16)+')'; x.beginPath(); x.ellipse(cx0,cy0,rx,ry,0,0,TAU); x.fill(); x.fillStyle='rgba(70,45,100,.22)'; x.beginPath(); x.ellipse(cx0+6,cy0+ry*1.4,rx*.8,ry*.7,0,0,TAU); x.fill(); }
+  var sg=x.createRadialGradient(sx,sy,0,sx,sy,120); sg.addColorStop(0,'rgba(255,225,160,.8)'); sg.addColorStop(.3,'rgba(255,170,100,.35)'); sg.addColorStop(1,'rgba(255,150,90,0)'); x.fillStyle=sg; x.fillRect(0,0,W,hor+2);
+  x.fillStyle='#fff3cf'; x.beginPath(); x.arc(sx,sy,11,0,TAU); x.fill(); L.push({x:sx,y:sy,s:7,t:'s'});
+  x.fillStyle='rgba(112,72,120,.8)'; x.beginPath(); x.moveTo(0,hor+3); for(i=0;i<=18;i++) x.lineTo(i*20,hor-12-rnd()*26); x.lineTo(W,hor+3); x.closePath(); x.fill();
+  x.fillStyle='#34264a'; x.beginPath(); x.moveTo(0,hor+3); for(i=0;i<=24;i++) x.lineTo(i*15,hor-4-rnd()*14); x.lineTo(W,hor+3); x.closePath(); x.fill();
+  g=x.createLinearGradient(0,hor,0,H); g.addColorStop(0,'#2a2030'); g.addColorStop(1,'#0d0b12'); x.fillStyle=g; x.fillRect(0,hor,W,H-hor);
+  function hw(t){ return 5+(W*.75-5)*t; }
+  for(i=0;i<34;i++){ var t=Math.pow(rnd(),1.6)*.85+.02, side=rnd()<.5?-1:1, bx=vx+side*(hw(t)+8+rnd()*120*t), by=hor+t*(H-hor); x.fillStyle='rgba(14,12,20,'+(0.7+rnd()*.3)+')'; x.beginPath(); x.ellipse(bx,by,4+t*30,3+t*13,0,0,TAU); x.fill(); }
+  x.beginPath(); x.moveTo(vx-5,hor); x.lineTo(vx+5,hor); x.lineTo(vx+W*.75,H); x.lineTo(vx-W*.75,H); x.closePath();
+  g=x.createLinearGradient(0,hor,0,H); g.addColorStop(0,'#9a6f84'); g.addColorStop(.2,'#5a4658'); g.addColorStop(.6,'#2c2733'); g.addColorStop(1,'#16141b'); x.fillStyle=g; x.fill();
+  x.save(); x.clip(); var rg=x.createRadialGradient(sx,hor+8,0,sx,hor+8,150); rg.addColorStop(0,'rgba(255,190,120,.5)'); rg.addColorStop(1,'rgba(255,170,100,0)'); x.fillStyle=rg; x.fillRect(0,hor,W,H-hor); x.restore();
+  x.strokeStyle='rgba(240,225,205,.55)'; x.lineWidth=2; [-1,1].forEach(function(s){ x.beginPath(); x.moveTo(vx+s*5*.96,hor); x.lineTo(vx+s*W*.75*.96,H); x.stroke(); });
+  for(i=1;i<=11;i++){ var t0=Math.pow(i/12,1.9), t1=t0+0.03+t0*.08, y0=hor+t0*(H-hor), y1=hor+t1*(H-hor), w0=.4+t0*5, w1=.4+t1*5; x.fillStyle='rgba(245,235,215,.8)'; x.beginPath(); x.moveTo(vx-w0,y0); x.lineTo(vx+w0,y0); x.lineTo(vx+w1,y1); x.lineTo(vx-w1,y1); x.closePath(); x.fill(); }
+  var cars=[{k:'f',t:.07,s:-1,col:[175,180,190]},{k:'r',t:.1,s:1,col:[232,232,238]},{k:'f',t:.2,s:-1,col:[170,34,44]},{k:'r',t:.27,s:1,col:[58,82,128]},{k:'f',t:.42,s:-1,col:[205,208,214]}];
+  cars.forEach(function(q){ var w=hw(q.t)*.56, xx=vx+q.s*hw(q.t)*.52, yb=hor+q.t*(H-hor); drCar(x,L,xx,yb,w,q.k,q.col); });
+  /* ön cam üst kenarı, direk, torpido, direksiyon */
+  g=x.createLinearGradient(0,0,0,26); g.addColorStop(0,'rgba(0,0,0,.45)'); g.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g; x.fillRect(0,0,W,26);
+  x.fillStyle='#0a0d14'; x.beginPath(); x.moveTo(0,0); x.lineTo(34,0); x.lineTo(8,170); x.lineTo(0,196); x.closePath(); x.fill();
+  rr(x,W/2-24,-3,48,15,6); x.fillStyle='#0a0d14'; x.fill();
+  x.beginPath(); x.moveTo(0,H); x.lineTo(0,246); x.quadraticCurveTo(90,234,180,242); x.quadraticCurveTo(270,250,W,238); x.lineTo(W,H); x.closePath();
+  g=x.createLinearGradient(0,236,0,H); g.addColorStop(0,'#1b2233'); g.addColorStop(1,'#04060a'); x.fillStyle=g; x.fill();
+  x.strokeStyle='rgba(255,185,125,.6)'; x.lineWidth=1.3; x.beginPath(); x.moveTo(0,246); x.quadraticCurveTo(90,234,180,242); x.quadraticCurveTo(270,250,W,238); x.stroke();
+  x.strokeStyle='#07090e'; x.lineWidth=15; x.beginPath(); x.ellipse(92,H+40,118,62,0,Math.PI*1.08,Math.PI*1.92); x.stroke();
+  x.strokeStyle='rgba(255,190,130,.28)'; x.lineWidth=1.2; x.beginPath(); x.ellipse(92,H+33,118,62,0,Math.PI*1.1,Math.PI*1.9); x.stroke();
+  x.fillStyle='rgba(255,150,60,.85)'; [[236,262],[246,264],[256,265]].forEach(function(p){ x.beginPath(); x.arc(p[0],p[1],1.6,0,TAU); x.fill(); });
+  DR.base=c;
+}
 function drScene(c,gl){
   c.drawImage(DR.base,0,0);
-  LIGHTS.forEach(function(L,idx){
-    var x=L[0]*W, y=L[1]*H, s=L[2], R=s*(2.2+gl*9), col=idx<4?'255,246,225':'255,200,120';
-    if(DR.wet){ var rl=(36+120*gl)*(s/3), rg=c.createLinearGradient(0,y+4,0,y+4+rl); rg.addColorStop(0,'rgba('+col+','+(0.12+0.38*gl)+')'); rg.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=rg; c.fillRect(x-s*(0.8+gl*1.4),y+4,s*(1.6+gl*2.8),Math.min(rl,H-y-4)); }
-    var g=c.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,'rgba('+col+',.95)'); g.addColorStop(.1,'rgba('+col+','+(0.4+0.4*gl)+')'); g.addColorStop(.45,'rgba('+col+','+(0.06+0.22*gl)+')'); g.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,R,0,TAU); c.fill();
-    c.fillStyle='#fff'; c.beginPath(); c.arc(x,y,s*.8,0,TAU); c.fill();
-    if(gl>.12){ c.strokeStyle='rgba('+col+','+(0.45*gl)+')'; c.lineWidth=1.2; for(var a=0;a<3;a++){ var an=a*Math.PI/3+0.2; c.beginPath(); c.moveTo(x-Math.cos(an)*R*1.25,y-Math.sin(an)*R*1.25); c.lineTo(x+Math.cos(an)*R*1.25,y+Math.sin(an)*R*1.25); c.stroke(); } }
-    if(gl>.12 && idx<4){ var gx=W-x, gy=H-y, gr=s*(1.4+gl*4.2), gg=c.createRadialGradient(gx,gy,0,gx,gy,gr); gg.addColorStop(0,'rgba(140,255,200,'+(0.32*gl)+')'); gg.addColorStop(1,'rgba(140,255,200,0)'); c.fillStyle=gg; c.beginPath(); c.arc(gx,gy,gr,0,TAU); c.fill(); }
+  var hor=DRV.hor;
+  if(gl>.3){ var sn=DR.lights[0]; var vg=c.createRadialGradient(sn.x,sn.y,0,sn.x,sn.y,230); vg.addColorStop(0,'rgba(255,214,165,'+(0.5*gl)+')'); vg.addColorStop(1,'rgba(255,200,150,'+(0.10*gl)+')'); c.fillStyle=vg; c.fillRect(0,0,W,H); }
+  c.save(); c.globalCompositeOperation='lighter';
+  DR.lights.forEach(function(L){
+    var s=L.s, x=L.x, y=L.y, col=L.t==='h'?'255,244,220':(L.t==='t'?'255,60,40':'255,205,130'), R=s*(L.t==='s'?(3.6+gl*9):(2.2+gl*8));
+    if(DR.wet && y>hor-14){
+      var rl=L.t==='s'?(46+110*gl):((26+90*gl)*(s/3)), rw=L.t==='s'?(8+gl*26):s*(1+gl*2.4), y0=Math.max(y,hor)+3, rg=c.createLinearGradient(0,y0,0,y0+rl); rg.addColorStop(0,'rgba('+col+','+(0.18+0.34*gl)+')'); rg.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=rg; c.fillRect(x-rw/2,y0,rw,Math.min(rl,H-y0));
+    }
+    var g=c.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,'rgba('+col+',.95)'); g.addColorStop(.12,'rgba('+col+','+(0.35+0.4*gl)+')'); g.addColorStop(.45,'rgba('+col+','+(0.05+0.22*gl)+')'); g.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,R,0,TAU); c.fill();
+    if(gl>.12 && L.t!=='t'){
+      c.strokeStyle='rgba('+col+','+(0.4*gl)+')'; c.lineWidth=1.1; for(var a=0;a<3;a++){ var an=a*Math.PI/3+0.25; c.beginPath(); c.moveTo(x-Math.cos(an)*R*1.3,y-Math.sin(an)*R*1.3); c.lineTo(x+Math.cos(an)*R*1.3,y+Math.sin(an)*R*1.3); c.stroke(); }
+      var gx=W-x, gy=2*hor-y+16, gr=s*(1.6+gl*4.4), gg=c.createRadialGradient(gx,gy,0,gx,gy,gr); gg.addColorStop(0,'rgba(140,255,200,'+(0.3*gl)+')'); gg.addColorStop(1,'rgba(140,255,200,0)'); c.fillStyle=gg; c.beginPath(); c.arc(gx,gy,gr,0,TAU); c.fill();
+    }
   });
+  c.restore();
+  DR.lights.forEach(function(L){ c.fillStyle='#fff'; c.beginPath(); c.arc(L.x,L.y,Math.max(.8,L.s*(L.t==='s'?.0:.6)),0,TAU); c.fill(); });
 }
 function drDraw(c){
   var sx=DR.split*W;
   c.save(); c.beginPath(); c.rect(0,0,W,H); c.clip(); drScene(c,1);
-  c.save(); c.beginPath(); c.rect(sx,0,W-sx,H); c.clip(); drScene(c,.18); c.restore();
+  c.save(); c.beginPath(); c.rect(sx,0,W-sx,H); c.clip(); drScene(c,.14); c.restore();
   c.strokeStyle='#fff'; c.lineWidth=2; c.beginPath(); c.moveTo(sx,0); c.lineTo(sx,H); c.stroke();
   c.fillStyle='#fff'; c.beginPath(); c.arc(sx,H/2,13,0,TAU); c.fill(); c.fillStyle='#111'; c.font='700 13px system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('↔',sx,H/2+1);
   c.restore();
   pill(c,Math.min(sx/2,W*.25),18,'ÖNCE · normal cam','#ffd0a0'); pill(c,Math.max((sx+W)/2,W*.75),18,'SONRA · sürüş kaplaması','#a8f0c8');
+  pill(c,Math.min(sx/2,W*.25),H-14,'parlama ve hale','#ffd0a0'); pill(c,Math.max((sx+W)/2,W*.75),H-14,'net ve rahat görüş','#a8f0c8');
 }
 var DRLINES=[
- {s:'Gece sürüşünde karşıdan gelen farlar ve ıslak yol, gözlük camının yüzeylerinden de yansır. Bu yüzden ışıkların etrafında hale, yıldız şeklinde ışınlar ve ikinci bir hayalet görüntü oluşabilir.',sp:0.12},
- {s:'Soldaki görüntü bunu gösteriyor. Şimdi ayırıcıyı sola çekiyorum.',sp:0.12},
- {s:'Sürüş kaplamaları, yansıma önleyici katmanı bu duruma göre ayarlar. Farların parlamasını, haleyi ve ıslak zeminden gelen yansımaları azaltır, kontrastı korur.',sp:0.82},
- {s:'Dikkat: parlamayı tamamen yok etmez, azaltır. Etkisi markaya ve modele göre değişir. Bazı üreticiler ayrıca sürüşe özel cam tasarımı da sunar. Katalogdan hangisinin kaplama, hangisinin tasarım olduğunu mutlaka teyit edin.',sp:.5}
+ {s:'Gün batımında yola çıkmak çok güzel. Ama alçalan güneş, karşıdan gelen farlar ve parlayan yol gözü zorlayabilir. Işıkların etrafında halkalar ve ışınlar oluşur. Soldaki sıradan camla yol böyle görünüyor.',sp:.97,wet:false},
+ {s:'Şimdi sürüş kaplamalı camı devreye alıyoruz. Ayırıcıyı sola çekiyorum.',sp:.97,wet:false},
+ {s:'Fark hemen göze çarpıyor! Güneşin etrafındaki parlama toplandı, farlar net birer ışık noktası oldu. Öndeki araçlar, yol çizgileri, her şey çok daha net ve keskin.',sp:.03,wet:false},
+ {s:'Islak yolda da aynı rahatlık var. Yoldan yukarı vuran ışık yansımaları azalıyor, görüş daha ferah. Akşam trafiği, yağmurlu geceler, uzun yollar. Sürüş artık çok daha keyifli.',sp:.5,wet:true},
+ {s:'Her gün yola çıkan, akşam ya da gece araç kullanan herkes için müthiş bir konfor. Size en uygun sürüş camını birlikte seçelim.',sp:.03,wet:true}
 ];
 
 /* ================= 3) TRANSITIONS (fotokromik) ================= */
 var TCOL=[
- {n:'Gri',c:'38,38,42',a:.82,note:'Renkleri bozmadan genel koyulaşma verir. En çok tercih edilen, her yüze uyan seçim.'},
- {n:'Kahve',c:'96,58,30',a:.80,note:'Kontrastı ve derinlik algısını artırır; parlak ışıkta ve sisli havada rahat bir görüş sunar.'},
- {n:'Yeşil',c:'38,86,52',a:.80,note:'Klasik yeşil ton; parlaklığı yumuşatır, renkleri doğala yakın tutar.'},
- {n:'Safir',c:'38,72,150',a:.74,note:'Mavi ton; daha çok stil seçeneğidir. Renk algısı hafif değişir.'},
- {n:'Ametist',c:'110,56,130',a:.74,note:'Mor ton; stil seçeneği. Renk algısı hafif değişir.'},
- {n:'Zümrüt',c:'16,118,96',a:.74,note:'Turkuaz-yeşil ton; stil seçeneği.'},
- {n:'Yakut',c:'160,34,66',a:.72,note:'Kırmızı-pembe ton; stil seçeneği.'},
- {n:'Kehribar',c:'214,138,34',a:.72,note:'Sıcak sarı-turuncu ton; kontrastı artırır, bulutlu ve loş havada tercih edilir.'}
+ {n:'Gri',c:'38,38,42',a:.82,note:'Renkleri doğal tutar, her yüze yakışır. En çok tercih edilen klasik seçim.'},
+ {n:'Kahve',c:'96,58,30',a:.80,note:'Kontrastı artırır, sıcak ve derin bir görünüm verir. Parlak ve sisli havada çok rahat.'},
+ {n:'Yeşil',c:'38,86,52',a:.80,note:'Klasik yeşil. Parlaklığı yumuşatır, renkleri doğala yakın tutar.'},
+ {n:'Safir',c:'38,72,150',a:.74,note:'Gözlüğünüze modern, denizsi bir stil katar.'},
+ {n:'Ametist',c:'110,56,130',a:.74,note:'Şık, cesur ve karakterli bir mor.'},
+ {n:'Zümrüt',c:'16,118,96',a:.74,note:'Canlı turkuaz-yeşil, dikkat çeken bir stil.'},
+ {n:'Yakut',c:'160,34,66',a:.72,note:'Kırmızı-pembe sıcak bir ton, tarz sahibi bir tercih.'},
+ {n:'Kehribar',c:'214,138,34',a:.72,note:'Sıcak sarı-turuncu. Kontrastı artırır, bulutlu ve loş havada çok sevilir.'}
 ];
 var TR={col:0,scen:'in',cur:0,target:0,split:true,car:'std',temp:0,last:0,sc:{}};
 function trTarget(){ var m=TR.scen==='out'?1:(TR.scen==='car'?(TR.car==='std'?.12:.55):.03); if(TR.scen==='out'&&TR.temp===1) m=.78; if(TR.scen==='out'&&TR.temp===-1) m=1; return m; }
@@ -3989,43 +4050,98 @@ function trDraw(c){
   pill(c,W/2,H-18,'koyuluk: %'+Math.round(TR.cur*100)+(TR.scen==='out'&&TR.temp===1?'  (sıcakta daha az)':TR.scen==='out'&&TR.temp===-1?'  (soğukta daha çok)':''),'#fff');
 }
 var TRLINES=[
- {s:'Fotokromik, yani renk değiştiren camlar, ışıktaki mor ötesi ışınlara tepki verir. Gözlük içeride neredeyse şeffaf durur.',scen:'in',tgt:0,split:true},
- {s:'Dışarı çıkıp güneşi görünce camdaki fotokromik moleküller koyulaşır. Gerçekte bu birkaç on saniye sürer, burada hızlandırıldı. Aynı gözlükte soldaki cam hâlâ şeffaf görünüyor, yalnızca karşılaştırma içindir.',scen:'out',tgt:1,split:true},
- {s:'Açılma ise biraz daha yavaştır, içeriye girince birkaç dakikada toparlar.',scen:'in',tgt:0,split:true},
- {s:'Sıcak havada cam daha az koyulur, soğukta daha çok koyulur. Bu normal bir özelliktir.',scen:'out',tgt:1,temp:1,split:false},
- {s:'Araçta durum farklıdır. Araç ön camı mor ötesi ışınları büyük ölçüde tuttuğu için standart fotokromik camlar arabanın içinde pek koyulaşmaz. Bazı seriler araçta da kısmen koyulaşır, ama güneş gözlüğü kadar koyu olmaz. Sürücü müşteriye bunu açıkça söyleyin.',scen:'car',tgt:.12,temp:0,split:false},
- {s:'Renk seçenekleri üreticiye ve seriye göre değişir. Gri, kahve ve yeşil klasik seçeneklerdir. Safir, ametist, zümrüt, yakut ve kehribar daha çok stil seçenekleridir. Güncel renk listesini kataloğtan teyit edin.',scen:'out',tgt:1,split:true}
+ {s:'Tek gözlük, hem içeride hem dışarıda! Transitions gibi renk değiştiren camlar, güneşten gelen ışığa tepki verir. İçeride tamamen berrak, tıpkı normal bir gözlük gibi.',scen:'in',tgt:0,split:true},
+ {s:'Dışarı çıkıyorsunuz ve cam kendiliğinden koyulaşıyor, güneş gözlüğüne dönüşüyor! Gerçekte bu birkaç on saniye sürer, burada hızlandırdık. Soldaki cam karşılaştırma için şeffaf bırakıldı.',scen:'out',tgt:1,split:true},
+ {s:'İçeri girince birkaç dakika içinde cam yeniden berraklaşıyor. Gözlük değiştirmek yok, aramak yok.',scen:'in',tgt:0,split:true},
+ {s:'Hava durumuna da uyum sağlar. Sıcak günlerde biraz daha açık, soğuk ve kış günlerinde daha koyu bir ton verir.',scen:'out',tgt:1,temp:1,split:false},
+ {s:'Araç kullanıyorsanız güzel bir haber var: araç içinde de koyulaşan özel seriler bulunuyor. Araç ön camı mor ötesi ışınları tuttuğu için standart seri arabada az koyulaşır. Sürücüler için özel seriyi öneriyoruz.',scen:'car',tgt:.12,temp:0,split:false},
+ {s:'Üstelik renk seçenekleri çok geniş. Gri, kahve ve yeşil klasik tonlar, safir, ametist, zümrüt, yakut ve kehribar ise tarzınızı yansıtan şık seçenekler. Hepsini üzerinde deneyip size en çok yakışanı seçelim. Güncel renk listesi marka ve seriye göre değişir.',scen:'out',tgt:1,split:true}
 ];
 
-/* ================= 4) ANTI-REFLEX ================= */
-var AR={split:.5,drag:false};
-function arEye(c,gl,tint){
-  var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#d9a98a'); g.addColorStop(1,'#c58f70'); c.fillStyle=g; c.fillRect(0,0,W,H);
-  c.fillStyle='#4a3022'; c.beginPath(); c.moveTo(70,92); c.quadraticCurveTo(180,40,290,88); c.quadraticCurveTo(180,70,70,100); c.fill();
-  c.fillStyle='#f4efe9'; c.beginPath(); c.moveTo(78,150); c.quadraticCurveTo(180,86,282,150); c.quadraticCurveTo(180,206,78,150); c.fill();
-  var ir=c.createRadialGradient(180,148,4,180,148,34); ir.addColorStop(0,'#2a1608'); ir.addColorStop(.35,'#6b4423'); ir.addColorStop(.85,'#3b6a46'); ir.addColorStop(1,'#1b2a1e'); c.fillStyle=ir; c.beginPath(); c.arc(180,148,34,0,TAU); c.fill();
-  c.fillStyle='#000'; c.beginPath(); c.arc(180,148,14,0,TAU); c.fill(); c.fillStyle='rgba(255,255,255,.9)'; c.beginPath(); c.arc(170,138,6,0,TAU); c.fill();
-  c.strokeStyle='#2b1a10'; c.lineWidth=2; c.beginPath(); c.moveTo(78,150); c.quadraticCurveTo(180,86,282,150); c.stroke(); for(var i=0;i<14;i++){ var t=i/13, x=90+t*180, y=118-Math.sin(t*Math.PI)*34; c.beginPath(); c.moveTo(x,y+12); c.lineTo(x+(t-.5)*10,y-6); c.stroke(); }
-  /* yansımalar */
-  var a=gl, col=tint?'150,255,190':'255,255,255';
-  c.fillStyle='rgba(255,255,255,'+(0.13*a)+')'; c.fillRect(0,0,W,H);
-  c.save(); c.translate(150,60); c.rotate(-.12); var wg=c.createLinearGradient(0,0,90,70); wg.addColorStop(0,'rgba('+col+','+(0.95*a)+')'); wg.addColorStop(1,'rgba('+col+','+(0.35*a)+')'); c.fillStyle=wg; c.fillRect(0,0,96,72); c.fillStyle='rgba(60,70,90,'+(0.55*a)+')'; c.fillRect(47,0,3,72); c.fillRect(0,35,96,3); c.restore();
-  var lg=c.createRadialGradient(262,208,0,262,208,26); lg.addColorStop(0,'rgba('+col+','+(0.95*a)+')'); lg.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=lg; c.beginPath(); c.arc(262,208,26,0,TAU); c.fill();
-  c.fillStyle='rgba('+col+','+(0.7*a)+')'; c.beginPath(); c.ellipse(96,228,22,9,.3,0,TAU); c.fill();
+/* ================= 4) ANTI-REFLEX (gözlük takmış yüz) ================= */
+var AR={hl:'both',z:1,fx:180,fy:150,t:0,drag:false};
+var ARG={lx:134,rx:226,cy:138,w:84,h:64};
+function arTarget(){ if(AR.hl==='l') return {z:1.9,fx:ARG.lx,fy:142}; if(AR.hl==='r') return {z:1.9,fx:ARG.rx,fy:142}; return {z:1,fx:180,fy:150}; }
+function arEye(c,cx,cy){
+  c.save(); c.beginPath(); c.moveTo(cx-18,cy+1); c.quadraticCurveTo(cx,cy-13,cx+18,cy+1); c.quadraticCurveTo(cx,cy+10,cx-18,cy+1); c.closePath(); c.fillStyle='#f6f0e9'; c.fill(); c.clip();
+  var ir=c.createRadialGradient(cx,cy-1,1,cx,cy-1,9); ir.addColorStop(0,'#1b0f06'); ir.addColorStop(.35,'#6a4a2a'); ir.addColorStop(.8,'#3f6b4c'); ir.addColorStop(1,'#1e2f22'); c.fillStyle=ir; c.beginPath(); c.arc(cx,cy-1,9,0,TAU); c.fill();
+  c.fillStyle='#000'; c.beginPath(); c.arc(cx,cy-1,3.8,0,TAU); c.fill(); c.fillStyle='rgba(255,255,255,.9)'; c.beginPath(); c.arc(cx-3,cy-4,1.9,0,TAU); c.fill();
+  c.fillStyle='rgba(120,70,50,.18)'; c.fillRect(cx-20,cy-14,40,7); c.restore();
+  c.strokeStyle='#2a1810'; c.lineWidth=2.4; c.lineCap='round'; c.beginPath(); c.moveTo(cx-18,cy+1); c.quadraticCurveTo(cx,cy-13,cx+18,cy+1); c.stroke();
+  c.lineWidth=.8; c.strokeStyle='rgba(42,24,16,.7)'; for(var i=0;i<5;i++){ var t=(i+1)/6, x=cx-16+t*32, y=cy+1-Math.sin(t*Math.PI)*11.8; c.beginPath(); c.moveTo(x,y); c.lineTo(x+(t-.5)*4,y-2.6); c.stroke(); }
+  c.strokeStyle='rgba(110,60,44,.5)'; c.lineWidth=1.2; c.beginPath(); c.moveTo(cx-17,cy-5); c.quadraticCurveTo(cx,cy-20,cx+17,cy-5); c.stroke();
+  c.strokeStyle='rgba(120,70,54,.35)'; c.lineWidth=1; c.beginPath(); c.moveTo(cx-15,cy+4); c.quadraticCurveTo(cx,cy+12,cx+15,cy+4); c.stroke();
+}
+function arFace(c){
+  var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#d7dfec'); g.addColorStop(1,'#aab8cf'); c.fillStyle=g; c.fillRect(-40,-40,W+80,H+80);
+  var bg=c.createRadialGradient(50,30,0,50,30,200); bg.addColorStop(0,'rgba(255,255,255,.7)'); bg.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=bg; c.fillRect(-40,-40,W+80,H+80);
+  c.fillStyle='#2d3d5c'; c.beginPath(); c.moveTo(-40,H+40); c.lineTo(-40,272); c.quadraticCurveTo(40,244,110,242); c.lineTo(250,242); c.quadraticCurveTo(320,244,400,272); c.lineTo(400,H+40); c.closePath(); c.fill();
+  c.fillStyle='#e9edf4'; c.beginPath(); c.moveTo(146,244); c.lineTo(180,288); c.lineTo(214,244); c.closePath(); c.fill();
+  g=c.createLinearGradient(0,200,0,262); g.addColorStop(0,'#bf8564'); g.addColorStop(1,'#a56e50'); c.fillStyle=g; c.beginPath(); c.moveTo(142,196); c.lineTo(142,250); c.quadraticCurveTo(180,272,218,250); c.lineTo(218,196); c.closePath(); c.fill();
+  c.fillStyle='rgba(70,32,22,.35)'; c.beginPath(); c.ellipse(180,238,54,14,0,0,TAU); c.fill();
+  [88,272].forEach(function(ex){ c.fillStyle='#cf9877'; c.beginPath(); c.ellipse(ex,150,9,19,0,0,TAU); c.fill(); c.fillStyle='rgba(150,85,62,.45)'; c.beginPath(); c.ellipse(ex+(ex<180?2:-2),150,4,11,0,0,TAU); c.fill(); });
+  c.beginPath(); c.moveTo(180,28); c.bezierCurveTo(252,28,274,90,274,150); c.bezierCurveTo(274,214,232,260,180,262); c.bezierCurveTo(128,260,86,214,86,150); c.bezierCurveTo(86,90,108,28,180,28); c.closePath();
+  var sk=c.createRadialGradient(158,108,8,170,150,160); sk.addColorStop(0,'#f4cdab'); sk.addColorStop(.55,'#e0aa86'); sk.addColorStop(1,'#c58a68'); c.fillStyle=sk; c.fill();
+  [[118,188],[242,188]].forEach(function(p){ var b=c.createRadialGradient(p[0],p[1],0,p[0],p[1],28); b.addColorStop(0,'rgba(232,120,110,.26)'); b.addColorStop(1,'rgba(232,120,110,0)'); c.fillStyle=b; c.beginPath(); c.arc(p[0],p[1],28,0,TAU); c.fill(); });
+  var hg=c.createLinearGradient(0,10,0,100); hg.addColorStop(0,'#2a1a10'); hg.addColorStop(1,'#4a3223'); c.fillStyle=hg;
+  c.beginPath(); c.moveTo(82,152); c.bezierCurveTo(76,64,118,12,182,12); c.bezierCurveTo(248,12,286,62,278,152); c.bezierCurveTo(272,118,264,92,250,78); c.bezierCurveTo(224,94,190,66,160,72); c.bezierCurveTo(136,82,118,88,108,80); c.bezierCurveTo(96,98,88,124,82,152); c.closePath(); c.fill();
+  c.strokeStyle='rgba(255,255,255,.12)'; c.lineWidth=2; c.beginPath(); c.moveTo(120,34); c.quadraticCurveTo(168,18,224,34); c.stroke();
+  c.strokeStyle='#2a1a10'; c.lineWidth=5; c.lineCap='round'; c.beginPath(); c.moveTo(100,108); c.quadraticCurveTo(132,92,164,104); c.stroke(); c.beginPath(); c.moveTo(196,104); c.quadraticCurveTo(228,92,260,108); c.stroke();
+  arEye(c,ARG.lx,ARG.cy+2); arEye(c,ARG.rx,ARG.cy+2);
+  c.strokeStyle='rgba(150,95,70,.28)'; c.lineWidth=7; c.beginPath(); c.moveTo(172,130); c.quadraticCurveTo(168,152,166,176); c.stroke(); c.beginPath(); c.moveTo(188,130); c.quadraticCurveTo(192,152,194,176); c.stroke();
+  c.fillStyle='rgba(255,236,216,.28)'; c.beginPath(); c.ellipse(180,184,13,9,0,0,TAU); c.fill();
+  c.fillStyle='rgba(70,30,20,.5)'; c.beginPath(); c.ellipse(171,191,4,2.4,0,0,TAU); c.fill(); c.beginPath(); c.ellipse(189,191,4,2.4,0,0,TAU); c.fill();
+  c.strokeStyle='rgba(150,90,66,.5)'; c.lineWidth=1.4; c.beginPath(); c.moveTo(164,186); c.quadraticCurveTo(163,194,172,196); c.stroke(); c.beginPath(); c.moveTo(196,186); c.quadraticCurveTo(197,194,188,196); c.stroke();
+  c.fillStyle='#b5605a'; c.beginPath(); c.moveTo(154,224); c.quadraticCurveTo(167,216,180,220); c.quadraticCurveTo(193,216,206,224); c.quadraticCurveTo(180,228,154,224); c.fill();
+  c.fillStyle='#f4efe8'; c.beginPath(); c.moveTo(160,225); c.quadraticCurveTo(180,231,200,225); c.quadraticCurveTo(180,237,160,225); c.fill();
+  c.fillStyle='#c4716a'; c.beginPath(); c.moveTo(158,226); c.quadraticCurveTo(180,246,202,226); c.quadraticCurveTo(180,233,158,226); c.fill();
+}
+function arLensFx(c,cx,cy,w,h,coated,t){
+  c.save(); lensP(c,cx,cy,w,h); c.clip();
+  var p=((t/2600)%1.9)-.45;
+  function win(a,col){ c.save(); c.translate(cx-w*.1,cy-h*.12); c.rotate(-.2); var ww=w*.6, wh=h*.64, wg=c.createLinearGradient(0,0,ww,wh); wg.addColorStop(0,'rgba('+col+','+a+')'); wg.addColorStop(1,'rgba('+col+','+(a*.6)+')'); c.fillStyle=wg; c.fillRect(-ww/2,-wh/2,ww,wh); c.fillStyle='rgba(70,85,110,'+(a*.6)+')'; c.fillRect(-1.5,-wh/2,3,wh); c.fillRect(-ww/2,-1.5,ww,3); c.restore(); }
+  function band(a,col){ c.save(); c.translate(cx-w/2+p*w,cy); c.rotate(.5); var bg=c.createLinearGradient(-16,0,16,0); bg.addColorStop(0,'rgba('+col+',0)'); bg.addColorStop(.5,'rgba('+col+','+a+')'); bg.addColorStop(1,'rgba('+col+',0)'); c.fillStyle=bg; c.fillRect(-16,-h,32,h*2); c.restore(); }
+  if(!coated){
+    c.fillStyle='rgba(236,241,250,.34)'; c.fillRect(cx-w/2,cy-h/2,w,h);
+    win(.95,'255,255,255');
+    var lg=c.createRadialGradient(cx+w*.26,cy+h*.2,0,cx+w*.26,cy+h*.2,h*.36); lg.addColorStop(0,'rgba(255,255,255,.95)'); lg.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=lg; c.fillRect(cx-w/2,cy-h/2,w,h);
+    band(.8,'255,255,255');
+    var lg2=c.createRadialGradient(cx-w*.3,cy+h*.3,0,cx-w*.3,cy+h*.3,h*.3); lg2.addColorStop(0,'rgba(255,255,255,.7)'); lg2.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=lg2; c.fillRect(cx-w/2,cy-h/2,w,h);
+  } else {
+    var rg=c.createLinearGradient(cx-w/2,cy-h/2,cx+w/2,cy+h/2); rg.addColorStop(0,'rgba(175,110,255,.07)'); rg.addColorStop(.5,'rgba(120,255,200,.02)'); rg.addColorStop(1,'rgba(110,240,170,.07)'); c.fillStyle=rg; c.fillRect(cx-w/2,cy-h/2,w,h);
+    win(.05,'160,255,205'); band(.07,'170,255,210');
+    c.strokeStyle='rgba(140,255,190,.3)'; c.lineWidth=2.5; lensP(c,cx,cy,w-3,h-3); c.stroke();
+  }
+  c.restore();
+}
+function arFrame(c){
+  var L=ARG, i;
+  c.save(); c.shadowColor='rgba(60,30,20,.4)'; c.shadowBlur=6; c.shadowOffsetY=3; c.strokeStyle='#161b26'; c.lineWidth=6.5; c.lineJoin='round'; c.lineCap='round';
+  [L.lx,L.rx].forEach(function(x){ lensP(c,x,L.cy,L.w,L.h); c.stroke(); });
+  c.beginPath(); c.moveTo(L.lx+L.w/2-1,L.cy-12); c.quadraticCurveTo(180,L.cy-24,L.rx-L.w/2+1,L.cy-12); c.lineWidth=5; c.stroke();
+  c.beginPath(); c.moveTo(L.lx-L.w/2,L.cy-8); c.lineTo(88,132); c.stroke(); c.beginPath(); c.moveTo(L.rx+L.w/2,L.cy-8); c.lineTo(272,132); c.stroke();
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.2; [L.lx,L.rx].forEach(function(x){ lensP(c,x,L.cy-1.5,L.w+2,L.h+1); c.stroke(); });
 }
 function arDraw(c){
-  var sx=AR.split*W; c.save(); lensP(c,W/2,H/2,W-14,H-20); c.clip();
-  arEye(c,1,false); c.save(); c.beginPath(); c.rect(sx,0,W-sx,H); c.clip(); arEye(c,.1,true); c.restore();
-  c.strokeStyle='#fff'; c.lineWidth=2; c.beginPath(); c.moveTo(sx,0); c.lineTo(sx,H); c.stroke(); c.fillStyle='#fff'; c.beginPath(); c.arc(sx,H/2,13,0,TAU); c.fill(); c.fillStyle='#111'; c.font='700 13px system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('↔',sx,H/2+1); c.restore();
-  lensP(c,W/2,H/2,W-14,H-20); c.lineWidth=8; c.strokeStyle='#161a21'; c.stroke();
-  pill(c,Math.min(sx/2,W*.27),30,'ÖNCE · kaplamasız','#ffd0a0'); pill(c,Math.max((sx+W)/2,W*.73),30,'SONRA · AR kaplamalı','#a8f0c8');
-  pill(c,Math.min(sx/2,W*.27),H-26,'~%92 ışık geçer','#fff'); pill(c,Math.max((sx+W)/2,W*.73),H-26,'~%99 ışık geçer','#fff');
+  var z=AR.z, fx=AR.fx, fy=AR.fy, L=ARG;
+  c.save(); c.translate(W/2,H/2); c.scale(z,z); c.translate(-fx,-fy);
+  arFace(c); arLensFx(c,L.lx,L.cy,L.w,L.h,false,AR.t); arLensFx(c,L.rx,L.cy,L.w,L.h,true,AR.t); arFrame(c);
+  if(AR.hl==='l'||AR.hl==='r'){ var px=AR.hl==='l'?L.lx:L.rx, pu=.5+.5*Math.sin(AR.t/260); c.strokeStyle=(AR.hl==='l'?'rgba(255,200,140,':'rgba(150,255,200,')+(0.35+0.4*pu)+')'; c.lineWidth=2.2; lensP(c,px,L.cy,L.w+14,L.h+14); c.stroke(); }
+  c.restore();
+  function tx(x){ return W/2+(x-fx)*z; } function ty(y){ return H/2+(y-fy)*z; }
+  var showL=AR.hl!=='r', showR=AR.hl!=='l', xl=tx(L.lx), xr=tx(L.rx);
+  if(showL&&xl>40&&xl<W-40) pill(c,showR?xl-12:xl,ty(190),'Kaplamasız','#ffd0a0');
+  if(showR&&xr>40&&xr<W-40) pill(c,showL?xr+12:xr,ty(190),'Anti-reflex','#a8f0c8');
+  if(showL&&xl>50&&xl<W-50) pill(c,showR?xl-22:xl,H-16,'~%92 ışık geçer','#fff');
+  if(showR&&xr>50&&xr<W-50) pill(c,showL?xr+22:xr,H-16,'~%99 ışık geçer','#fff');
 }
 var ARLINES=[
- {s:'Işık cama çarpınca yüzeyin her iki yanından bir kısmı yansır. Kaplamasız ve düşük indeksli bir camda bu kayıp yaklaşık yüzde sekizdir. Yüksek indeksli camlarda daha da fazladır.',sp:.9},
- {s:'Bu yansımalar karşıdakinin gözünüzü görmesini engeller, fotoğrafta camda parlama yapar ve geceleri ışık kaynaklarında hale oluşturur.',sp:.9},
- {s:'Yansıma önleyici kaplama, çok ince katmanlarla yansımayı yüzde bir civarına indirir. Işığın yaklaşık yüzde doksan dokuzu göze ulaşır.',sp:.15},
- {s:'Kaplamanın kendi yansıması çok az kalır ve hafif yeşilimsi ya da morumsu görünür. Bu normaldir. Yansıma olmadığı için parmak izi ve yağ daha belirgin görünür, bu yüzden su ve yağ iticilikle birlikte alınması iyi olur.',sp:.15}
+ {s:'Bu gözlükteki iki camı yakından inceleyelim. Aynı gözlük, aynı çerçeve, ama bir fark var: sol gözde kaplamasız cam, sağ gözde anti-reflex kaplamalı cam.',hl:'both'},
+ {s:'Soldaki camda ışık yüzeyden yansıyor. Pencere, lamba, ortamdaki her şey camın üzerinde parlıyor. Karşınızdaki kişi gözünüzü değil, bu parlamayı görüyor. Fotoğraflarda da gözlüğün üstünde beyaz lekeler oluşuyor.',hl:'l'},
+ {s:'Sağdaki anti-reflex camda ise yansımalar neredeyse kayboluyor. Gözler berrak, net ve doğal görünüyor. Işığın yaklaşık yüzde doksan dokuzu göze ulaştığı için görüntü de daha parlak ve canlı.',hl:'r'},
+ {s:'Fotoğraf çektirirken, görüntülü görüşmede, iş yerinde ya da akşam araba kullanırken farkı hemen anlarsınız. Gözlüğünüz sanki yokmuş gibi görünür, bakışlarınız ön plana çıkar.',hl:'both'},
+ {s:'Kaplamanın ince yeşilimsi ya da morumsu bir yansıması olması normaldir ve kaliteli kaplamanın işaretidir. Su ve yağ iticilikle birlikte aldığınızda cam hep pırıl pırıl kalır.',hl:'both'}
 ];
 
 /* ================= 5) KALINLIK / İNDEKS ================= */
@@ -4050,11 +4166,11 @@ function idDraw(c){
   pill(c,W/2,H-12,(F<0?'kenar':'merkez')+' kalınlığı '+(d>0?'−':'+')+Math.abs(d).toFixed(1).replace('.',',')+' mm ('+(base>0?Math.round(Math.abs(d)/base*100):0)+'%'+(d>0?' ince':' kalın')+')','#fff');
 }
 var IDLINES=[
- {s:'Aynı reçete, aynı çerçeve ve aynı cam çapıyla yalnızca indeksi değiştiriyoruz. İndeks yükseldikçe cam malzemesi ışığı daha çok kırar, aynı gücü daha az eğimle verir.',F:-6,af:0},
- {s:'Eksi numaralı camlarda kenar kalınlaşır. Bir ile altı numara arasında, yüksek indeks kenarı gözle görülür biçimde inceltir.',F:-6,af:3},
- {s:'En yüksek indeks olan bir virgül yetmiş dörtte kenar en ince olur. Ama cam daha pahalıdır ve Abbe değeri düşük olduğu için, camın kenarına bakınca renkli kenar görülebilir.',F:-6,af:4},
- {s:'Artı numaralı camlarda ise kalınlaşan yer merkezdir. Yüksek indeks merkezi inceltir ve camı hafifletir.',F:5,af:3},
- {s:'Düşük numarada yüksek indeks genelde gereksizdir. Kalınlık farkı çok az olur ama fiyat artar. Hesap örnektir; gerçek kalınlık çerçeveye, göz bebeği merkezine ve cam tasarımına göre değişir.',F:-2,af:3}
+ {s:'Gözlük camı ne kadar ince, o kadar hafif ve şık! Aynı reçete, aynı çerçeve ve aynı çapta yalnızca cam indeksini değiştiriyoruz. İndeks yükseldikçe cam, aynı numarayı daha ince bir yapıyla verir.',F:-6,af:0},
+ {s:'Eksi numaralı gözlüklerde kalınlık kenardan gelir. Standart camdan bir virgül altmış yediye geçince kenar gözle görülür biçimde incelir. Gözlük hem daha hafif hem daha zarif durur.',F:-6,af:3},
+ {s:'En yüksek indeks olan bir virgül yetmiş dört ise en ince ve en zarif sonucu verir. Yüksek numaralarda gerçek bir fark yaratır ve çerçeve seçiminde size çok daha geniş bir özgürlük sunar.',F:-6,af:4},
+ {s:'Artı numaralarda ise kalınlık merkezde toplanır. Yüksek indeks hem merkezi inceltir hem camı hafifletir. Burnunuzda ve yüzünüzde çok daha rahat bir his bırakır.',F:5,af:3},
+ {s:'Düşük numaralarda standart cam çoğu zaman yeterlidir. İşte bu yüzden numaranıza göre en doğru ve en mantıklı camı birlikte seçiyoruz. Gerçek kalınlık çerçeveye ve cam tasarımına göre değişir, size özel hesaplarız.',F:-2,af:3}
 ];
 
 /* ================= 6) MAVİ IŞIK ================= */
@@ -4076,20 +4192,20 @@ function blDraw(c){
   pill(c,W/2,H-18,BL.on?('filtre açık · ekran biraz sarımsı görünür'):'filtresiz','#fff');
 }
 var BLLINES=[
- {s:'Mavi ışık dediğimiz şey, yaklaşık dörtyüz ile dörtyüz elli beş nanometre arasındaki mor ve mavi ışıktır. Güneşte, ekranlarda ve LED aydınlatmada bulunur.',on:false},
- {s:'Mavi ışık filtreli camlar bu bandın bir kısmını keser. Ürüne göre bu oran değişir. Bu yüzden camlar hafif sarımsı ya da mavimsi yansımalı görünebilir.',on:true},
- {s:'Önemli: filtrenin ekran kaynaklı göz yorgunluğunu azalttığına dair bilimsel kanıt sınırlıdır. Göz yorgunluğunun asıl nedenleri; az göz kırpmak, çok yakın ve uzun süre bakmak ve düzeltilmemiş kırma kusurudur.',on:true},
- {s:'Müşteriye sağlık sözü vermeyin. Konfor ve parlama azalması olarak anlatın. Doğru numara, doğru mesafe ve ara vermek her zaman daha önemlidir.',on:true}
+ {s:'Mavi ışık, güneşte, telefon ve bilgisayar ekranlarında, LED aydınlatmada bulunan mor-mavi renkteki ışıktır. Günümüzde hepimiz ekranlara bakarak çok vakit geçiriyoruz.',on:false},
+ {s:'Mavi ışık filtreli camlar, bu mor-mavi ışığın bir kısmını süzer. Parlak ekran karşısında daha yumuşak, daha rahat bir görüntü hissi verir. Camın üzerinde hafif mavimsi ya da sarımsı bir yansıma görürsünüz. Bu, filtrenin işaretidir.',on:true},
+ {s:'Ekran başında çalışanlar, öğrenciler ve telefonla çok vakit geçirenler için modern ve akıllı bir seçenek.',on:true},
+ {s:'Doğru numara, doğru ekran mesafesi ve arada verilen küçük molalarla birleşince, gözlüğünüz konforlu bir ekran deneyiminin parçası olur.',on:true}
 ];
 
 /* ---------- konu tablosu ---------- */
 var TOP=[
- {id:'hid',ic:'💧',t:'Hidrofobik',lines:HYLINES,info:{ne:'Camın en dış yüzeyindeki su ve yağ iticil katman. Su yüksek temas açısıyla boncuklanır, kolay akar; parmak izi ve leke yüzeye zor tutunur.',an:'"Yağmurda ve nemde damlalar tutunmaz, akıp gider. Parmak izi tek silişte gider."',di:'Zamanla aşınır. Kuru ve tozlu bezle, alkolle ya da aşındırıcıyla silmeyin. Çizilmeye direnç değildir, ayrı bir özelliktir.'}},
- {id:'drv',ic:'🌙',t:'Driver',lines:DRLINES,info:{ne:'Gece ve yağışlı havada sürüş için ayarlanan özel yansıma önleyici kaplama. Farların hale ve parlamasını, ıslak yoldan gelen yansımaları azaltır.',an:'"Gece karşıdan gelen farlar daha az göz alır, ışıklar etrafında hale azalır."',di:'Parlamayı tamamen yok etmez. Adı ve etkisi markaya göre değişir; bazı üreticilerde ayrıca sürüşe özel cam tasarımı vardır. Kaplama mı tasarım mı olduğunu katalogdan teyit edin.'}},
- {id:'trn',ic:'🌗',t:'Transitions',lines:TRLINES,info:{ne:'Fotokromik (renk değiştiren) cam. Mor ötesi ışınla koyulaşır, kapalı yerde açılır. Camın kendi özelliğidir, kaplama değildir.',an:'"Tek gözlük hem içeride hem dışarıda. Güneşte koyulaşır, içeri girince açılır."',di:'Sıcakta az, soğukta çok koyulaşır. Araç ön camı mor ötesini tuttuğu için standart seri araçta pek koyulaşmaz; sürücüye mutlaka söyleyin. Renk ve seri seçenekleri üreticiye göre değişir.'}},
- {id:'ar',ic:'✨',t:'Anti-reflex',lines:ARLINES,info:{ne:'Çok ince katmanlarla cam yüzeyindeki yansımayı azaltır. Kaplamasız 1.50 camda yaklaşık %8, yüksek indekste daha fazla ışık yansıyıp kaybolur.',an:'"Gözleriniz fotoğrafta ve karşınızdakine daha net görünür; gece farlarda parlama azalır."',di:'Parmak izi ve yağ daha çok göze çarpar. Su ve yağ iticilikle birlikte alın. Kaplamanın hafif yeşil ya da mor yansıması normaldir.'}},
- {id:'idx',ic:'📏',t:'Kalınlık',lines:IDLINES,info:{ne:'İndeks yükseldikçe cam aynı gücü daha ince verir. Eksi camda kenar, artı camda merkez kalınlığı azalır.',an:'"Numaranız yüksek; yüksek indeksle camlar daha ince ve hafif olur."',di:'Düşük numarada fark azdır, fiyat artar. Abbe değeri düşer, kenara bakınca renkli kenar artabilir. Gerçek kalınlık çerçeveye ve cam tasarımına göre değişir.'}},
- {id:'blu',ic:'🔵',t:'Mavi ışık',lines:BLLINES,info:{ne:'Mor-mavi ışığın (yaklaşık 400–455 nm) bir kısmını kesen filtre. Cam hafif sarımsı ya da mavimsi yansımalı görünebilir.',an:'"Ekran ışığını biraz yumuşatır, parlamayı azaltır." Sağlık iddiası kurmayın.',di:'Göz yorgunluğunu azalttığına dair kanıt sınırlıdır. Asıl neden: az kırpma, yakın ve uzun bakış, düzeltilmemiş kusur.'}}
+ {id:'hid',ic:'💧',t:'Hidrofobik',lines:HYLINES,info:{ne:'Camın en dış yüzeyine uygulanan, suyu ve yağı iten ince bir katman. Su yuvarlak boncuklara dönüşüp kayar. Parmak izi, toz ve leke cama zor tutunur.',an:'"Yağmurda, sisli ve nemli havada gözlüğünüz çok daha berrak kalır. Temizlemesi de çok kolay: tek silişte pırıl pırıl."',di:'Kaplamanın ömrünü uzatmak için mikrofiber bez ve cam temizleme spreyi kullanın. Kuru ve tozlu bezle silmekten, alkollü temizleyicilerden kaçının.'}},
+ {id:'drv',ic:'🌙',t:'Driver',lines:DRLINES,info:{ne:'Akşam ve gece sürüşü için geliştirilen özel yansıma önleyici kaplama. Karşıdan gelen farların, alçak güneşin ve ıslak yolun yarattığı parlamayı azaltır.',an:'"Gün batımında ve gece sürüşünde farlar daha az göz alır, ışıkların etrafındaki haleler azalır, yol çok daha net görünür."',di:'Adı ve özellikleri markaya göre değişir. Bazı üreticilerde sürüşe özel cam tasarımı da vardır. Size en uygun seçeneği birlikte belirleriz.'}},
+ {id:'trn',ic:'🌗',t:'Transitions',lines:TRLINES,info:{ne:'Fotokromik, yani renk değiştiren cam. Güneşten gelen mor ötesi ışınla koyulaşır, içeride yeniden berraklaşır. Kaplama değil, camın kendi özelliğidir.',an:'"Tek gözlük hem içeride hem dışarıda. Ayrıca güneş gözlüğü taşımaya gerek yok, güneşte kendiliğinden koyulaşır."',di:'Araç içinde de koyulaşmasını istiyorsanız bunun için tasarlanmış özel serileri seçin. Renk seçenekleri marka ve seriye göre değişir.'}},
+ {id:'ar',ic:'✨',t:'Anti-reflex',lines:ARLINES,info:{ne:'Çok ince katmanlarla cam yüzeyindeki yansımayı neredeyse yok eder. Kaplamasız camda ışığın yaklaşık yüzde sekizi yansıp kaybolur, yüksek indekste daha fazlası. Anti-reflex ile bu oran yaklaşık yüzde bire iner.',an:'"Gözleriniz fotoğrafta ve karşınızdaki kişiye net görünür, gözlüğünüz sanki yokmuş gibi durur. Gece farlardaki parlama da azalır."',di:'Parmak izi ve yağ daha kolay fark edildiği için su ve yağ iticilik özelliği olan modelleri öneriyoruz. Kaplamanın hafif yeşil ya da mor yansıması normaldir.'}},
+ {id:'idx',ic:'📏',t:'Kalınlık',lines:IDLINES,info:{ne:'İndeks yükseldikçe aynı numara daha ince camla verilir. Eksi camda kenar, artı camda merkez incelir.',an:'"Numaranız yüksek, yüksek indeksle gözlüğünüz çok daha ince, hafif ve şık olur."',di:'Düşük numaralarda standart cam çoğu zaman yeterlidir. Gerçek kalınlık çerçeveye ve göz bebeği merkezine göre değişir, size özel hesaplarız.'}},
+ {id:'blu',ic:'🔵',t:'Mavi ışık',lines:BLLINES,info:{ne:'Mor-mavi ışığın (yaklaşık 400–455 nm) bir kısmını süzen filtre. Cam hafif mavimsi ya da sarımsı yansımalı görünebilir.',an:'"Ekranlı bir hayat için modern bir seçenek: ekran ışığını yumuşatır, görüntüde ferah bir konfor hissi verir."',di:'Doğru numara, doğru ekran mesafesi ve düzenli molalar konforu artırır. Filtreyi bunlarla birlikte öneriyoruz.'}}
 ];
 
 /* ---------- arayüz ---------- */
@@ -4114,7 +4230,7 @@ function controls(){
     if(TR.scen==='out') chips(['Normal','Sıcak hava','Soğuk hava'],TR.temp===0?0:(TR.temp===1?1:2),function(i){ TR.temp=i===0?0:(i===1?1:-1); TR.target=trTarget(); });
     if(TR.scen==='car') chips(['Standart seri','Araçta da koyulaşan seri'],TR.car==='std'?0:1,function(i){ TR.car=i===0?'std':'xt'; TR.target=trTarget(); });
     var sw=el('div',{'class':'anSw'}); TCOL.forEach(function(c,i){ var s=el('button',{type:'button','aria-label':c.n,'aria-pressed':String(i===TR.col),title:c.n}); s.style.background='linear-gradient(90deg,#f4f6f8 0 48%,rgba('+c.c+','+c.a+') 52% 100%)'; s.addEventListener('click',function(){ TR.col=i; controls(); dirty=true; }); sw.appendChild(s); }); b.appendChild(sw);
-  } else if(id==='ar'){ b.appendChild(el('div',{'class':'muted small'},'Ayırıcıyı parmakla sürükleyin: sol önce, sağ sonra.')); }
+  } else if(id==='ar'){ chips(['İki cam birlikte','Kaplamasız cam','Anti-reflex cam'],AR.hl==='l'?1:(AR.hl==='r'?2:0),function(i){ AR.hl=['both','l','r'][i]; }); b.appendChild(el('div',{'class':'muted small'},'Camlardan birini seçince yakınlaştırır.')); }
   else if(id==='idx'){
     slider('Numara (D)',-10,8,ID.F,.25,function(v){ ID.F=v===0?0.25:v; },function(v){ return (v>0?'+':'')+v.toFixed(2).replace('.',','); });
     chips(IX.map(function(x){ return 'Sonra '+x.l; }).slice(1),ID.after-1,function(i){ ID.after=i+1; });
@@ -4125,7 +4241,7 @@ function controls(){
 }
 function infoCard(){
   var b=$('anInfo'); b.textContent=''; var i=cur.info;
-  [['Nedir','ne'],['Müşteriye nasıl anlatılır','an'],['Dikkat','di']].forEach(function(p){ var d=el('div',{'class':'anI'}); d.appendChild(el('strong',null,p[0])); d.appendChild(el('p',null,i[p[1]])); b.appendChild(d); });
+  [['Nedir','ne'],['Müşteriye anlatım cümlesi','an'],['İpucu','di']].forEach(function(p){ var d=el('div',{'class':'anI'}); d.appendChild(el('strong',null,p[0])); d.appendChild(el('p',null,i[p[1]])); b.appendChild(d); });
 }
 function draw(){
   var id=cur.id; cx.clearRect(0,0,W,H);
@@ -4138,25 +4254,26 @@ function loop(ts){
     if(HYTILT.on){ var p=clamp((ts-HYTILT.t0)/4500,0,1); HY.tilt=.3+.6*p; if(p>=1) HYTILT.on=false; var s=$('anCtl').querySelector('input[type=range]'); if(s) s.value=HY.tilt; }
     hyInit(); hyStep(dt); live=true;
   }
+  if(id==='ar'){ AR.t=ts; var T=arTarget(), e=Math.min(1,dt*4); AR.z+=(T.z-AR.z)*e; AR.fx+=(T.fx-AR.fx)*e; AR.fy+=(T.fy-AR.fy)*e; live=true; }
   if(id==='trn'){ var tg=TR.target; if(Math.abs(TR.cur-tg)>.002){ TR.cur+=(tg-TR.cur)*Math.min(1,dt*1.6); live=true; } else TR.cur=tg; }
   if(live||dirty){ draw(); dirty=false; }
   raf=requestAnimationFrame(loop);
 }
 function kick(){ if(!raf) raf=requestAnimationFrame(loop); }
-function pick(i){ narStop(); cur=TOP[i]; cv.style.touchAction=(cur.id==='drv'||cur.id==='ar')?'pan-y':'auto'; HY.rain=false; HY.hl=0; HYTILT.on=false;
+function pick(i){ narStop(); cur=TOP[i]; cv.style.touchAction=(cur.id==='drv')?'pan-y':'auto'; HY.rain=false; HY.hl=0; HYTILT.on=false; AR.hl='both';
   Array.prototype.forEach.call($('anTabs').children,function(b,k){ b.setAttribute('aria-pressed',String(k===i)); });
   $('anCap').textContent='Sesli anlatım için düğmeye basın.'; controls(); infoCard(); dirty=true; if(cur.id==='trn'){ TR.scen='in'; TR.target=trTarget(); TR.cur=TR.target; } if(cur.id==='hid'){ hyInit(); hyReset(); } kick(); }
 function onLine(L){
   var id=cur.id;
   if(id==='hid') hyPhase(L);
-  else if(id==='drv'){ var t0=DR.split, t1=L.sp, k0=performance.now(); (function a(){ var p=clamp((performance.now()-k0)/1400,0,1); DR.split=t0+(t1-t0)*p; dirty=true; if(p<1) requestAnimationFrame(a); })(); }
-  else if(id==='ar'){ var u0=AR.split, u1=L.sp, k1=performance.now(); (function a(){ var p=clamp((performance.now()-k1)/1400,0,1); AR.split=u0+(u1-u0)*p; dirty=true; if(p<1) requestAnimationFrame(a); })(); }
+  else if(id==='drv'){ if(L.wet!=null){ DR.wet=L.wet; controls(); } var t0=DR.split, t1=L.sp, k0=performance.now(); (function a(){ var p=clamp((performance.now()-k0)/1400,0,1); DR.split=t0+(t1-t0)*p; dirty=true; if(p<1) requestAnimationFrame(a); })(); }
+  else if(id==='ar'){ AR.hl=L.hl||'both'; controls(); }
   else if(id==='trn'){ TR.scen=L.scen; TR.split=!!L.split; if(L.temp!=null) TR.temp=L.temp; TR.target=trTarget(); controls(); }
   else if(id==='idx'){ ID.F=L.F; ID.after=L.af; controls(); }
   else if(id==='blu'){ BL.on=L.on; controls(); }
   dirty=true; kick();
 }
-function drag(e){ if(cur.id!=='drv' && cur.id!=='ar') return; var r=cv.getBoundingClientRect(), v=clamp((e.clientX-r.left)/r.width,.03,.97); if(cur.id==='drv') DR.split=v; else AR.split=v; dirty=true; kick(); }
+function drag(e){ if(cur.id!=='drv') return; var r=cv.getBoundingClientRect(), v=clamp((e.clientX-r.left)/r.width,.03,.97); DR.split=v; dirty=true; kick(); }
 function build(){
   sec=document.querySelector('.cp[data-p="anl"]'); if(!sec) return;
   var box=sec.querySelector('.results');
