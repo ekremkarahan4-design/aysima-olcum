@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#1d4ed8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Aysima Ölçüm">
+<meta name="apple-mobile-web-app-title" content="PD Ölçer">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font:14px system-ui,sans-serif}[hidden]{display:none!important}img{max-width:100%}</style>
@@ -342,7 +342,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v65</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v66</span>
   </header>
 
   <div id="dftBanner" hidden></div>
@@ -2372,7 +2372,7 @@ function waMessage(list,byId){
     head.push((p.name||'İsimsiz')+' · '+localStr(r.t)+'\n'+recLine(r));
   });
   var code=b64(JSON.stringify(exportObj(list,byId)));
-  return 'Aysima Optik ölçüm ('+list.length+')\n\n'+head.join('\n\n')+'\n\n--AYSIMA-OLCUM--\n'+code+'\n--SON--';
+  return (window.__SHOP||'Optik')+' ölçüm ('+list.length+')\n\n'+head.join('\n\n')+'\n\n--AYSIMA-OLCUM--\n'+code+'\n--SON--';
 }
 function waUrl(list,byId){
   return 'https://wa.me/'+waNumber()+'?text='+encodeURIComponent(waMessage(list,byId));
@@ -2585,7 +2585,7 @@ function zipBlob(files){
 function buildZip(list){
   var d=readDB(), by=byIdOf(d), enc=new TextEncoder();
   var files=[{name:'olcumler.json',data:enc.encode(JSON.stringify(exportObj(list,by),null,1))}];
-  files.push({name:'OKU-BENI.txt',data:enc.encode('Aysima Optik ölçüm aktarımı\r\nolcumler.json: ölçümler; resimler/: fotoğraflar.\r\nBilgisayardaki programda "Ölçüm aktar" ile bu zip dosyasını seçin.\r\n')});
+  files.push({name:'OKU-BENI.txt',data:enc.encode((window.__SHOP||'Optik')+' ölçüm aktarımı\r\nolcumler.json: ölçümler; resimler/: fotoğraflar.\r\nBilgisayardaki programda "Ölçüm aktar" ile bu zip dosyasını seçin.\r\n')});
   return Promise.all(list.filter(function(r){ return r.img; }).map(function(r){
     return imgGet(r.id).then(function(o){ return o && o.blob ? o.blob.arrayBuffer().then(function(b){ files.push({name:'resimler/'+r.id+'.jpg',data:new Uint8Array(b)}); }) : null; });
   })).then(function(){ return zipBlob(files); });
@@ -2601,7 +2601,7 @@ function exportZip(all,share){
     var viaDl=function(){ if(!dl){ toast('Dosya kaydı bu görünümde yok.'); return; } dl.save({filename:name,data:blob}).then(done,function(err){ if(err && err.code==='declined') return; toast('Dosya kaydedilemedi.'); }); };
     if(share && navigator.canShare && window.File){
       var f=new File([blob],name,{type:'application/zip'});
-      if(navigator.canShare({files:[f]})){ navigator.share({files:[f],title:'Aysima Optik ölçümler'}).then(done,function(err){ if(err && err.name==='AbortError') return; viaDl(); }); return; }
+      if(navigator.canShare({files:[f]})){ navigator.share({files:[f],title:((window.__SHOP||'Optik')+' ölçümler')}).then(done,function(err){ if(err && err.name==='AbortError') return; viaDl(); }); return; }
     }
     viaDl();
   },function(){ toast('Zip hazırlanamadı.'); });
@@ -4855,4 +4855,185 @@ layout();
 
 
 <script>if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
+<script>(function(){
+var C={build:66,enforce:true,trialDays:7,pub:{"kty":"EC","x":"rKFAJSAU7GM1rNDR36q3iwrCYC2EY8MMw7KPKcOOJug","y":"4MnAbBM54tmbFMpAPdsrDgUQKud78jNfllio9DWTyXk","crv":"P-256"},vurl:'version.json'};
+var mem={};
+function g(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}
+function s(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
+function u8(b){b=b.replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';var r=atob(b),a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a}
+function nowMs(){var n=Date.now(),seen=+g('ao_seen')||0;if(n<seen)n=seen;else s('ao_seen',String(n));return n}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var SET={};try{SET=JSON.parse(g('ao_set')||'{}')||{}}catch(e){SET={}}
+window.__SHOP=SET.shop||'';
+function shopName(){return SET.shop||'Optik'}
+window.__SHOP=SET.shop||'Optik';
+
+function verify(key){
+  key=(key||'').trim().replace(/\s+/g,'');
+  var p=key.split('.');
+  if(p.length!==2) return Promise.reject('Anahtar biçimi hatalı.');
+  if(!window.crypto||!crypto.subtle) return Promise.reject('Bu tarayıcı doğrulamayı desteklemiyor (https gerekir).');
+  return crypto.subtle.importKey('jwk',C.pub,{name:'ECDSA',namedCurve:'P-256'},false,['verify']).then(function(k){
+    return crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},k,u8(p[1]),new TextEncoder().encode(p[0]));
+  }).then(function(ok){
+    if(!ok) throw 'Anahtar geçersiz.';
+    return JSON.parse(new TextDecoder().decode(u8(p[0])));
+  },function(e){ throw (typeof e==='string'?e:'Anahtar geçersiz.'); });
+}
+function status(){
+  var key=g('ao_lic');
+  var pr=key?verify(key).catch(function(){return null}):Promise.resolve(null);
+  return pr.then(function(d){
+    var n=nowMs();
+    if(d){
+      var forever=String(d.e).indexOf('9999')===0;
+      var left=forever?99999:Math.ceil((Date.parse(d.e+'T23:59:59')-n)/86400000);
+      return {k:left>=0?'lic':'exp',d:d,left:left,forever:forever};
+    }
+    var t0=+g('ao_t0');if(!t0){t0=n;s('ao_t0',String(t0))}
+    var l=C.trialDays-Math.floor((n-t0)/86400000);
+    return {k:l>0?'trial':'trialend',left:l};
+  });
+}
+
+var css=document.createElement('style');
+css.textContent='.aoBar{display:flex;align-items:center;gap:10px;margin:0 0 8px;font:13px system-ui,sans-serif;color:var(--muted,#56636f)}'+
+'.aoBar img{width:28px;height:28px;object-fit:contain;border-radius:6px}.aoBar b{color:var(--ink,#141c24);font-weight:600}.aoBar .sp{flex:1}'+
+'.aoBar button,.aoBox button{font:600 13px system-ui,sans-serif;border:1px solid var(--line,#ccd4db);background:var(--surface,#fff);color:var(--ink,#141c24);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}'+
+'.aoBar .chip{padding:3px 9px;border-radius:999px;border:1px solid var(--line,#ccd4db);font-size:12px}.aoBar .chip.warn{background:#fff4d6;border-color:#e8c766;color:#7a5b00}'+
+'.aoOv{position:fixed;inset:0;z-index:99999;background:rgba(10,14,22,.72);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}'+
+'.aoBox{background:var(--surface,#fff);color:var(--ink,#141c24);border-radius:16px;max-width:460px;width:100%;padding:18px;font:14px/1.45 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.4)}'+
+'.aoBox h2{margin:0 0 6px;font-size:18px}.aoBox label{display:block;margin:10px 0 3px;font-weight:600;font-size:12px;letter-spacing:.03em;color:var(--muted,#56636f)}'+
+'.aoBox input[type=text],.aoBox textarea{width:100%;box-sizing:border-box;border:1px solid var(--line,#ccd4db);border-radius:10px;padding:10px;font:14px system-ui,sans-serif;background:var(--bg,#eef1f4);color:var(--ink,#141c24)}'+
+'.aoBox textarea{min-height:86px;font:12px ui-monospace,monospace;word-break:break-all}.aoBox .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}'+
+'.aoBox .pri{background:#1d4ed8;border-color:#1d4ed8;color:#fff}.aoBox .msg{margin-top:8px;font-size:13px}.aoBox .ok{color:#0a7a3d}.aoBox .er{color:#b42318}.aoBox .mut{color:var(--muted,#56636f);font-size:12px}'+
+'#aoUpd{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99998;background:#1d4ed8;color:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;font:600 14px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3)}'+
+'#aoUpd span{flex:1}#aoUpd button{background:#fff;color:#1d4ed8;border:0;border-radius:10px;padding:9px 14px;font:700 13px system-ui,sans-serif;cursor:pointer}#aoUpd .x{background:transparent;color:#fff;padding:6px 8px}';
+document.head.appendChild(css);
+
+var bar=document.createElement('div');bar.className='aoBar';
+function drawBar(st){
+  var h='';
+  if(SET.logo)h+='<img alt="" src="'+esc(SET.logo)+'">';
+  h+='<b>'+esc(SET.shop||'Dükkân adı girilmedi')+'</b><span class="sp"></span>';
+  if(C.enforce&&st){
+    if(st.k==='trial')h+='<span class="chip warn">Deneme: '+st.left+' gün</span>';
+    else if(st.k==='lic'&&!st.forever&&st.left<=15)h+='<span class="chip warn">Lisans '+st.left+' gün</span>';
+  }
+  h+='<button id="aoGear" aria-label="Ayarlar ve lisans">⚙ Ayarlar</button>';
+  bar.innerHTML=h;
+  var b=bar.querySelector('#aoGear');if(b)b.onclick=openSettings;
+}
+var hd=document.querySelector('header.top');
+if(hd)hd.insertAdjacentElement('afterend',bar);else document.body.insertBefore(bar,document.body.firstChild);
+
+function overlay(html,locked){
+  var o=document.createElement('div');o.className='aoOv';o.innerHTML='<div class="aoBox">'+html+'</div>';
+  if(!locked)o.addEventListener('click',function(e){if(e.target===o)o.remove()});
+  document.body.appendChild(o);return o;
+}
+function licHtml(st){
+  var h='';
+  if(st.k==='lic')h='<span class="ok"><b>Lisanslı</b> · '+esc(st.d.n)+' · '+esc(st.d.p||'')+' · '+(st.forever?'süresiz':'bitiş '+esc(st.d.e)+' ('+st.left+' gün)')+'</span>';
+  else if(st.k==='exp')h='<span class="er"><b>Lisans süresi doldu</b> · '+esc(st.d.n)+' · '+esc(st.d.e)+'</span>';
+  else if(st.k==='trial')h='<span><b>Deneme sürümü</b> · '+st.left+' gün kaldı</span>';
+  else h='<span class="er"><b>Deneme süresi bitti</b></span>';
+  return h;
+}
+function activateUi(o,after){
+  var ta=o.querySelector('#aoKey'),bt=o.querySelector('#aoAct'),m=o.querySelector('#aoMsg');
+  bt.onclick=function(){
+    m.className='msg';m.textContent='Doğrulanıyor…';
+    verify(ta.value).then(function(d){
+      var exp=String(d.e).indexOf('9999')!==0&&Date.parse(d.e+'T23:59:59')<nowMs();
+      if(exp){m.className='msg er';m.textContent='Bu anahtarın süresi dolmuş.';return}
+      s('ao_lic',ta.value.trim().replace(/\s+/g,''));
+      m.className='msg ok';m.textContent='Etkinleştirildi: '+d.n;
+      setTimeout(function(){location.reload()},700);
+    },function(e){m.className='msg er';m.textContent=String(e)});
+  };
+}
+function lockScreen(st){
+  var old=document.getElementById('aoLock');if(old)old.remove();
+  var t=st.k==='exp'?'Lisans süreniz doldu':'Deneme süresi bitti';
+  var o=overlay('<h2>'+t+'</h2><p>Yeni ölçüm yapmak için lisans anahtarı gerekir. Kayıtlarınız silinmez; anahtarı girince kaldığınız yerden devam edersiniz.</p>'+
+   '<label>LİSANS ANAHTARI</label><textarea id="aoKey" placeholder="Satıcınızdan aldığınız anahtarı buraya yapıştırın"></textarea>'+
+   '<div class="row"><button class="pri" id="aoAct">Etkinleştir</button></div><div class="msg" id="aoMsg"></div>'+
+   '<p class="mut">Anahtar için satıcınızla iletişime geçin.</p>',true);
+  o.id='aoLock';activateUi(o);
+}
+function openSettings(){
+  status().then(function(st){
+    var o=overlay('<h2>Ayarlar ve lisans</h2><div>'+licHtml(st)+'</div>'+
+    '<label>DÜKKÂN ADI</label><input type="text" id="aoShop" value="'+esc(SET.shop)+'" maxlength="60">'+
+    '<label>TELEFON</label><input type="text" id="aoPhone" value="'+esc(SET.phone)+'" maxlength="30">'+
+    '<label>ADRES</label><input type="text" id="aoAddr" value="'+esc(SET.addr)+'" maxlength="140">'+
+    '<label>LOGO (isteğe bağlı)</label><input type="file" id="aoLogo" accept="image/*">'+
+    '<div class="row"><button class="pri" id="aoSave">Kaydet</button><button id="aoClose">Kapat</button></div><div class="msg" id="aoSm"></div>'+
+    '<hr style="border:0;border-top:1px solid var(--line,#ccd4db);margin:14px 0">'+
+    '<label>LİSANS ANAHTARI GİR / DEĞİŞTİR</label><textarea id="aoKey"></textarea>'+
+    '<div class="row"><button id="aoAct">Etkinleştir</button><button id="aoChk">Güncelleme kontrol et</button></div><div class="msg" id="aoMsg"></div>'+
+    '<p class="mut">Sürüm '+C.build+'. Ölçümler ve fotoğraflar yalnızca bu cihazda saklanır.</p>');
+    activateUi(o);
+    var logo=SET.logo||'';
+    o.querySelector('#aoLogo').onchange=function(e){
+      var f=e.target.files&&e.target.files[0];if(!f)return;
+      var im=new Image(),u=URL.createObjectURL(f);
+      im.onload=function(){var r=Math.min(1,160/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);logo=c.toDataURL('image/png');URL.revokeObjectURL(u);o.querySelector('#aoSm').textContent='Logo hazır, Kaydet\'e basın.'};
+      im.src=u;
+    };
+    o.querySelector('#aoSave').onclick=function(){
+      SET={shop:o.querySelector('#aoShop').value.trim(),phone:o.querySelector('#aoPhone').value.trim(),addr:o.querySelector('#aoAddr').value.trim(),logo:logo};
+      s('ao_set',JSON.stringify(SET));window.__SHOP=SET.shop||'Optik';drawBar(st);
+      var m=o.querySelector('#aoSm');m.className='msg ok';m.textContent='Kaydedildi.';
+    };
+    o.querySelector('#aoClose').onclick=function(){o.remove()};
+    o.querySelector('#aoChk').onclick=function(){
+      var m=o.querySelector('#aoMsg');m.className='msg';m.textContent='Kontrol ediliyor…';
+      fetch(C.vurl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
+        if(j.v>C.build){m.textContent='Yeni sürüm var (v'+j.v+').';showUpd(j)}
+        else{m.className='msg ok';m.textContent='Güncelsiniz (v'+C.build+').'}
+      }).catch(function(){m.className='msg er';m.textContent='Bağlantı kurulamadı.'});
+    };
+  });
+}
+function doUpdate(){
+  var p=(window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):Promise.resolve());
+  p.then(function(){return navigator.serviceWorker?navigator.serviceWorker.getRegistrations():[]}).then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}).then(function(){location.reload()},function(){location.reload()});
+}
+var updShown=false;
+function showUpd(j){
+  if(updShown)return;updShown=true;
+  if(j.min&&j.min>C.build){
+    var o=overlay('<h2>Güncelleme gerekli</h2><p>Bu sürüm artık desteklenmiyor. Devam etmek için güncelleyin; kayıtlarınız korunur.</p><div class="row"><button class="pri" id="aoU">Şimdi güncelle</button></div>',true);
+    o.querySelector('#aoU').onclick=doUpdate;return;
+  }
+  var d=document.createElement('div');d.id='aoUpd';
+  d.innerHTML='<span>Yeni sürüm hazır'+(j.note?': '+esc(j.note):'')+'</span><button id="aoUb">Güncelle</button><button class="x" id="aoUx" aria-label="Kapat">✕</button>';
+  document.body.appendChild(d);
+  d.querySelector('#aoUb').onclick=doUpdate;d.querySelector('#aoUx').onclick=function(){d.remove();updShown=false};
+}
+function chk(){
+  fetch(C.vurl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(j&&j.v>C.build)showUpd(j)}).catch(function(){});
+}
+function run(){
+  status().then(function(st){
+    drawBar(st);
+    if(C.enforce&&(st.k==='exp'||st.k==='trialend'))lockScreen(st);
+  });
+}
+drawBar(null);
+var h=location.hash||'';
+if(h.indexOf('#lisans=')===0){
+  var key=decodeURIComponent(h.slice(8));
+  verify(key).then(function(d){s('ao_lic',key.trim());try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+    overlay('<h2>Lisans etkinleştirildi</h2><p><b>'+esc(d.n)+'</b> · '+esc(d.p||'')+'</p><div class="row"><button class="pri" id="aoOk">Tamam</button></div>').querySelector('#aoOk').onclick=function(){location.reload()};
+  },function(){run()});
+}else run();
+chk();
+document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()});
+setInterval(chk,30*60*1000);
+window.__ao={status:status,verify:verify,build:C.build};
+})();
+</script>
 </body></html>
