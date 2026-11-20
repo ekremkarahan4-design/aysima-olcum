@@ -330,7 +330,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v39</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v40</span>
   </header>
 
   <div id="dftBanner" hidden></div>
@@ -507,7 +507,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="sp" data-for="vertex" hidden>
         <h2 id="vTitle">Adım 1/2 · Kornea ucunu işaretleyin</h2>
         <p class="muted" id="vTxt"></p>
-        <svg viewBox="0 0 320 130" style="width:100%;height:auto;border-radius:10px;background:#eef2f6;margin:2px 0 8px" aria-label="Verteks şeması">
+        <svg id="vSvg" viewBox="0 0 320 130" style="width:100%;height:auto;border-radius:10px;background:#eef2f6;margin:2px 0 8px" aria-label="Verteks şeması">
           <path d="M20 40 C60 20 120 24 150 50 C168 66 178 80 172 96 C150 110 90 112 50 100 C30 92 18 70 20 40 Z" fill="#e8c9a8" stroke="#8a6a4a" stroke-width="2"/>
           <ellipse cx="128" cy="62" rx="22" ry="12" fill="#fff" stroke="#8a6a4a" stroke-width="1.5"/>
           <circle cx="146" cy="62" r="9" fill="#5b3a29"/><circle cx="146" cy="62" r="4" fill="#000"/>
@@ -530,7 +530,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <button data-d="1" aria-pressed="true">Hasta sağa bakıyor</button>
           <button data-d="-1" aria-pressed="false">Hasta sola bakıyor</button>
         </div>
-        <label class="chk"><input type="checkbox" id="pantOn" checked> Pantoskopik açıyı da ölç</label>
+        <label class="chk" id="pantLbl" hidden><input type="checkbox" id="pantOn" checked> Pantoskopik açıyı da ölç</label>
         
       </div>
 
@@ -964,9 +964,10 @@ var TAU = Math.PI * 2;
 var COL = { a:'#22d3ee', b:'#fbbf24', cal:'#a3e635', pant:'#f472b6', pad:'#34d399' };
 var STEP_SETS = {
   front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['pad','Burunluk'],['align','Hizala']],
-  side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['vertex','Verteks']]
+  side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['pant','Pantoskopik'],['vertex','Verteks']]
 };
-var EDITSETS={front:[['pupil','Göz bebeği'],['box','Kutu'],['scale','Kart'],['pad','Burunluk']],side:[['vertex','Nokta'],['scale','Kart']]};
+var EDITSETS={front:[['pupil','Göz bebeği'],['box','Kutu'],['scale','Kart'],['pad','Burunluk']],side:[['pant','Pantoskopik'],['vertex','Verteks'],['scale','Kart']]};
+function vxStep(t){ return t==='vertex'||t==='pant'; }
 function easyOn(){ return !S.adv && !S.edit; }
 function stepList(){ return (S.edit&&!S.adv)?EDITSETS[S.mode]:STEP_SETS[S.mode]; }
 function ids(){ return easyOn() ? ['easy'] : stepList().map(function(s){ return s[0]; }); }
@@ -1167,7 +1168,7 @@ function hitTest(pt, ptype){
     consider({k:'pup',i:'a'},S.pup.a,tol*1.2); consider({k:'pup',i:'b'},S.pup.b,tol*1.2);
     if(!best){ var nx=T({x:S.noseX,y:0}).x; if(Math.abs(nx-pt.x)<tol*0.8) best={k:'nose'}; }
   }
-  if(step==='vertex'){
+  if(vxStep(step)){
     if(S.vsub==='pant'){ consider({k:'vx',i:'top'},S.sd.top,tol*1.4); consider({k:'vx',i:'bot'},S.sd.bot,tol*1.4); }
     else { consider({k:'vx',i:'apex'},S.sd.apex,tol*1.4); consider({k:'vx',i:'back'},S.sd.back,tol*1.4); }
   }
@@ -1312,7 +1313,7 @@ function ov(c,TT,k,mode){
     }
   });
   }
-  if(!ex && S.sel && (step==='scale'||step==='box'||step==='pupil'||step==='vertex')){
+  if(!ex && S.sel && (step==='scale'||step==='box'||step==='pupil'||vxStep(step))){
     var sp=TT(handlePos(S.sel)); c.save(); c.beginPath(); c.arc(sp.x,sp.y,17,0,TAU);
     c.strokeStyle='#fff'; c.lineWidth=2.5; c.setLineDash([5,4]); c.stroke(); c.restore();
   }
@@ -1418,7 +1419,7 @@ function defaultSel(){
   if(S.step==='box') return {k:'box',i:'a',part:'tl'};
   if(S.step==='pupil') return {k:'pup',i:'a'};
   if(S.step==='pad') return {k:'nb',i:'a'};
-  if(S.step==='vertex') return {k:'vx',i:(S.vsub==='back'?'back':S.vsub==='pant'?'top':'apex')};
+  if(vxStep(S.step)) return {k:'vx',i:(S.vsub==='back'?'back':S.vsub==='pant'?'top':'apex')};
   return null;
 }
 function syncBoxSeg(){
@@ -1572,7 +1573,7 @@ document.addEventListener('click',function(e){ var b=e.target.closest && e.targe
 function barUpdate(){
   var bar=$('bar'), h='', cols='1fr';
   if(S.edit && !S.adv){
-    h='<button data-act="back">‹ Geri</button><button data-act="undo"'+(UD.u.length?'':' class="off"')+'>↶ Geri al</button><button data-act="redo" aria-label="İleri al"'+(UD.r.length?'':' class="off"')+'>↷</button><button class="gr" data-act="done">✔ Tamam</button>'; cols='1fr 1.3fr .6fr 1.3fr'; }
+    h='<button data-act="back">‹ Geri</button><button data-act="undo"'+(UD.u.length?'':' class="off"')+'>↶ Geri al</button><button data-act="redo" aria-label="İleri al"'+(UD.r.length?'':' class="off"')+'>↷</button><button class="gr" data-act="'+(S.mode==='side'&&S.step==='pant'?'next">Verteks ›':'done">✔ Tamam')+'</button>'; cols='1fr 1.3fr .6fr 1.3fr'; }
   else if(easyOn()){
     if(S.demo){ h='<button class="bl" data-act="cam">📷 Düz + yan çek</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
     else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">'+(S.editRec?'✔ Güncelle':'✔ Kaydet')+'</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
@@ -1631,8 +1632,9 @@ $('bar').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(!b) return; var a=b.dataset.act;
   if(a==='cam') startSeq();
   else if(a==='gal') $('btnGal').click();
-  else if(a==='fix') enterEdit(S.mode==='side'?'vertex':'pupil');
+  else if(a==='fix') enterEdit(S.mode==='side'?(S.sd&&S.sd.pant?'pant':'vertex'):'pupil');
   else if(a==='done') doneEdit();
+  else if(a==='next'){ var l2=ids(), i2=l2.indexOf(S.step); go(l2[Math.min(l2.length-1,i2+1)]); }
   else if(a==='back'){ var l=ids(), i=l.indexOf(S.step); if(i>0) go(l[i-1]); else doneEdit(); }
   else if(a==='undo') udUndo();
   else if(a==='redo') udRedo();
@@ -1695,20 +1697,22 @@ Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b
 /* ---------- steps ---------- */
 function go(step){
   S.step=step; syncUiClasses();
-  Array.prototype.forEach.call(document.querySelectorAll('.sp'),function(el){ el.hidden = el.dataset['for']!==step; });
+  if(step==='pant') S.vsub='pant'; else if(step==='vertex' && (S.vsub==='pant'||!S.vsub)) S.vsub='apex';
+  Array.prototype.forEach.call(document.querySelectorAll('.sp'),function(el){ el.hidden = el.dataset['for']!==(step==='pant'?'vertex':step); });
+  if(vxStep(step)){ var _p=step==='pant'; $('vSub').hidden=_p; $('vSvg').style.display=_p?'none':''; $('pantLbl').hidden=!_p; var _pb=document.querySelector('#vSub [data-v=pant]'); if(_pb) _pb.hidden=true; }
   Array.prototype.forEach.call(document.querySelectorAll('#steps button'),function(b){
     if(b.dataset.step===step) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
   });
-  var showN = step==='box' || step==='pad' || step==='pupil' || step==='vertex' || (step==='scale' && S.calMode==='card');
+  var showN = step==='box' || step==='pad' || step==='pupil' || vxStep(step) || (step==='scale' && S.calMode==='card');
   $('nudge').hidden=!showN;
   S.sel = showN ? defaultSel() : null;
   $('selName').textContent=descLabel(S.sel); syncBoxSeg();
   var list=ids(), i=list.indexOf(step);
   $('prev').disabled = i<=0; $('next').disabled = i===list.length-1;
-  var nm=STEP_SETS[S.mode]; $('next').textContent = i<list.length-1 ? 'İleri · '+nm[i+1][1]+' ›' : 'Son adım'; $('prev').textContent = i>0 ? '‹ '+nm[i-1][1] : 'Geri';
+  var nm=stepList(); $('next').textContent = i<list.length-1 ? 'İleri · '+nm[i+1][1]+' ›' : 'Son adım'; $('prev').textContent = i>0 ? '‹ '+nm[i-1][1] : 'Geri';
   $('demoNote').hidden = !S.demo;
-  if(step==='vertex' && typeof VTXT!=='undefined' && VTXT){ var _t=VTXT[S.vsub||'apex']; $('vTitle').textContent=_t[0]; $('vTxt').textContent=_t[1]; Array.prototype.forEach.call(document.querySelectorAll('#vSub button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===(S.vsub||'apex'))); }); }
-  if(step==='vertex' && S.mode==='side' && !S.vzDone && S.z===1 && !S.demo){ S.vzDone=true; setZoom(3); }
+  if(vxStep(step) && typeof VTXT!=='undefined' && VTXT){ var _t=VTXT[S.vsub||'apex']; $('vTitle').textContent=_t[0]; $('vTxt').textContent=_t[1]; Array.prototype.forEach.call(document.querySelectorAll('#vSub button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===(S.vsub||'apex'))); }); }
+  if(vxStep(step) && S.mode==='side' && !S.vzDone && S.z===1 && !S.demo){ S.vzDone=true; setZoom(3); }
   if(S.sel && S.z>1) centerOn(handlePos(S.sel));
   try{ easyUpdate(); }catch(e){}
   schedule();
@@ -1943,7 +1947,7 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-mm]'),function(b){
 });
 $('applyScale').addEventListener('click',function(){
   if(!mmPerPx()){ toast('Ölçek hesaplanamadı. Değerleri ve noktaları kontrol edin.'); return; }
-  S.calibrated=true; results(); go(S.mode==='side' ? 'vertex' : 'box');
+  S.calibrated=true; results(); go(S.mode==='side' ? (S.sd&&S.sd.pant?'pant':'vertex') : 'box');
 });
 ['cD','cZ','cY','cP'].forEach(function(id){ $(id).addEventListener('change',function(){ results(); schedule(); }); $(id).addEventListener('input',function(){ results(); schedule(); }); });
 $('mirror').addEventListener('change',function(){ S.mirror=$('mirror').checked; syncBoxSeg(); $('selName').textContent=descLabel(S.sel); results(); schedule(); });
@@ -2596,8 +2600,8 @@ function cross(c,P,col,k){
 }
 function ovSide(c,TT,k,ex,step){
   var sd=S.sd, rs=S.calibrated ? computeSide() : null, f=sd.facing;
-  var A=TT(sd.apex), B=TT(sd.back), simple=(step==='vertex' && !ex), sub=S.vsub||'apex';
-  var tags=ex || S.demo || step==='vertex';
+  var A=TT(sd.apex), B=TT(sd.back), simple=(vxStep(step) && !ex), sub=(step==='pant')?'pant':((S.vsub==='pant'||!S.vsub)?'apex':S.vsub);
+  var tags=ex || S.demo || vxStep(step);
   function ring(p,col,rad){ c.save(); c.beginPath(); c.arc(p.x,p.y,rad,0,TAU); c.fillStyle='rgba(255,230,80,.16)'; c.fill(); c.lineWidth=3*k; c.strokeStyle=col; c.stroke(); c.restore(); }
   function arrow(p,dir,col){ c.save(); c.fillStyle=col; c.strokeStyle='rgba(0,0,0,.7)'; c.lineWidth=1.2*k; c.beginPath(); c.moveTo(p.x,p.y); c.lineTo(p.x+dir*13*k,p.y-7*k); c.lineTo(p.x+dir*13*k,p.y+7*k); c.closePath(); c.fill(); c.stroke(); c.restore(); }
   if(simple && sub==='apex'){
@@ -2608,6 +2612,7 @@ function ovSide(c,TT,k,ex,step){
     return;
   }
   if(simple && sub==='pant'){
+    if(!sd.pant){ return; }
     var T1=TT(sd.top), B1=TT(sd.bot);
     halo(c,[T1,B1],COL.pant,1.8*k); halo(c,[T1,{x:T1.x,y:B1.y}],'#ffffff',1*k,[4*k,4*k]);
     cross(c,T1,COL.pant,k); cross(c,B1,COL.pant,k);
@@ -2629,13 +2634,7 @@ function ovSide(c,TT,k,ex,step){
   }
   cross(c,A,COL.a,k); cross(c,B,COL.b,k);
   if(rs && tags) tag(c,'Verteks '+f1(R(rs.vd))+' mm',(A.x+B.x)/2,A.y+(step==='vertex'?58:-36)*k,'#ffffff',k);
-  if(sd.pant && !simple){
-    var Tp=TT(sd.top), Bt=TT(sd.bot);
-    halo(c,[Tp,Bt],COL.pant,1.8*k);
-    halo(c,[Tp,{x:Tp.x,y:Bt.y}],'#ffffff',1*k,[4*k,4*k]);
-    cross(c,Tp,COL.pant,k*0.8); cross(c,Bt,COL.pant,k*0.8);
-    if(rs && tags) tag(c,'Pant. '+f1(R(rs.tilt))+'°',Math.max(Tp.x,Bt.x)+(f>0?18:-18)*k,(Tp.y+Bt.y)/2,COL.pant,k,f>0?'left':'right');
-  }
+  if(sd.pant && !simple && rs && tags) tag(c,'Pantoskopik '+f1(R(rs.tilt))+'°',(A.x+B.x)/2,A.y+(step==='vertex'?100:36)*k,COL.pant,k);
 }
 function demoSideMarks(){
   S.cal.p1={x:880,y:400}; S.cal.p2={x:1136.8,y:400}; S.calMm=85.6; S.calMode='card';
@@ -2646,13 +2645,13 @@ function defaultSideMarks(){
   S.cal.p1={x:W*0.3,y:H*0.2}; S.cal.p2={x:W*0.7,y:H*0.2};
   S.sd={apex:{x:W*0.42,y:H*0.5},back:{x:W*0.5,y:H*0.5},top:{x:W*0.51,y:H*0.4},bot:{x:W*0.49,y:H*0.6},facing:S.sd.facing,pant:S.sd.pant};
 }
-var VTXT={apex:['Adım 1/2 · Kornea ucunu işaretleyin','Mavi artıyı gözün en öne çıkan noktasına (kornea ucu) koyun. Sadece bu noktayı ayarlayın.'],
-  back:['Adım 2/2 · Cam arka yüzünü işaretleyin','Sarı artıyı camın arka yüzüne, kornea ucuyla aynı yükseklikte koyun. Verteks mesafesi otomatik görünür.'],
-  pant:['Açı (isteğe bağlı) · Camın üst ve alt noktası','Pembe iki noktayı camın arka yüzünde en üste ve en alta koyun. Açıyı ölçmek istemezseniz aşağıdaki kutuyu kapatın.']};
+var VTXT={apex:['Verteks 1/2 · Kornea ucunu işaretleyin','Mavi artıyı gözün en öne çıkan noktasına (kornea ucu) koyun. Sadece bu noktayı ayarlayın.'],
+  back:['Verteks 2/2 · Cam arka yüzünü işaretleyin','Sarı artıyı camın arka yüzüne, kornea ucuyla aynı yükseklikte koyun. Verteks mesafesi otomatik görünür.'],
+  pant:['Pantoskopik açı · Camın üst ve alt noktası','Pembe iki noktayı camın arka yüzünde en üste ve en alta koyun. Bitince "İleri · Verteks"e geçin; bu işaretler kalkar, yalnızca verteks noktaları görünür.']};
 function setVsub(v){
   S.vsub=v; var t=VTXT[v]; $('vTitle').textContent=t[0]; $('vTxt').textContent=t[1];
   Array.prototype.forEach.call(document.querySelectorAll('#vSub button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===v)); });
-  if(S.step==='vertex'){ S.sel=defaultSel(); $('selName').textContent=descLabel(S.sel); if(S.z>1 && S.sel) centerOn(handlePos(S.sel)); }
+  if(vxStep(S.step)){ S.sel=defaultSel(); $('selName').textContent=descLabel(S.sel); if(S.z>1 && S.sel) centerOn(handlePos(S.sel)); }
   schedule();
 }
 $('vSub').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) setVsub(b.dataset.v); });
