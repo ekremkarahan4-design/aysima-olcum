@@ -50,7 +50,7 @@ body.easy,body.edit{padding-bottom:104px}
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;gap:8px;padding:12px max(14px,env(safe-area-inset-left,0px)) calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 28%)}
 .easy #bar,.edit #bar{display:grid}.inCam #bar{display:none!important}
 #bar button{border-radius:16px;padding:16px 4px;font:inherit;font-weight:700;font-size:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-#bar .gr{background:#16a34a;border:0;color:#fff;font-size:17px}#bar .bl{background:var(--accent);border:0;color:#fff;font-size:17px}
+#bar button.off{opacity:.4}#bar .gr{background:#16a34a;border:0;color:#fff;font-size:17px}#bar .bl{background:var(--accent);border:0;color:#fff;font-size:17px}
 #editLive{display:none;text-align:center;font-family:var(--mono);font-weight:700;color:var(--accent)}.edit #editLive{display:block}
 .epd{text-align:center;margin:10px 0 6px}.epd small{display:block;color:var(--muted);font-size:13px;letter-spacing:.08em}.epd b{font-family:var(--mono);font-size:62px;line-height:1.05;color:var(--ink)}.epd em{font-style:normal;font-size:20px;color:var(--muted);margin-left:4px}
 .etbl{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 12px}.etr{display:grid;grid-template-columns:1.3fr 1fr 1fr;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.etr:last-child{border:0}.etr b{font-family:var(--mono);font-size:21px}.ea{color:var(--a)}.eb2{color:var(--b)}.eh{font-size:12px;color:var(--muted)}
@@ -286,7 +286,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 #ovOval{position:absolute;left:8%;right:8%;top:20%;bottom:24%;border:4px solid var(--c);border-radius:50%;opacity:.9;pointer-events:none}
 #camOv.bad #ovOval{border-style:dashed}
 #ovVline{position:absolute;left:50%;top:14%;bottom:20%;width:2px;background:var(--c);opacity:.55;pointer-events:none}
-#ovHor{position:absolute;left:6%;right:6%;top:46%;height:3px;background:var(--c);opacity:.9;transform-origin:50% 50%;pointer-events:none;border-radius:2px}
+#ovHor{position:absolute;left:6%;right:6%;top:46%;height:3px;background:var(--c);opacity:.9;transform-origin:50% 50%;transition:transform .18s linear;pointer-events:none;border-radius:2px}
 #ovRef{position:absolute;left:6%;right:6%;top:46%;height:0;border-top:2px dashed #fff;opacity:.45;pointer-events:none}
 #ovPill{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:20px;font-weight:700;font-size:15px;background:rgba(0,0,0,.65);color:var(--c);white-space:nowrap}
 #ovChips{position:absolute;top:calc(58px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:center;gap:8px;padding:0 12px}
@@ -323,7 +323,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v29</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v33</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -459,7 +459,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <h2>Camları kutulayın</h2>
         <p class="muted">Her camın en dışa çıkan dört noktasına kutunun kenarları değsin. Köşeleri veya kenarları sürükleyin, kutuyu içinden tutup taşıyın.</p>
         <div class="seg" id="boxWho" role="group" aria-label="Hangi kutu" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sağ göz kutusu</button><button data-i="b" aria-pressed="false">Sol göz kutusu</button></div>
-        <div class="row"><button class="btn sm primary" id="autoFind1">Otomatik bul (internet varsa)</button></div>
+        <div class="row"><button class="btn sm primary" id="autoFind1">Otomatik bul (internet varsa)</button><button class="btn sm" id="snapBtn">Cam kalıbına oturt</button></div>
         <div class="seg wrapseg" id="boxPart" role="group" aria-label="Kutunun hangi noktası" style="margin-bottom:8px"><button data-p="tl" aria-pressed="true">Sol üst</button><button data-p="tr" aria-pressed="false">Sağ üst</button><button data-p="bl" aria-pressed="false">Sol alt</button><button data-p="br" aria-pressed="false">Sağ alt</button><button data-p="move" aria-pressed="false">Tüm kutu</button></div>
         <p class="muted small">Yakınlaştırınca diğer göz ekran dışında kalabilir: yukarıdaki düğmelerle kutuyu ve noktayı seçin, ok tuşlarıyla ince ayar yapın.</p>
         <label class="chk"><input type="checkbox" id="mirror"> Görüntü ayna (ön kamera sol-sağ ters kaydetti)</label>
@@ -883,7 +883,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
   <video id="ovVid" playsinline muted autoplay></video>
   <div id="ovOval"></div><div id="ovVline"></div><div id="ovRef"></div><div id="ovHor"></div>
   <div id="ovPill">Duruşu kontrol ediliyor…</div>
-  <div id="ovChips"><span class="ovChip" id="ovC1"><i></i><span>Dik</span></span><span class="ovChip" id="ovC2"><i></i><span>Düz</span></span></div>
+  <div id="ovChips"><span class="ovChip" id="ovC1"><i></i><span>Dik</span></span><span class="ovChip" id="ovC2"><i></i><span>Düz</span></span><span class="ovChip" id="ovC3" hidden><i></i><span>Mesafe</span></span></div>
   <div id="ovHint"></div>
   <label id="ovAutoL"><input type="checkbox" id="ovAuto"> Yeşilde otomatik çek</label>
   <div id="ovBar"><button id="ovX" type="button">Kapat</button><button id="ovShot" type="button">ÇEK</button><button id="ovFree" type="button">Kilitsiz çek</button></div>
@@ -941,6 +941,7 @@ var S = {
   z:1, vx:0, vy:0, sel:null
 };
 var cvBox = { w:600, h:400, dpr:1 };
+var UD = { u:[], r:[] };
 var V = { front:null, side:null };
 var store = null;
 try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); store = localStorage; } catch(e){ store = null; }
@@ -1203,6 +1204,12 @@ function ov(c,TT,k,mode){
     var b=S.box[id], col=COL[id];
     var p1=TT({x:b.x1,y:b.y1}), p2=TT({x:b.x2,y:b.y1}), p3=TT({x:b.x2,y:b.y2}), p4=TT({x:b.x1,y:b.y2});
     halo(c,[p1,p2,p3,p4,p1],col,lw);
+    var ln=S.lens&&S.lens[id];
+    if(ln && Math.abs(ln.bb.x1-b.x1)<2 && Math.abs(ln.bb.y1-b.y1)<2 && Math.abs(ln.bb.x2-b.x2)<2 && Math.abs(ln.bb.y2-b.y2)<2){
+      var lp=ln.pts.map(function(q){ return TT(q); }); lp.push(lp[0]);
+      halo(c,lp,col,lw*0.8);
+      for(var li=0;li<lp.length-1;li+=4) dot(c,lp[li],3.2,col);
+    }
     if(tags || step==='box'){
       var e = r ? r[id] : null, nm=lensName(id).toUpperCase();
       tag(c, e ? nm+'  A '+f1(R(e.w))+' · B '+f1(R(e.bb)) : nm, p1.x+4*k, p1.y+14*k, col, k, 'left');
@@ -1387,14 +1394,53 @@ function afLoad(){
   return Promise.race([AF.p,new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('zaman')); },20000); })]);
 }
 function afBoxes(cxs,cys,pxPerMm){
+  S.lens=null;
   var w=S.frameA*pxPerMm, h=w*0.8;
   ['a','b'].forEach(function(i,k){ S.box[i]={x1:cxs[k]-w/2,y1:cys[k]-h/2,x2:cxs[k]+w/2,y2:cys[k]+h/2}; });
+}
+/* ---------- cam kalıbına oturt: göz bebeğinden her yöne ışın at, çerçevenin iç kenarını bul, kutuyu o kalıbın sınırı yap ---------- */
+function afSnap(){
+  var img=S.base||S.src; if(!img||S.demo) return 0;
+  var W=S.W,H=S.H, cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var cx=cv.getContext('2d',{willReadFrequently:true}); cx.drawImage(img,0,0,W,H);
+  var D; try{ D=cx.getImageData(0,0,W,H).data; }catch(e){ return 0; }
+  function L(x,y){ x=Math.max(0,Math.min(W-1,x|0)); y=Math.max(0,Math.min(H-1,y|0)); var i=(y*W+x)*4; return 0.299*D[i]+0.587*D[i+1]+0.114*D[i+2]; }
+  var total=0, N=64; S.lens=S.lens||{};
+  ['a','b'].forEach(function(k){
+    var b=S.box[k], p=S.pup[k], hw=(b.x2-b.x1)/2, hh=(b.y2-b.y1)/2; if(!(hw>8&&hh>8)) return;
+    var v=[]; for(var yy=-0.7;yy<=0.7;yy+=0.1) for(var xx=-0.8;xx<=0.8;xx+=0.1) v.push(L(p.x+xx*hw,p.y+yy*hh)); v.sort(function(a,c){return a-c;});
+    var ref=v[Math.floor(v.length*0.65)], thr=ref*0.62, run=Math.max(2,Math.round(W*0.007));
+    var ratio=[], ex=[], dirs=[];
+    for(var i=0;i<N;i++){
+      var th=2*Math.PI*i/N, dx=Math.cos(th), dy=Math.sin(th), e=1/Math.sqrt((dx/hw)*(dx/hw)+(dy/hh)*(dy/hh)), sp=Math.max(2,e*0.05);
+      var cnt=0, first=-1, got=NaN;
+      for(var d=e*0.55; d<=e*1.7; d+=1){
+        var sum=0,n=0;
+        for(var t=-sp;t<=sp;t+=sp/2){ sum+=L(p.x+dx*d-dy*t, p.y+dy*d+dx*t); n++; }
+        if(sum/n<thr){ if(cnt===0) first=d; cnt++; if(cnt>=run){ got=first/e; break; } } else { cnt=0; first=-1; }
+      }
+      ratio.push(got); ex.push(e); dirs.push([dx,dy]);
+    }
+    var valid=ratio.filter(function(x){return x===x;}).length; if(valid<N*0.7) return;
+    // medyan süzgeç: aykırı ışınları komşularına göre düzelt, eksikleri doldur
+    var out=[];
+    for(var i2=0;i2<N;i2++){
+      var w=[]; for(var j=-3;j<=3;j++){ var q=ratio[(i2+j+N)%N]; if(q===q) w.push(q); }
+      w.sort(function(a,c){return a-c;}); var med=w[Math.floor(w.length/2)];
+      var cur=ratio[i2]; out.push((cur===cur && Math.abs(cur-med)<0.22) ? cur : med);
+    }
+    var pts=[], x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;
+    for(var m=0;m<N;m++){ var r=out[m]*ex[m], pt={x:p.x+dirs[m][0]*r,y:p.y+dirs[m][1]*r}; pts.push(pt); x1=Math.min(x1,pt.x); y1=Math.min(y1,pt.y); x2=Math.max(x2,pt.x); y2=Math.max(y2,pt.y); }
+    if((x2-x1)>hw*1.1 && (y2-y1)>hh*1.1){ S.box[k]={x1:x1,y1:y1,x2:x2,y2:y2}; S.lens[k]={pts:pts,bb:{x1:x1,y1:y1,x2:x2,y2:y2}}; total+=valid; }
+  });
+  return total;
 }
 function afApply(P,irisPx){
   S.pup.a={x:P[0].x,y:P[0].y}; S.pup.b={x:P[1].x,y:P[1].y};
   var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
   var pxmm=cardOk ? 1/mmPerPx() : (irisPx>4 ? irisPx/11.7 : null);
   if(pxmm) afBoxes([P[0].x,P[1].x],[P[0].y,P[1].y],pxmm);
+  try{ afSnap(); }catch(e){}
   if(!cardOk && irisPx>4){ S.calMode='iris'; S.irisMm=11.7/irisPx; S.calibrated=true; syncMode(); }
   if(!S.noseCustom) S.noseX=(P[0].x+P[1].x)/2;
 }
@@ -1438,12 +1484,31 @@ function autoFind(cb){
   });
 }
 $('autoFind3').addEventListener('click',function(){autoFind();}); $('autoFind1').addEventListener('click',function(){autoFind();}); $('autoFind2').addEventListener('click',function(){autoFind();});
+$('snapBtn').addEventListener('click',function(){ var n=0; try{ n=afSnap(); }catch(e){} results(); schedule(); toast(n?'Cam kalıbı bulundu, kutu ona oturdu. Gerekirse düzeltin.':'Çerçeve kenarı net bulunamadı. Elle ayarlayın.'); });
 $('autoGo').addEventListener('click',function(){ autoFind(function(){ go('pupil'); }); });
 
+/* ---------- geri al / ileri al ---------- */
+function udSnap(){ return JSON.stringify({pup:S.pup,box:S.box,noseX:S.noseX,noseCustom:S.noseCustom,cal:S.cal,sd:S.sd,lens:S.lens||null,calMode:S.calMode,irisMm:S.irisMm,calibrated:S.calibrated}); }
+function udPush(){ var s=udSnap(); if(UD.u.length && UD.u[UD.u.length-1]===s) return; UD.u.push(s); if(UD.u.length>80) UD.u.shift(); UD.r=[]; try{ barUpdate(); }catch(e){} }
+function udApply(js){ var o=JSON.parse(js); Object.keys(o).forEach(function(k){ S[k]=o[k]; }); if(!o.lens) S.lens=null; try{ syncMode(); }catch(e){} if(S.mode==='side'){ try{ syncSideUI(); }catch(e){} } results(); schedule(); }
+function udUndo(){
+  var cur=udSnap(); while(UD.u.length && UD.u[UD.u.length-1]===cur) UD.u.pop();
+  if(!UD.u.length){ toast('Geri alınacak işlem yok.'); barUpdate(); return; }
+  UD.r.push(cur); udApply(UD.u.pop()); barUpdate(); toast('Önceki işlem geri alındı.');
+}
+function udRedo(){
+  var cur=udSnap(); while(UD.r.length && UD.r[UD.r.length-1]===cur) UD.r.pop();
+  if(!UD.r.length){ toast('İleri alınacak işlem yok.'); barUpdate(); return; }
+  UD.u.push(cur); udApply(UD.r.pop()); barUpdate();
+}
+cv.addEventListener('pointerdown',udPush,true);
+window.addEventListener('pointerup',function(){ var cur=udSnap(); if(UD.u.length && UD.u[UD.u.length-1]===cur){ UD.u.pop(); try{ barUpdate(); }catch(e){} } else { try{ barUpdate(); }catch(e){} } });
+document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('.sp button, #nudge button'); if(b && !b.closest('.seg')) udPush(); },true);
 /* ---------- kolay mod ---------- */
 function barUpdate(){
   var bar=$('bar'), h='', cols='1fr';
-  if(S.edit && !S.adv){ h='<button class="gr" data-act="done">✔ Tamam</button>'; }
+  if(S.edit && !S.adv){
+    h='<button data-act="back">‹ Geri</button><button data-act="undo"'+(UD.u.length?'':' class="off"')+'>↶ Geri al</button><button data-act="redo" aria-label="İleri al"'+(UD.r.length?'':' class="off"')+'>↷</button><button class="gr" data-act="done">✔ Tamam</button>'; cols='1fr 1.3fr .6fr 1.3fr'; }
   else if(easyOn()){
     if(S.demo){ h='<button class="bl" data-act="cam">📷 Kamerayı aç</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
     else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">✔ Kaydet</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
@@ -1489,6 +1554,9 @@ $('bar').addEventListener('click',function(e){
   else if(a==='gal') $('btnGal').click();
   else if(a==='fix') enterEdit(S.mode==='side'?'vertex':'pupil');
   else if(a==='done') doneEdit();
+  else if(a==='back'){ var l=ids(), i=l.indexOf(S.step); if(i>0) go(l[i-1]); else doneEdit(); }
+  else if(a==='undo') udUndo();
+  else if(a==='redo') udRedo();
   else if(a==='save'){
     if(!$('easyName').value.trim()){ toast('Kaydetmek için hasta adını yazın.'); $('easyName').focus(); return; }
     $('btnSave').click();
@@ -1586,7 +1654,7 @@ function demoMarks(){
   S.pup.a={x:440,y:455}; S.pup.b={x:763,y:452}; S.noseX=600; S.noseCustom=false;
 }
 function setImage(canvas,demo){
-  S.src=canvas; S.W=canvas.width; S.H=canvas.height; S.demo=demo; S.rot=0; syncUiClasses();
+  S.src=canvas; S.W=canvas.width; S.H=canvas.height; S.demo=demo; S.rot=0; UD.u=[]; UD.r=[]; syncUiClasses();
   $('rot').value=0; $('rotVal').textContent='0,0°';
   rebuildBase(); S.z=1; S.vx=0; S.vy=0; setZoom(1);
   var sideM = S.mode==='side';
@@ -1616,11 +1684,43 @@ var inCam=$('inCam'), inGal=$('inGal');
 
 /* ---------- uygulama içi kamera + duruş göstergesi ---------- */
 var OV={stream:null,beta:null,gamma:null,okSince:0,count:0,state:'na',raf:0,has:false,t0:0};
-function ovOrient(e){ if(e.beta!=null && e.gamma!=null){ OV.beta=e.beta; OV.gamma=e.gamma; OV.has=true; } }
+function ovOrient(e){
+  if(e.beta==null || e.gamma==null) return;
+  if(!OV.has){ OV.beta=e.beta; OV.gamma=e.gamma; OV.has=true; }
+  else { var a=0.08; OV.beta+=a*(e.beta-OV.beta); OV.gamma+=a*(e.gamma-OV.gamma); }
+}
+var OVD={dist:null,t:0,timer:0,busy:false,msg:''};
+function ovDistStart(){
+  OVD.dist=null; OVD.t=0; OVD.msg='yüz aranıyor…'; clearInterval(OVD.timer);
+  if(S.mode==='side') return;
+  if(!navigator.onLine){ OVD.msg='internet yok'; return; }
+  afLoad().then(function(lm){
+    OVD.msg='yüz aranıyor…';
+    OVD.timer=setInterval(function(){
+      var v=$('ovVid'); if(OVD.busy || !v.videoWidth || $('camOv').hidden) return; OVD.busy=true;
+      try{
+        var r=lm.detect(v), Lm=r&&r.faceLandmarks&&r.faceLandmarks[0];
+        if(Lm && Lm.length>=478){
+          var vw=v.videoWidth, vh=v.videoHeight, f=0.73*Math.max(vw,vh);
+          var ipd=Math.hypot((Lm[473].x-Lm[468].x)*vw,(Lm[473].y-Lm[468].y)*vh);
+          function dia(ids){ var m=0; for(var i=0;i<ids.length;i++) for(var j=i+1;j<ids.length;j++) m=Math.max(m,Math.hypot((Lm[ids[i]].x-Lm[ids[j]].x)*vw,(Lm[ids[i]].y-Lm[ids[j]].y)*vh)); return m; }
+          var ir=(dia([469,470,471,472])+dia([474,475,476,477]))/2;
+          if(ipd>10){
+            var d1=f*6.3/ipd, d2=ir>4 ? f*1.17/ir : d1, d=(d1*2+d2)/3;
+            OVD.dist = OVD.dist==null ? d : OVD.dist+0.35*(d-OVD.dist); OVD.t=performance.now();
+          }
+        } else if(performance.now()-OVD.t>1500){ OVD.dist=null; OVD.msg='yüz aranıyor…'; }
+      }catch(e){}
+      OVD.busy=false;
+    },250);
+  }).catch(function(){ OVD.msg='model yüklenemedi'; });
+}
 function ovEval(){
   var ov=$('camOv'), land=window.innerWidth>window.innerHeight, st='na', hint='', c1='', c2='';
   if(OV.has && !land){
-    var tilt=OV.beta-90, roll=OV.gamma, tOk=Math.abs(tilt)<=15, rOk=Math.abs(roll)<=12;
+    var tilt=OV.beta-90, roll=OV.gamma;
+    OV.tOk = Math.abs(tilt)<=(OV.tOk?24:18); OV.rOk = Math.abs(roll)<=(OV.rOk?18:14);
+    var tOk=OV.tOk, rOk=OV.rOk;
     c1=tOk?'ok':'bad'; c2=rOk?'ok':'bad';
     st=(tOk&&rOk)?'ok':'bad';
     if(!tOk) hint= tilt>0 ? 'Kamera yukarı bakıyor: telefonu dikleştirin' : 'Kamera aşağı bakıyor: telefonu dikleştirin';
@@ -1628,12 +1728,25 @@ function ovEval(){
     $('ovHor').style.transform='rotate('+(-roll).toFixed(1)+'deg)';
   } else if(land){ st='bad'; c1='bad'; c2='bad'; hint='Telefonu dik (portre) tutun'; $('ovHor').style.transform='none'; }
   else { hint='Duruş sensörü yok: gözle hizalayın'; $('ovHor').style.transform='none'; }
+  // mesafe (yalnız önden, model varsa): 40 cm hedef, 34-47 cm yeşil
+  var dTxt='', dCls='', dBad=false, c3=$('ovC3'), fr=(S.mode!=='side');
+  c3.hidden=!fr;
+  if(fr){
+    var D=(OVD.dist!=null && performance.now()-OVD.t<1500) ? OVD.dist : null;
+    if(D==null){ dTxt='Mesafe: '+(OVD.msg||'…'); dCls=''; }
+    else { var cm=Math.round(D);
+      if(D>47){ dTxt='Yaklaşın · '+cm+' cm'; dCls='bad'; dBad=true; if(!hint) hint='Yüz uzak: telefonu yaklaştırın (hedef 40 cm)'; }
+      else if(D<34){ dTxt='Uzaklaşın · '+cm+' cm'; dCls='bad'; dBad=true; if(!hint) hint='Yüz çok yakın: telefonu uzaklaştırın (hedef 40 cm)'; }
+      else { dTxt='Mesafe '+cm+' cm ✓'; dCls='ok'; } }
+    c3.className='ovChip '+dCls; c3.lastChild.textContent=dTxt;
+  }
+  if(st==='ok' && dBad) st='bad';
   OV.state=st;
   ov.className = st + (S.facing==='user' ? ' mir' : '');
-  $('ovPill').textContent = st==='ok' ? '✓ MÜKEMMEL DURUŞ' : st==='bad' ? '✗ DURUŞU DÜZELT' : 'Duruş sensörü yok';
+  $('ovPill').textContent = st==='ok' ? '✓ MÜKEMMEL DURUŞ' : st==='bad' ? (dBad && (!OV.has||(OV.tOk&&OV.rOk)) ? '✗ MESAFEYİ AYARLA' : '✗ DURUŞU DÜZELT') : 'Duruş sensörü yok';
   $('ovC1').className='ovChip '+c1; $('ovC2').className='ovChip '+c2;
   $('ovC1').lastChild.textContent = c1==='bad' ? 'Telefon eğik' : 'Dik'; $('ovC2').lastChild.textContent = c2==='bad' ? 'Telefon yatık' : 'Düz';
-  $('ovChips').hidden = !OV.has && !land;
+  $('ovChips').hidden = !OV.has && !land && !fr;
   $('ovHint').textContent=hint;
   $('ovShot').disabled = false;
   var side=S.mode==='side'; $('ovOval').hidden=side; $('ovVline').hidden=false;
@@ -1648,7 +1761,7 @@ function ovEval(){
   OV.raf=requestAnimationFrame(ovEval);
 }
 function ovClose(){
-  cancelAnimationFrame(OV.raf); window.removeEventListener('deviceorientation',ovOrient);
+  clearInterval(OVD.timer); cancelAnimationFrame(OV.raf); window.removeEventListener('deviceorientation',ovOrient);
   if(OV.stream){ OV.stream.getTracks().forEach(function(t){ t.stop(); }); OV.stream=null; }
   $('ovVid').srcObject=null; $('camOv').hidden=true; $('ovCount').hidden=true; OV.okSince=0;
 }
@@ -1674,6 +1787,7 @@ function openCamOv(){
     var pl=v.play(); if(pl && pl.catch) pl.catch(function(){});
     $('camOv').hidden=false; $('ovAuto').checked=false;
     window.addEventListener('deviceorientation',ovOrient);
+    OV.tOk=false; OV.rOk=false; ovDistStart();
     cancelAnimationFrame(OV.raf); OV.raf=requestAnimationFrame(ovEval);
   }).catch(function(){ nativeCam(); });
 }
