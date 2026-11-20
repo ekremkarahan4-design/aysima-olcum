@@ -258,6 +258,8 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 .plHalo{fill:#fff;opacity:.45} .plHalo.bad{fill:#f59e0b}
 .bkSvg{width:100%;max-width:560px;margin:0 auto;display:block;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
 .bkSvg.dark{background:#fff}
+.dsPair{display:grid;grid-template-columns:1fr;gap:10px}
+.dsPair .bkSvg{min-width:0}
 .bkTxt{font:600 9px var(--mono);fill:var(--muted)}
 .bkHead{fill:var(--surface2);stroke:var(--ink);stroke-width:1.5}
 .bkLens{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
@@ -276,7 +278,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 .gvCard{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:4px;min-width:0}
 .gvCard h3{margin:0;font:700 12px var(--font);letter-spacing:.04em;color:var(--accent);text-align:center}
 .gvCard .d{font-size:12px;color:var(--muted);text-align:center;min-height:30px}
-.gvCard svg{width:100%;display:block;touch-action:none;cursor:grab}
+.gvCard svg{width:100%;display:block;touch-action:pan-y;cursor:grab}
 .gvDash{fill:none;stroke:#fff;stroke-width:1.6;stroke-dasharray:5 4}
 .gvEdit summary{cursor:pointer;font-weight:600;min-height:36px;display:flex;align-items:center}
 .gvEdit{border-top:1px solid var(--line);padding-top:6px}
@@ -340,7 +342,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v47</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v65</span>
   </header>
 
   <div id="dftBanner" hidden></div>
@@ -854,7 +856,10 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="seg" id="bkTabs" role="group" aria-label="Görünüm">
         <button data-m="he" aria-pressed="true">Baş + göz</button>
         <button data-m="wo" aria-pressed="false">Gözlük takılı</button>
+        <button data-m="ds" aria-pressed="false">Mesafe ve baş</button>
       </div>
+      <div class="actions" style="margin:10px 0 0"><button type="button" class="btn primary" id="bkNar">🔊 Sesli anlat</button></div>
+      <div class="anCap" id="bkNarCap" hidden></div>
       <div id="bkHE" class="bkcol">
       <div class="muted small">Üstte kuşbakışı baş, göz ve gözlük; altta gözlükten gördüğünüz görüntü. Hedefin yönünü kaydırın ya da oynatın, hareket biçimini değiştirip farkı görün.</div>
       <svg id="bkTop" viewBox="0 0 360 190" class="bkSvg" role="img" aria-label="Kuşbakışı baş, göz ve gözlük"></svg>
@@ -881,8 +886,9 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       </div>
       </div>
       <div id="bkWorn" class="bkcol" hidden>
-        <div class="muted small">Gözlük gözünüze takılı gibi ekranda sabit durur. Resmi parmağınızla sürükleyin ya da düğmelerle kaydırın: net alan, koridor ve ölü bölgeler camla birlikte yerinde kalır, resim altlarından akar.</div>
-        <svg id="bwSvg" viewBox="0 0 360 256" class="bkSvg dark" role="img" aria-label="Gözlükten görünen kaydırılabilir resim" style="touch-action:none;cursor:grab"></svg>
+        <div class="muted small">Gözlüğün iki camı gözünüze takılı gibi ekranda sabit durur. Solda standart (klasik) progresif, sağda markalı, geniş alanlı progresif. Resmi parmağınızla sürükleyin ya da düğmelerle kaydırın: iki cam birlikte hareket eder, net alanlar camla birlikte yerinde kalır, resim altlarından akar.</div>
+        <div class="seg" id="bwRight" role="group" aria-label="Sağ cam"><button data-t="1" aria-pressed="false">Sağ: markalı dijital</button><button data-t="2" aria-pressed="true">Sağ: markalı kişiye özel</button></div>
+        <svg id="bwSvg" viewBox="0 0 360 140" class="bkSvg dark" role="img" aria-label="Gözlükten görünen kaydırılabilir resim" style="touch-action:pan-y;cursor:grab"></svg>
         <div class="plCap" id="bwCap" aria-live="polite"></div>
         <div class="plCtl">
           <button class="btn sm primary" id="bwPlay" type="button">▶ Oynat</button>
@@ -896,21 +902,43 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <div class="plRead">
           <div><span class="muted small">Yatay kayma</span><b id="bwX">0°</b></div>
           <div><span class="muted small">Dikey kayma</span><b id="bwY">0°</b></div>
-          <div><span class="muted small">Net alan</span><b id="bwNet" class="good">%0</b></div>
-          <div><span class="muted small">Ölü bölge</span><b id="bwDead" class="bad">%0</b></div>
+          <div><span class="muted small">Net alan (sol / sağ)</span><b id="bwNet" class="good">%0</b></div>
+          <div><span class="muted small">Ölü bölge (sol / sağ)</span><b id="bwDead" class="bad">%0</b></div>
         </div>
         <div class="row">
           <label class="chk"><input type="checkbox" id="bwBands"> Ölü bölgeleri işaretle</label>
           <label class="chk"><input type="checkbox" id="bwRings"> Açı halkaları</label>
         </div>
       </div>
-      <div class="boxnote"><strong>Neden böyle?</strong> Gözlük başla birlikte döner, göz ise camın içinde kayar. Hedefe sadece gözle bakınca bakış çizgisi camın kenarına, ölü bölgeye kayar; görüntü bulanır, eğrilir ve yürürken sallanır. Başı hedefe çevirince göz camın ortasında kalır ve görüntü net olur. Yakın alan dar olduğu için okurken bu etki daha erken başlar. Açılar ve mesafeler örnektir, gerçek değerler cam tasarımına göre değişir.</div>
+      <div id="bkDS" class="bkcol" hidden>
+        <div class="muted small">Yandan görünüm: gözlüğün camı üstte uzak, ortada bilgisayar, altta okuma bölgesidir. Mesafeyi ve baş eğimini değiştirin; bakış çizgisi camın hangi yerinden geçiyorsa görüntü ona göre netleşir ya da bulanıklaşır.</div>
+        <div class="dsPair"><svg id="dsTop" viewBox="30 40 320 190" class="bkSvg" role="img" aria-label="Yandan görünüm: baş, progresif cam ve bakış çizgisi"></svg>
+        <svg id="dsView" viewBox="0 0 360 230" class="bkSvg dark" role="img" aria-label="Gözlükten görünen görüntü"></svg></div>
+        <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px"><span><b style="color:#60a5fa">■</b> Uzak bölge</span><span><b style="color:#fbbf24">■</b> Ara bölge</span><span><b style="color:#34d399">■</b> Yakın bölge</span></div>
+        <div class="plCap" id="dsCap" aria-live="polite"></div>
+        <div class="plCtl"><button class="btn sm primary" id="dsPlay" type="button">⏸ Durdur</button></div>
+        <div class="seg" id="dsPre" role="group" aria-label="Mesafe"><button data-v="100" aria-pressed="true">Uzak (tabela)</button><button data-v="45" aria-pressed="false">Orta (bilgisayar)</button><button data-v="8" aria-pressed="false">Yakın (kitap)</button></div>
+        <label class="muted small" for="dsDist">Bakış mesafesi: <b id="dsDl"></b></label>
+        <input type="range" id="dsDist" min="0" max="100" value="100">
+        <label class="muted small" for="dsPit">Baş eğimi (sol: çene yukarı · sağ: çene aşağı)</label>
+        <input type="range" id="dsPit" min="-25" max="25" value="0">
+        <div class="plRead">
+          <div><span class="muted small">Mesafe</span><b id="dsRd">-</b></div>
+          <div><span class="muted small">Baş eğimi</span><b id="dsPt">0°</b></div>
+          <div><span class="muted small">Baktığınız bölge</span><b id="dsZ">-</b></div>
+          <div><span class="muted small">Gereken bölge</span><b id="dsN">-</b></div>
+          <div><span class="muted small">Görüntü (standart / markalı)</span><b id="dsS">-</b></div>
+        </div>
+        <div class="boxnote"><strong>Pratik kural:</strong> Mesafeyi gözünüzle, yönü başınızla ayarlayın. Okurken çeneyi fazla indirmeyin, gözleri indirin. Uzağa bakarken çeneyi fazla kaldırmayın. Açılar ve mesafeler örnektir; gerçek değerler cam tasarımına ve kişisel ölçülere göre değişir.</div>
+      </div>
+      <div class="boxnote" id="bkNote"><strong>Neden böyle?</strong> Gözlük başla birlikte döner, göz ise camın içinde kayar. Hedefe sadece gözle bakınca bakış çizgisi camın kenarına, ölü bölgeye kayar; görüntü bulanır, eğrilir ve yürürken sallanır. Başı hedefe çevirince göz camın ortasında kalır ve görüntü net olur. Yakın alan dar olduğu için okurken bu etki daha erken başlar. Açılar ve mesafeler örnektir, gerçek değerler cam tasarımına göre değişir.</div>
     </div>
   </section>
 
   <!-- CAM LİSTEM -->
   <section class="cp" data-p="miy" hidden>
-    <div class="results" style="padding:0;overflow:hidden"><iframe id="miyFr" title="Miyopi sesli anlatım" style="width:100%;height:78vh;min-height:520px;border:0;display:block;background:#0d1520" allow="autoplay"></iframe></div>
+    <div class="seg" id="miyTabs" role="group" aria-label="Miyopi anlatımı" style="margin:0 0 8px"><button data-m="1" aria-pressed="true">Röntgen görünümü</button><button data-m="2" aria-pressed="false">Çocuk ve güneş ışığı</button></div>
+    <div class="results" style="padding:0;overflow:hidden"><iframe id="miyFr" title="Miyopi sesli anlatım" style="width:100%;height:78vh;min-height:520px;border:0;display:block;background:#0d1520" allow="autoplay"></iframe><iframe id="miyFr2" title="Çocuk ve güneş ışığı sesli anlatım" hidden style="width:100%;height:86vh;min-height:600px;border:0;display:block;background:#0d1520" allow="autoplay"></iframe></div>
   </section>
 
   <section class="cp" data-p="lis" hidden>
@@ -2908,9 +2936,14 @@ function showMain(name){
   try{ window.dispatchEvent(new Event('resize')); }catch(e){}
 }
 $('mainTabs').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) showMain(b.dataset.v); });
+var MIYDOC2="<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Aysima Optik · Çocuk ve güneş ışığı<\/title><\/head><body style=\"margin:0;background:#0d1520;width:100%;max-width:480px;margin:auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif\">\n<div id=\"ui\" style=\"position:fixed;left:0;right:0;bottom:0;padding:10px 14px 18px;background:linear-gradient(transparent,#0d1520 35%);z-index:5\"><div id=\"sub\" style=\"color:#fff;font-size:13.5px;line-height:1.32;min-height:54px;text-shadow:0 1px 2px #000\"><\/div><div style=\"display:flex;gap:6px;margin-top:6px\"><select id=\"vsel\" style=\"flex:1;min-width:0;padding:8px;border-radius:8px;background:#16263a;color:#fff;border:1px solid #35506f;font-size:13px\"><\/select><select id=\"rsel\" style=\"padding:8px;border-radius:8px;background:#16263a;color:#fff;border:1px solid #35506f;font-size:13px\"><option value=\"1.0\">Normal hız<\/option><option value=\"1.12\" selected>Biraz hızlı<\/option><option value=\"1.25\">Hızlı<\/option><\/select><\/div><button id=\"go\" style=\"width:100%;margin-top:6px;padding:11px;border-radius:12px;border:0;background:#2b6fff;color:#fff;font-size:16px;font-weight:700\">▶ Sesli anlatımı başlat<\/button><\/div>\n<svg id=\"s\" style=\"width:100%;height:calc(100vh - 205px);display:block\" viewBox=\"0 0 420 670\"><\/svg>\n<script>\nconst $=id=>document.getElementById(id);\nconst cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)), ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;\nconst CUES=[\n\"Bu minik arkadaşımız sekiz yaşında ve güneşli bir günde dışarıda. Gözlüğünün bir camı standart, diğer camı miyopi kontrol camı. Farkı yan yana göreceğiz.\",\n\"Güneş ışığı karşıdan geliyor ve gözlük camlarına çarpıyor. Cam, ışığı toparlayıp gözün içine doğru yönlendiriyor.\",\n\"Işık gözün içinde, tam merkezde retinada toplanıyor. İki gözde de çocuğumuz net görüyor.\",\n\"Fark, kenardan gelen ışıkta başlıyor. Soldaki standart camda bu ışık retinanın arkasında toplanıyor. Göz küresi sanki ışığı kovalıyormuş gibi uzamaya başlıyor.\",\n\"Sağdaki miyopi kontrol camında ise özel noktalar, kenar ışığını retinanın hemen önünde toplayan bir ışık kütlesi oluşturuyor. Bu, göz küresine uzamayı yavaşlatması için güçlü bir işaret veriyor.\",\n\"Şimdi zamanı hızlandıralım. Çocuk büyüdükçe başı, bedeni ve göz küresi de büyüyor. Bu büyüme genellikle on sekiz, yirmi yaşına kadar devam ediyor.\",\n\"Standart camda göz küresi yıllar içinde belirgin şekilde uzuyor ve arka ucu giderek sivriliyor. Miyopi kontrol camında ise uzama çok daha yavaş kalıyor.\",\n\"Büyüme çağında göz küresinin uzaması, miyopinin ilerlemesinde önemli bir etken; baş ve beden büyümesi de buna eşlik ediyor. Bu yüzden gözlüğü her gün takmak ve düzenli kontrole gelmek çok önemli.\",\n\"Unutmayın: miyopi kontrol camları miyopiyi tamamen durdurmaz, ama ilerlemesini belirgin şekilde yavaşlatmaya yardımcı olur. Sonuçlar kişiden kişiye değişir. Çocuğunuz için en uygun camı birlikte seçelim.\"];\nconst ST={cue:-1,cs:performance.now(),running:false,voice:true,rate:1.12,vname:null};\nfunction trVoices(){return (window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>v.lang&&v.lang.toLowerCase().replace('_','-').startsWith('tr'))}\nfunction bestVoice(){const vs=trVoices();const pick=ST.vname&&vs.find(v=>v.name===ST.vname);if(pick)return pick;\n const score=v=>(/siri/i.test(v.name)?8:0)+(/premium|enhanced|gelişmiş|neural|natural/i.test(v.name)?4:0)+(/yelda|filiz|seda|female|kad[ıi]n/i.test(v.name)?2:0)+(/google/i.test(v.name)?1:0);\n return vs.sort((x,y)=>score(y)-score(x))[0]}\nfunction fillVoices(){const sel=$('vsel');if(!sel)return;const vs=trVoices();sel.innerHTML=vs.length?vs.map(v=>`<option value=\"${v.name}\">${v.name}<\/option>`).join(''):'<option>Türkçe ses bulunamadı<\/option>';const b=bestVoice();if(b){sel.value=b.name;ST.vname=b.name}}\nif('speechSynthesis' in window){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=fillVoices}catch(e){}}\nsetTimeout(fillVoices,300);\n$('vsel').onchange=e=>{ST.vname=e.target.value};$('rsel').onchange=e=>{ST.rate=parseFloat(e.target.value)||1.12};\nfunction say(i){\n ST.cue=i;ST.cs=performance.now();$('sub').textContent=CUES[i];\n const est=Math.max(5000,CUES[i].length*65);let done=false;\n const next=()=>{if(done)return;done=true;if(i+1<CUES.length)setTimeout(()=>say(i+1),350);else{ST.running=false;$('go').style.display='block';$('go').textContent='↻ Tekrar oynat'}};\n const parts=CUES[i].match(/[^.!?]+[.!?]*/g)||[CUES[i]];let voiced=false;\n if(ST.voice&&'speechSynthesis' in window){try{const v=bestVoice();if(v){voiced=true;\n   parts.forEach((p,k)=>{const u=new SpeechSynthesisUtterance(p.trim());u.lang='tr-TR';u.voice=v;u.rate=ST.rate;u.pitch=1.0;if(k===parts.length-1)u.onend=next;u.onerror=()=>{};speechSynthesis.speak(u)});\n   setTimeout(next,est*2+9000)}}catch(e){}}\n if(!voiced)setTimeout(next,est);\n}\nfunction start(){try{speechSynthesis.cancel()}catch(e){}ST.running=true;ST.cue=-1;$('go').style.display='none';say(0)}\n$('go').onclick=start;\nconst OR='#ff9a3c',TE='#35e0c0',YE='#ffe066';\nfunction eyePanel(ex,kind,G,rin,per,hlC,t){\n const std=kind==='std',col=std?OR:TE,y0=330,R0=62+9*G,k=R0/62,g=std?56*G:10*G,yR=y0+2*R0+g,yfp=std?y0+186:y0+98;\n let o='';\n o+=`<text x=\"${ex}\" y=\"246\" text-anchor=\"middle\" font-size=\"15\" font-weight=\"800\" fill=\"${col}\">${std?'Standart cam':'Miyopi kontrol camı'}<\/text>`;\n o+=`<text x=\"${ex}\" y=\"262\" text-anchor=\"middle\" font-size=\"10.5\" fill=\"#9fb2c8\">${std?'tek odaklı, düz cam':'özel odak noktalı cam'}<\/text>`;\n // gözlük camı (eksi cam kesiti)\n o+=`<path d=\"M${ex-62},268 L${ex+62},268 Q${ex+50},277 ${ex+62},286 L${ex-62},286 Q${ex-50},277 ${ex-62},268Z\" fill=\"#bfe3f7\" fill-opacity=\".85\" stroke=\"#7fb6d8\" stroke-width=\"1.5\"/>`;\n if(!std){ for(const k of [-56,-48,-40,-32,32,40,48,56]) o+=`<circle cx=\"${ex+k}\" cy=\"277\" r=\"2.6\" fill=\"${TE}\" stroke=\"#fff\" stroke-width=\".8\"/>`; }\n // göz küresi\n const bumpO=`M${ex-44*k},${y0+100*k} Q${ex-12*k},${y0+108*k} ${ex},${yR} Q${ex+12*k},${y0+108*k} ${ex+44*k},${y0+100*k}`, bump=bumpO+'Z';\n const ball=`<ellipse cx=\"${ex}\" cy=\"${y0+R0}\" rx=\"${R0}\" ry=\"${R0}\"/>`;\n o+=`<g stroke=\"#a99486\" stroke-width=\"7\" fill=\"#a99486\" stroke-linejoin=\"round\"><path d=\"${bump}\"/>${ball}<\/g>`;\n o+=`<g fill=\"url(#vit)\" stroke=\"none\"><path d=\"${bump}\"/>${ball}<\/g>`;\n o+=`<g clip-path=\"url(#rc${ex})\" fill=\"none\" stroke=\"#e4586c\" stroke-width=\"4\"><path d=\"${bumpO}\"/>${ball}<\/g>`;\n o+=`<clipPath id=\"rc${ex}\"><rect x=\"${ex-90}\" y=\"${y0+78}\" width=\"180\" height=\"170\"/><\/clipPath>`;\n // kornea + göz merceği\n o+=`<path d=\"M${ex-27},${y0+16} Q${ex},${y0-24} ${ex+27},${y0+16}Z\" fill=\"#dff1ff\" fill-opacity=\".7\" stroke=\"#8fb6d6\" stroke-width=\"2\"/><ellipse cx=\"${ex}\" cy=\"${y0+30}\" rx=\"19\" ry=\"7.5\" fill=\"#f7e3a1\" stroke=\"#d1b668\"/>`;\n // ışınlar\n const rays=(dxs,fy,c,w,vis,sp)=>{ let r=''; for(const dx of dxs){ const p0=[ex+dx,268],p1=[ex+dx,277],p2=[ex+dx*.62,y0+6],p3=[ex+dx*.55,y0+30],F=[ex,fy];\n   const e=[F[0]+(F[0]-p3[0])*.3,F[1]+(F[1]-p3[1])*.3];\n   const pts=`${p0} ${p1} ${p2} ${p3} ${F} ${e}`;\n   r+=`<polyline points=\"${pts}\" fill=\"none\" stroke=\"${c}\" stroke-width=\"${w}\" stroke-opacity=\"${(vis*.35).toFixed(2)}\" stroke-linejoin=\"round\"/><polyline points=\"${pts}\" fill=\"none\" stroke=\"${c}\" stroke-width=\"${w}\" stroke-opacity=\"${vis.toFixed(2)}\" stroke-dasharray=\"7 7\" stroke-dashoffset=\"${(-t*34*sp).toFixed(1)}\" stroke-linejoin=\"round\"/>`; } return r; };\n if(rin>0) o+=rays([-13,13],yR,YE,2.2,rin,1);\n if(per>0) o+=rays([-46,46],yfp,col,2.2,per,1);\n // merkez odak parlaması\n if(rin>0){ const pr=hlC?1+.35*Math.sin(t*6):1; o+=`<circle cx=\"${ex}\" cy=\"${yR}\" r=\"${(9*pr).toFixed(1)}\" fill=\"${YE}\" opacity=\"${(rin*.55).toFixed(2)}\" filter=\"url(#gl)\"/><circle cx=\"${ex}\" cy=\"${yR}\" r=\"3\" fill=\"#fff\" opacity=\"${rin}\"/>`; }\n if(hlC) o+=`<text x=\"${ex}\" y=\"${yR+34}\" text-anchor=\"middle\" font-size=\"12\" font-weight=\"700\" fill=\"${YE}\">merkez net ✓<\/text>`;\n // kenar odak işareti\n if(per>0){\n  if(std){ o+=`<g opacity=\"${per}\"><circle cx=\"${ex}\" cy=\"${yfp}\" r=\"9\" fill=\"${OR}\" opacity=\".5\" filter=\"url(#gl)\"/><path d=\"M${ex-5},${yfp-5} L${ex+5},${yfp+5} M${ex+5},${yfp-5} L${ex-5},${yfp+5}\" stroke=\"${OR}\" stroke-width=\"2.5\"/>\n    <text x=\"${ex}\" y=\"${yfp+22}\" text-anchor=\"middle\" font-size=\"11.5\" font-weight=\"700\" fill=\"${OR}\">kenar ışığı retinanın arkasında<\/text><text x=\"${ex}\" y=\"${yfp+36}\" text-anchor=\"middle\" font-size=\"11\" fill=\"#c9d6e6\">göz küresi ışığı kovalar, uzar ve sivrilir<\/text><\/g>`; }\n  else { o+=`<g opacity=\"${per}\"><ellipse cx=\"${ex}\" cy=\"${yfp}\" rx=\"${(34+3*Math.sin(t*4)).toFixed(1)}\" ry=\"10\" fill=\"${TE}\" opacity=\".55\" filter=\"url(#gl)\"/><ellipse cx=\"${ex}\" cy=\"${yfp}\" rx=\"22\" ry=\"5\" fill=\"#eafffb\" opacity=\".95\"/>\n    <text x=\"${ex}\" y=\"${yR+34}\" text-anchor=\"middle\" font-size=\"11.5\" font-weight=\"700\" fill=\"${TE}\">ışık kütlesi retinanın önünde<\/text><text x=\"${ex}\" y=\"${yR+48}\" text-anchor=\"middle\" font-size=\"11\" fill=\"#c9d6e6\">uzama yavaşlar<\/text><\/g>`; } }\n // uzama çubuğu\n if(G>0){ const f=std?G:g/56; o+=`<text x=\"${ex}\" y=\"580\" text-anchor=\"middle\" font-size=\"10.5\" fill=\"#9fb2c8\">göz küresi uzaması<\/text><rect x=\"${ex-60}\" y=\"586\" width=\"120\" height=\"8\" rx=\"4\" fill=\"rgba(255,255,255,.12)\"/><rect x=\"${ex-60}\" y=\"586\" width=\"${(120*f).toFixed(1)}\" height=\"8\" rx=\"4\" fill=\"${col}\"/>`; }\n return o; }\nfunction child(beams,t,rin,G){\n let o='';\n const S=.78+.27*G, mx=x=>252+(x-252)*S, my=y=>216+(y-216)*S;\n o+=`<rect width=\"420\" height=\"216\" fill=\"url(#sky)\"/>`;\n // güneş\n const sx=96,sy=44;\n o+=`<circle cx=\"${sx}\" cy=\"${sy}\" r=\"46\" fill=\"#fff6c4\" opacity=\".35\" filter=\"url(#gl)\"/>`;\n for(let i=0;i<12;i++){const a=i*Math.PI/6+t*.15;o+=`<line x1=\"${sx+Math.cos(a)*30}\" y1=\"${sy+Math.sin(a)*30}\" x2=\"${sx+Math.cos(a)*40}\" y2=\"${sy+Math.sin(a)*40}\" stroke=\"#ffd84a\" stroke-width=\"3\" stroke-linecap=\"round\" opacity=\".9\"/>`;}\n o+=`<circle cx=\"${sx}\" cy=\"${sy}\" r=\"25\" fill=\"#ffd84a\"/><circle cx=\"${sx}\" cy=\"${sy}\" r=\"21\" fill=\"#fff08a\"/>`;\n o+=`<ellipse cx=\"330\" cy=\"38\" rx=\"34\" ry=\"11\" fill=\"#fff\" opacity=\".85\"/><ellipse cx=\"352\" cy=\"30\" rx=\"22\" ry=\"10\" fill=\"#fff\" opacity=\".85\"/><ellipse cx=\"170\" cy=\"70\" rx=\"26\" ry=\"8\" fill=\"#fff\" opacity=\".6\"/>`;\n // çocuk\n o+=`<g transform=\"translate(252 216) scale(${S.toFixed(3)}) translate(-252 -216)\">`;\n o+=`<path d=\"M170,216 Q178,176 252,172 Q326,176 334,216Z\" fill=\"#fbbf24\"/><path d=\"M236,176 Q252,190 268,176\" stroke=\"#d99a0b\" stroke-width=\"3\" fill=\"none\"/>`;\n o+=`<rect x=\"238\" y=\"154\" width=\"28\" height=\"26\" rx=\"8\" fill=\"#e9b88f\"/>`;\n o+=`<ellipse cx=\"204\" cy=\"128\" rx=\"7\" ry=\"11\" fill=\"#eebb94\"/><ellipse cx=\"300\" cy=\"128\" rx=\"7\" ry=\"11\" fill=\"#eebb94\"/>`;\n o+=`<ellipse cx=\"252\" cy=\"120\" rx=\"47\" ry=\"55\" fill=\"url(#face)\"/>`;\n o+=`<path d=\"M204,112 Q198,60 252,56 Q306,60 300,112 Q294,84 270,80 Q248,92 226,80 Q208,86 204,112Z\" fill=\"#4a2f1d\"/>`;\n o+=`<path d=\"M214,98 Q226,92 240,98 M264,98 Q278,92 290,98\" stroke=\"#4a2f1d\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\"/>`;\n // gözler\n for(const cx of [228,276]){ o+=`<ellipse cx=\"${cx}\" cy=\"128\" rx=\"10\" ry=\"7.5\" fill=\"#fff\"/><circle cx=\"${cx}\" cy=\"128.5\" r=\"4.6\" fill=\"#6b4423\"/><circle cx=\"${cx}\" cy=\"128.5\" r=\"2.2\" fill=\"#111\"/><circle cx=\"${cx+1.6}\" cy=\"126.6\" r=\"1.1\" fill=\"#fff\"/>`; }\n o+=`<path d=\"M250,136 Q246,148 252,150 Q258,148 254,136\" stroke=\"#d99f7a\" stroke-width=\"2\" fill=\"none\"/><path d=\"M236,158 Q252,170 268,158\" stroke=\"#b9575a\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"214\" cy=\"150\" r=\"6\" fill=\"#f09a8a\" opacity=\".35\"/><circle cx=\"290\" cy=\"150\" r=\"6\" fill=\"#f09a8a\" opacity=\".35\"/>`;\n // gözlük\n o+=`<line x1=\"248\" y1=\"126\" x2=\"256\" y2=\"126\" stroke=\"#1f2937\" stroke-width=\"4\"/><line x1=\"207\" y1=\"124\" x2=\"200\" y2=\"122\" stroke=\"#1f2937\" stroke-width=\"4\"/><line x1=\"297\" y1=\"124\" x2=\"304\" y2=\"122\" stroke=\"#1f2937\" stroke-width=\"4\"/>`;\n for(const [cx,c,pat] of [[228,OR,0],[276,TE,1]]){\n   o+=`<circle cx=\"${cx}\" cy=\"128\" r=\"23.5\" fill=\"none\" stroke=\"${c}\" stroke-width=\"2.5\" opacity=\".85\"/><circle cx=\"${cx}\" cy=\"128\" r=\"20\" fill=\"#cfe9f8\" fill-opacity=\".22\" stroke=\"#1f2937\" stroke-width=\"4\"/>`;\n   o+=`<path d=\"M${cx-13},118 Q${cx-6},110 ${cx+3},111\" stroke=\"#fff\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\".7\"/>`;\n   if(pat){ for(let i=0;i<14;i++){ const a=i*Math.PI*2/14+t*.2; o+=`<circle cx=\"${cx+Math.cos(a)*14.5}\" cy=\"${128+Math.sin(a)*14.5}\" r=\"1.6\" fill=\"${TE}\" stroke=\"#fff\" stroke-width=\".5\" opacity=\".95\"/>`; } }\n   if(beams>0) o+=`<circle cx=\"${cx}\" cy=\"128\" r=\"20\" fill=\"${YE}\" opacity=\"${(beams*.28*(.8+.2*Math.sin(t*5))).toFixed(2)}\"/>`;\n }\n o+='<\/g>';\n if(G>.04){ o+=`<ellipse cx=\"252\" cy=\"141.1\" rx=\"36.7\" ry=\"42.9\" fill=\"none\" stroke=\"#1e3a5f\" stroke-width=\"1.6\" stroke-dasharray=\"4 4\" opacity=\".7\"/><text x=\"252\" y=\"206\" font-size=\"9.5\" fill=\"#1e3a5f\" text-anchor=\"middle\">8 yaşındaki baş (kesikli çizgi)<\/text>`; }\n // ışınlar (güneşten gözlüğe, camdan toparlanıp göze)\n if(beams>0){ for(const cx of [228,276]){ for(const k of [-12,0,12]){\n   const a=[sx+34,sy+8+k*.8],b=[mx(cx)-16*S,my(128)+k*.9*S],c=[mx(cx)+2,my(128)];\n   const p=`${a} ${b}`, q=`${b} ${c}`;\n   o+=`<polyline points=\"${p}\" fill=\"none\" stroke=\"${YE}\" stroke-width=\"2.2\" stroke-opacity=\"${(beams*.85).toFixed(2)}\" stroke-dasharray=\"6 6\" stroke-dashoffset=\"${(-t*36).toFixed(1)}\"/>`;\n   o+=`<polyline points=\"${q}\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.6\" stroke-opacity=\"${(beams*.9).toFixed(2)}\"/>`; } } }\n // yakınlaştırma konisi\n if(rin>0){ for(const [cx,ex] of [[228,110],[276,310]]) o+=`<polygon points=\"${mx(cx)-20*S},${my(148)} ${mx(cx)+20*S},${my(148)} ${ex+95},232 ${ex-95},232\" fill=\"#fff\" fill-opacity=\"${(rin*.07).toFixed(3)}\" stroke=\"#9fb2c8\" stroke-opacity=\"${(rin*.35).toFixed(2)}\" stroke-dasharray=\"3 5\"/>`; }\n return o; }\nfunction frame(){\n const now=performance.now(),t=now/1000,tc=(now-ST.cs)/1000,c=ST.cue;\n const beams=c<1?0:c===1?ease(cl(tc/2.5)):1, rin=c<1?0:c===1?ease(cl((tc-1.5)/3)):1;\n const per0=c<3?0:c===3?ease(cl(tc/1.5)):1, per1=c<4?0:c===4?ease(cl(tc/1.5)):1, hl=c===2?1:0;\n const G=c<3?0:c===3?.07*ease(cl(tc/9)):c===4?.07+.06*ease(cl(tc/9)):c===5?.13+.37*ease(cl(tc/9)):c===6?.5+.5*ease(cl(tc/9)):1, age=8+11*G;\n let o=`<defs><linearGradient id=\"sky\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6db7ee\"/><stop offset=\"1\" stop-color=\"#cfeaff\"/><\/linearGradient>\n <radialGradient id=\"face\" cx=\".45\" cy=\".4\" r=\".7\"><stop offset=\"0\" stop-color=\"#fbd9b8\"/><stop offset=\"1\" stop-color=\"#eebb94\"/><\/radialGradient>\n <radialGradient id=\"vit\" cx=\".5\" cy=\".4\" r=\".75\"><stop offset=\"0\" stop-color=\"#eef7fd\"/><stop offset=\"1\" stop-color=\"#bcd9ec\"/><\/radialGradient>\n <filter id=\"gl\" x=\"-50%\" y=\"-50%\" width=\"200%\" height=\"200%\"><feGaussianBlur stdDeviation=\"5\"/><\/filter><\/defs>`;\n o+=`<rect width=\"420\" height=\"670\" fill=\"#0d1520\"/>`;\n o+=child(beams,t,rin,G);\n o+=eyePanel(110,'std',G,rin,per0,hl,t)+eyePanel(310,'ctl',G,rin,per1,hl,t);\n o+=`<text x=\"372\" y=\"200\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"800\" fill=\"#1e3a5f\">${Math.round(age)} yaş<\/text>`;\n if(c>=3){ const X0=60,W=300,px=X0+(age-8)/12*W; o+=`<rect x=\"${X0}\" y=\"612\" width=\"${W}\" height=\"7\" rx=\"3.5\" fill=\"rgba(255,255,255,.12)\"/><rect x=\"${X0+250}\" y=\"612\" width=\"50\" height=\"7\" fill=\"#fbbf24\" opacity=\".55\"/><rect x=\"${X0}\" y=\"612\" width=\"${(px-X0).toFixed(1)}\" height=\"7\" rx=\"3.5\" fill=\"#8ecbff\"/><circle cx=\"${px.toFixed(1)}\" cy=\"615.5\" r=\"7\" fill=\"#fff\" stroke=\"#8ecbff\" stroke-width=\"2\"/>\n  <text x=\"${X0}\" y=\"636\" text-anchor=\"middle\" font-size=\"10\" fill=\"#9fb2c8\">8<\/text><text x=\"${X0+250}\" y=\"636\" text-anchor=\"middle\" font-size=\"10\" fill=\"#fbbf24\">18<\/text><text x=\"${X0+300}\" y=\"636\" text-anchor=\"middle\" font-size=\"10\" fill=\"#fbbf24\">20<\/text><text x=\"${X0+275}\" y=\"606\" text-anchor=\"middle\" font-size=\"10\" fill=\"#fbbf24\">büyüme tamamlanır<\/text>`; }\n o+=`<text x=\"210\" y=\"652\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"#7f93aa\">Şematik örnek. Gerçekte iki göz aynı camı takar; karşılaştırma için bir yanda standart,<\/text><text x=\"210\" y=\"665\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"#7f93aa\">diğerinde miyopi kontrol camı gösterilmiştir. Sonuçlar kişiden kişiye değişir.<\/text>`;\n $('s').innerHTML=o; requestAnimationFrame(frame);\n}\nframe();\n<\/script><\/body><\/html>\n";
 var MIYDOC="<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Aysima Optik · Miyopi Camı<\/title><\/head><body style=\"margin:0;background:#0d1520;width:100%;max-width:480px;margin:auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif\">\n<div id=\"ui\" style=\"position:fixed;left:0;right:0;bottom:0;padding:10px 14px 18px;background:linear-gradient(transparent,#0d1520 35%);z-index:5\"><div id=\"sub\" style=\"color:#fff;font-size:14.5px;line-height:1.35;min-height:60px;text-shadow:0 1px 2px #000\"><\/div><label style=\"display:block;color:#a9b8cc;font-size:12px;margin-top:4px\">Ses: <select id=\"vs\" style=\"font-size:13px;padding:4px;border-radius:6px;max-width:70%\"><\/select><\/label><div style=\"display:flex;gap:6px;margin-top:6px\"><select id=\"vsel\" style=\"flex:1;min-width:0;padding:8px;border-radius:8px;background:#16263a;color:#fff;border:1px solid #35506f;font-size:13px\"><\/select><select id=\"rsel\" style=\"padding:8px;border-radius:8px;background:#16263a;color:#fff;border:1px solid #35506f;font-size:13px\"><option value=\"1.0\">Normal hız<\/option><option value=\"1.12\" selected>Biraz hızlı<\/option><option value=\"1.25\">Hızlı<\/option><\/select><\/div><button id=\"go\" style=\"width:100%;margin-top:6px;padding:14px;border-radius:12px;border:0;background:#2b6fff;color:#fff;font-size:17px;font-weight:700\">▶ Sesli anlatımı başlat<\/button><\/div><svg id=\"s\" style=\"width:100%;height:calc(100vh - 200px);display:block\" viewBox=\"0 0 420 760\">\n<defs><linearGradient id=\"bone\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f1e8d6\"/><stop offset=\"1\" stop-color=\"#c9bda4\"/><\/linearGradient>\n<radialGradient id=\"scl\"><stop offset=\"0\" stop-color=\"#fbf6f0\"/><stop offset=\"1\" stop-color=\"#d9cfc4\"/><\/radialGradient>\n<radialGradient id=\"vit\"><stop offset=\"0\" stop-color=\"#dff0fa\"/><stop offset=\"1\" stop-color=\"#a9cde4\"/><\/radialGradient>\n<filter id=\"gl\"><feGaussianBlur stdDeviation=\"4\"/><\/filter><\/defs>\n\n\n<\/svg>\n<script>\nconst s=document.getElementById('s');\nfunction skull(oy,mode,grow){\n const X=0,cy=oy; let o=`<g transform=\"translate(0,${oy})\">`;\n // kafatası (yüz sola bakar)\n o+=`<path d=\"M140 70 Q190 12 290 22 Q388 40 392 130 Q392 190 352 214 L340 250 Q316 262 296 238 L260 232 L210 238 L170 254 L150 252 L142 236 L128 232 L126 210 L134 196 L118 176 L110 160 L128 150 L136 126 Z\" fill=\"url(#bone)\" stroke=\"#a89a82\" stroke-width=\"2\"/>`;\n // alt çene\n o+=`<path d=\"M152 252 L146 276 Q170 300 230 292 Q290 282 318 244 L322 192 L296 200 L280 238 L220 246 L176 254Z\" fill=\"url(#bone)\" stroke=\"#a89a82\" stroke-width=\"2\"/>`;\n // dişler\n o+=`<path d=\"M130 232 L128 258 L152 258 L154 238Z\" fill=\"#fff\" stroke=\"#c8bda8\"/><path d=\"M128 248 L154 248 M138 232 L138 258 M146 234 L146 258\" stroke=\"#c8bda8\" stroke-width=\"1\"/>`;\n // yanak kemiği kavsi\n o+=`<path d=\"M196 190 Q240 198 292 184\" stroke=\"#a89a82\" stroke-width=\"6\" fill=\"none\" opacity=\".7\"/><path d=\"M196 190 Q240 198 292 184\" stroke=\"#e8dcc4\" stroke-width=\"3\" fill=\"none\"/>`;\n // sütür çizgileri\n o+=`<path d=\"M200 36 Q260 100 250 176\" stroke=\"#b5a78d\" stroke-width=\"1.4\" fill=\"none\" opacity=\".7\"/><path d=\"M290 22 Q330 110 296 180\" stroke=\"#b5a78d\" stroke-width=\"1.4\" fill=\"none\" opacity=\".6\"/>`;\n // kulak deliği\n o+=`<ellipse cx=\"300\" cy=\"190\" rx=\"8\" ry=\"10\" fill=\"#6d6048\"/>`;\n // göz çukuru (orbita)\n o+=`<ellipse cx=\"176\" cy=\"150\" rx=\"46\" ry=\"44\" fill=\"#8d7f66\" stroke=\"#a89a82\" stroke-width=\"3\"/>`;\n return o; }\nfunction eyeIn(cy,len,mode,t){\n const X0=138,a=34+len/2; let o='';\n o+=`<ellipse cx=\"${X0+a}\" cy=\"${cy}\" rx=\"${a}\" ry=\"34\" fill=\"url(#scl)\" stroke=\"#b9ab9c\" stroke-width=\"1.5\"/><ellipse cx=\"${X0+a}\" cy=\"${cy}\" rx=\"${a-4}\" ry=\"30\" fill=\"none\" stroke=\"#9c5a4a\" stroke-width=\"3.5\"/><ellipse cx=\"${X0+a}\" cy=\"${cy}\" rx=\"${a-8}\" ry=\"26\" fill=\"url(#vit)\"/>`;\n o+=`<path d=\"M${X0+3} ${cy-16} Q${X0-9} ${cy} ${X0+3} ${cy+16}\" fill=\"#bfe6ff\" stroke=\"#e6f6ff\"/><ellipse cx=\"${X0+16}\" cy=\"${cy}\" rx=\"4.5\" ry=\"11\" fill=\"#e9f6ff\" stroke=\"#fff\"/>`;\n o+=`<rect x=\"${X0+8}\" y=\"${cy-22}\" width=\"3\" height=\"10\" fill=\"#2f5f9a\"/><rect x=\"${X0+8}\" y=\"${cy+12}\" width=\"3\" height=\"10\" fill=\"#2f5f9a\"/>`;\n o+=`<circle cx=\"${X0+2*a-6}\" cy=\"${cy}\" r=\"3\" fill=\"#ffd34d\"/>`;\n return o;}\nfunction glasses(cy,ring){\n let o='';\n // sap (kulağa uzanan)\n o+=`<path d=\"M96 ${cy-44} L200 ${cy-52} Q282 ${cy-50} 298 ${cy+6} Q304 ${cy+30} 296 ${cy+52}\" stroke=\"#1d2733\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"96\" cy=\"${cy-44}\" r=\"4\" fill=\"#3a4a5e\"/>`;\n // burun pedi\n o+=`<path d=\"M118 ${cy+6} Q112 ${cy+24} 124 ${cy+30}\" stroke=\"#bbb\" stroke-width=\"3\" fill=\"none\"/>`;\n // cam (yandan ince)\n o+=`<path d=\"M92 ${cy-44} Q100 ${cy} 92 ${cy+44} L100 ${cy+44} Q92 ${cy} 100 ${cy-44}Z\" fill=\"${ring?'#6fe0cd':'#8cc2ea'}\" stroke=\"#fff\" stroke-width=\".6\"/>`;\n if(ring)for(const y of[-36,-24,24,36])o+=`<rect x=\"88\" y=\"${cy+y-4}\" width=\"16\" height=\"8\" rx=\"2\" fill=\"none\" stroke=\"#065e51\" stroke-width=\"1.3\"/>`;\n o+=`<rect x=\"86\" y=\"${cy-48}\" width=\"20\" height=\"5\" rx=\"2\" fill=\"#1d2733\"/><rect x=\"86\" y=\"${cy+43}\" width=\"20\" height=\"5\" rx=\"2\" fill=\"#1d2733\"/>`;\n return o;}\nfunction panelOld(oy,mode,len,label,col){\n const cy=150;let o=skull(oy,mode,0);\n o+=eyeIn(cy,len,mode);\n o+=glasses(cy,mode==='ctl');\n const R0=138+68, ret=138+(34+len/2)*2;\n const ycol=mode==='std'?'#ff9a3c':'#35e0c0', fx=mode==='std'?R0+14:R0-20;\n [-8,0,8].forEach(d=>o+=`<polyline points=\"18,${cy+d*1.5} 92,${cy+d*1.5} 138,${cy+d*.4} ${ret-6},${cy}\" fill=\"none\" stroke=\"#ffe27a\" stroke-width=\"1.5\"/>`);\n [-34,34].forEach(d=>{o+=`<polyline points=\"18,${cy+d*1.1} 92,${cy+d*1.1} 138,${cy+d*.45} ${fx},${cy}\" fill=\"none\" stroke=\"${ycol}\" stroke-width=\"1.3\"/>`});\n o+=`<circle cx=\"${fx}\" cy=\"${cy}\" r=\"9\" fill=\"${ycol}\" opacity=\".35\" filter=\"url(#gl)\"/><circle cx=\"${fx}\" cy=\"${cy}\" r=\"3.4\" fill=\"${ycol}\"/>`;\n if(mode==='std')o+=`<ellipse cx=\"${138+68}\" cy=\"${cy}\" rx=\"34\" ry=\"34\" fill=\"none\" stroke=\"#fff\" stroke-dasharray=\"3 3\" opacity=\".5\"/><text x=\"226\" y=\"${cy+62}\" fill=\"#ff9a3c\" font-size=\"11\" text-anchor=\"middle\">kesikli çizgi: ilk göz boyu → uzar<\/text>`;\n o+=`<text x=\"16\" y=\"14\" fill=\"${col}\" font-size=\"15\" font-weight=\"700\">${label}<\/text><\/g>`;\n return o;}\n\nconst cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),ease=x=>x*x*(3-2*x);\nfunction along(p,u){let L=[],tot=0;for(let i=1;i<p.length;i++){const d=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);L.push(d);tot+=d}let k=u*tot;for(let i=0;i<L.length;i++){if(k<=L[i]){const q=k/L[i];return[p[i][0]+(p[i+1][0]-p[i][0])*q,p[i][1]+(p[i+1][1]-p[i][1])*q]}k-=L[i]}return p[p.length-1]}\nfunction ray(p,col,t,w){let o=`<polyline points=\"${p.map(q=>q.join(',')).join(' ')}\" fill=\"none\" stroke=\"${col}\" stroke-width=\"${w||1.4}\" opacity=\".9\"/>`;for(let i=0;i<3;i++){const q=along(p,(t*.3+i/3)%1);o+=`<circle cx=\"${q[0].toFixed(1)}\" cy=\"${q[1].toFixed(1)}\" r=\"2.4\" fill=\"#fff\"/>`}return o}\nfunction panelX(oy,mode,len,t,rs,label,col){\n const cy=150, a=34+len/2, ret=138+2*a, R0=138+68;\n let A=skull(oy,mode,0)+eyeIn(cy,len,mode)+`<\/g>`;\n let B=`<g transform=\"translate(0,${oy})\">`+glasses(cy,mode==='ctl');\n const ycol=mode==='std'?'#ff9a3c':'#35e0c0', fx=mode==='std'?R0+16:R0-22;\n if(rs>0){B+=`<g opacity=\"${rs}\">`;\n  [-8,0,8].forEach(d=>B+=ray([[18,cy+d*1.5],[92,cy+d*1.5],[138,cy+d*.4],[ret-6,cy]],'#ffe27a',t));\n  [-34,34].forEach(d=>B+=ray([[18,cy+d*1.1],[92,cy+d*1.1],[138,cy+d*.45],[fx,cy]],ycol,t,1.3));\n  B+=`<circle cx=\"${fx}\" cy=\"${cy}\" r=\"9\" fill=\"${ycol}\" opacity=\".4\" filter=\"url(#gl)\"/><circle cx=\"${fx}\" cy=\"${cy}\" r=\"3.6\" fill=\"${ycol}\"/><\/g>`}\n B+=`<ellipse cx=\"${138+68}\" cy=\"${cy}\" rx=\"34\" ry=\"34\" fill=\"none\" stroke=\"#fff\" stroke-dasharray=\"3 3\" opacity=\"${mode==='std'&&len>2?.55:0}\"/>`;\n B+=`<text x=\"16\" y=\"14\" fill=\"${col}\" font-size=\"15\" font-weight=\"700\">${label}<\/text><\/g>`;\n return {A,B,ret};\n}\nconst CUES=[\n\"Merhaba, Aysima Optik'e hoş geldiniz. Şimdi Aysima Optik olarak, geleceğimiz olan çocuklarımız için miyopi camdan bahsedeceğiz. Çocuklarda miyopi, göz küresi zamanla uzadıkça artar. Önce ışığın göze nasıl girdiğini görelim.\",\n\"Işık gözlük camından ve korneadan geçerek göze girer. Merkezdeki ışık, iki camda da makulada, yani en net görme noktasında toplanır.\",\n\"Asıl fark çevredeki ışıkta. Normal camda çevre ışık retinanın arkasında kalır ve gözü uzamaya itebilir. Miyopi kontrol camındaki halkalar ise çevre ışığı retinanın önüne getirir.\",\n\"Şimdi iki yıl geçiyor. Normal camda göz küresi uzadıkça, çocuğun numarası daha hızlı artar.\",\n\"Bu örnekte normal camda göz boyu yaklaşık yedi onda bir milimetre uzar ve numara belirgin biçimde artar. Miyopi kontrol camında aynı sürede miyopi artışı yüzde altmış yedi daha yavaştır.\",\n\"Bu oran, üreticilerin klinik çalışmalarında bildirilen bir değerdir. Başarı oranı yüksektir, ancak kişinin bünye ve göz anatomisine bağlı olarak değişir.\",\n\"Bir yıl içinde numara artışı yarım diyoptriyi geçerse, firmamız ve üretici firma garantisi geçerlidir. Düzenli göz muayenesi ve camın sürekli takılması önemlidir. Sorularınız için bize danışabilirsiniz. Bizi dinlediğiniz için teşekkür ederiz.\"];\nconst ST={cue:-1,cs:performance.now(),tc:0,running:false,voice:true,rate:1.12,vname:null};\nlet TTSC=null,TTSTRY=false;\nasync function getTTS(){if(TTSTRY)return TTSC;TTSTRY=true;try{if(window.claude&&claude.use)TTSC=await claude.use('tts')}catch(e){TTSC=null}return TTSC}\nfunction trVoices(){return ('speechSynthesis' in window)?speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().replace('_','-').startsWith('tr')):[]}\nfunction pickVoice(){const sel=document.getElementById('vs');const vs=trVoices();if(sel&&sel.value){const f=vs.find(v=>v.name===sel.value);if(f)return f}\n const rank=v=>(/premium|enhanced|gelişmiş|neural|natural/i.test(v.name)?4:0)+(/yelda|filiz|seda|female|kad[ıi]n/i.test(v.name)?2:0)+(/google/i.test(v.name)?1:0);return vs.slice().sort((x,y)=>rank(y)-rank(x))[0]}\nfunction fillVoices(){const sel=document.getElementById('vs');if(!sel)return;const vs=trVoices();const cur=sel.value;sel.innerHTML='<option value=\"\">Otomatik (en iyi Türkçe ses)<\/option>'+vs.map(v=>`<option value=\"${v.name}\">${v.name}<\/option>`).join('');sel.value=cur}\nfunction speakChunks(text,done){\n const parts=text.match(/[^.!?]+[.!?]*/g)||[text];let k=0;\n const one=()=>{if(k>=parts.length){done();return}const u=new SpeechSynthesisUtterance(parts[k++].trim());u.lang='tr-TR';u.rate=0.9;u.pitch=1.04;const v=pickVoice();if(v)u.voice=v;u.onend=()=>setTimeout(one,260);u.onerror=()=>setTimeout(one,260);speechSynthesis.speak(u)};one()}\nfunction trVoices(){return (window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>v.lang&&v.lang.toLowerCase().replace('_','-').startsWith('tr'))}\nfunction bestVoice(){const vs=trVoices();const pick=ST.vname&&vs.find(v=>v.name===ST.vname);if(pick)return pick;\n const score=v=>(/siri/i.test(v.name)?8:0)+(/premium|enhanced|gelişmiş|neural|natural/i.test(v.name)?4:0)+(/yelda|filiz|seda|female|kad[ıi]n/i.test(v.name)?2:0)+(/google/i.test(v.name)?1:0)+(v.localService?0:0);\n return vs.sort((x,y)=>score(y)-score(x))[0]}\nfunction fillVoices(){const sel=document.getElementById('vsel');if(!sel)return;const vs=trVoices();sel.innerHTML=vs.length?vs.map(v=>`<option value=\"${v.name}\">${v.name}<\/option>`).join(''):'<option>Türkçe ses bulunamadı<\/option>';const b=bestVoice();if(b){sel.value=b.name;ST.vname=b.name}}\nfunction say(i){\n ST.cue=i;ST.cs=performance.now();document.getElementById('sub').textContent=CUES[i];\n const est=Math.max(5000,CUES[i].length*65);let done=false;\n const next=()=>{if(done)return;done=true;if(i+1<CUES.length)setTimeout(()=>say(i+1),350);else{ST.running=false;document.getElementById('go').style.display='block';document.getElementById('go').textContent='↻ Tekrar oynat'}};\n const parts=CUES[i].match(/[^.!?]+[.!?]*/g)||[CUES[i]];let voiced=false;\n if(ST.voice&&'speechSynthesis' in window){try{const v=bestVoice();if(v){voiced=true;\n   parts.forEach((p,k)=>{const u=new SpeechSynthesisUtterance(p.trim());u.lang='tr-TR';u.voice=v;u.rate=ST.rate;u.pitch=1.0;if(k===parts.length-1)u.onend=next;u.onerror=()=>{};speechSynthesis.speak(u)});\n   setTimeout(next,est*2+9000)}}catch(e){}}\n if(!voiced)setTimeout(next,est);\n}\nfunction start(){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();ST.running=true;ST.cue=-1;document.getElementById('go').style.display='none';say(0)}\nfunction frame(ts){const t=performance.now()/1000, tc=ST.tc=(performance.now()-ST.cs)/1000;\n const scan=ST.cue<0?0:ST.cue===0?ease(cl(tc/6)):1, rs=ST.cue<1?0:ST.cue===1?ease(cl(tc/2.5)):1, gp=ST.cue<3?0:ST.cue===3?ease(cl(tc/11)):1;\n const P1=panelX(70,'std',gp*28,t,rs,'Normal gözlük camı','#ff9a3c'), P2=panelX(400,'ctl',gp*9,t,rs,'Miyopi kontrol camı','#35e0c0');\n const cy1=scan*760;\n let o=`<defs><linearGradient id=\"bone\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f1e8d6\"/><stop offset=\"1\" stop-color=\"#c9bda4\"/><\/linearGradient><radialGradient id=\"scl\"><stop offset=\"0\" stop-color=\"#fbf6f0\"/><stop offset=\"1\" stop-color=\"#d9cfc4\"/><\/radialGradient><radialGradient id=\"vit\"><stop offset=\"0\" stop-color=\"#dff0fa\"/><stop offset=\"1\" stop-color=\"#a9cde4\"/><\/radialGradient><filter id=\"gl\"><feGaussianBlur stdDeviation=\"4\"/><\/filter><clipPath id=\"sc\"><rect x=\"0\" y=\"0\" width=\"420\" height=\"${cy1}\"/><\/clipPath>\n  <filter id=\"xr\"><feColorMatrix type=\"matrix\" values=\"0.3 0.6 0.1 0 0  0.3 0.6 0.1 0 0  0.3 0.6 0.1 0 0  0 0 0 1 0\"/><feComponentTransfer><feFuncR type=\"linear\" slope=\"1.25\" intercept=\"-.12\"/><feFuncG type=\"linear\" slope=\"1.3\" intercept=\"-.1\"/><feFuncB type=\"linear\" slope=\"1.45\" intercept=\"-.05\"/><\/feComponentTransfer><\/filter>\n  <linearGradient id=\"beam\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7fd0ff\" stop-opacity=\"0\"/><stop offset=\"1\" stop-color=\"#bfe8ff\" stop-opacity=\".9\"/><\/linearGradient><\/defs>`;\n o+=`<g clip-path=\"url(#sc)\"><g filter=\"url(#xr)\" opacity=\".92\">${P1.A}${P2.A}<\/g>${P1.B}${P2.B}<\/g>`;\n if(scan<1)o+=`<rect x=\"0\" y=\"${cy1-60}\" width=\"420\" height=\"60\" fill=\"url(#beam)\"/><rect x=\"0\" y=\"${cy1-2}\" width=\"420\" height=\"3\" fill=\"#e8f8ff\"/>`;\n o+=`<text x=\"16\" y=\"30\" fill=\"#bfe8ff\" font-size=\"19\" font-weight=\"700\">RÖNTGEN GÖRÜNÜMÜ<\/text><text x=\"16\" y=\"48\" fill=\"#7f9bb5\" font-size=\"12\">${ST.cue<1?'Tarama...':ST.cue<3?'Işık camdan göze giriyor':'Zaman: '+(gp*2).toFixed(1)+' yıl'}<\/text>`;\n if(ST.cue>=3){o+=`<text x=\"404\" y=\"${70+42}\" fill=\"#ff9a3c\" font-size=\"12\" text-anchor=\"end\">numara −${(1.75*gp).toFixed(2).replace('.',',')} D<\/text><text x=\"404\" y=\"${400+42}\" fill=\"#35e0c0\" font-size=\"12\" text-anchor=\"end\">numara −${(0.58*gp).toFixed(2).replace('.',',')} D<\/text>`;o+=`<text x=\"404\" y=\"${70+24}\" fill=\"#ff9a3c\" font-size=\"14\" font-weight=\"700\" text-anchor=\"end\">${(23+0.7*gp).toFixed(2)} mm<\/text><text x=\"404\" y=\"${400+24}\" fill=\"#35e0c0\" font-size=\"14\" font-weight=\"700\" text-anchor=\"end\">${(23+0.23*gp).toFixed(2)} mm<\/text>`}\n if(ST.cue>=4)o+=`<rect x=\"16\" y=\"684\" width=\"388\" height=\"60\" rx=\"12\" fill=\"#16263a\" stroke=\"#35506f\"/><text x=\"30\" y=\"710\" fill=\"#35e0c0\" font-size=\"15\" font-weight=\"700\">Örnek: miyopi artışı %67 daha yavaş<\/text><text x=\"30\" y=\"730\" fill=\"#a9b8cc\" font-size=\"11\">Şematik örnek; üretici çalışması, kişiye göre değişir.<\/text>`;\n s.innerHTML=o;\n requestAnimationFrame(frame)}\nrequestAnimationFrame(frame);\ndocument.getElementById('go').addEventListener('click',start);document.getElementById('vsel').addEventListener('change',e=>{ST.vname=e.target.value});document.getElementById('rsel').addEventListener('change',e=>{ST.rate=parseFloat(e.target.value)});\nif('speechSynthesis' in window){speechSynthesis.getVoices();fillVoices();speechSynthesis.onvoiceschanged=fillVoices;}\n<\/script><\/body><\/html>";
-function miyEnter(){ var f=$('miyFr'); if(f && !f.dataset.ok){ f.srcdoc=MIYDOC; f.dataset.ok='1'; } }
-function showSub(p){ if(p==='miy') miyEnter(); else { try{ if(window.__anlStop && p!=='anl') window.__anlStop(); if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} }
+var MIYM=1;
+function miyEnter(){ var f=$(MIYM===1?'miyFr':'miyFr2'); if(f && !f.dataset.ok){ f.srcdoc=(MIYM===1?MIYDOC:MIYDOC2); f.dataset.ok='1'; } }
+function miyReset(){ ['miyFr','miyFr2'].forEach(function(id){ var f=$(id); if(f&&f.dataset.ok){ f.srcdoc=''; delete f.dataset.ok; } }); }
+function miySwitch(n){ miyReset(); MIYM=n; $('miyFr').hidden=n!==1; $('miyFr2').hidden=n!==2; Array.prototype.forEach.call($('miyTabs').querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.m===String(n))); }); miyEnter(); }
+$('miyTabs').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) miySwitch(parseInt(b.dataset.m,10)); });
+function showSub(p){ if(p==='miy') miyEnter(); else { miyReset(); try{ if(window.__anlStop && p!=='anl') window.__anlStop(); if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} }
   Array.prototype.forEach.call(document.querySelectorAll('#viewCam .cp'),function(s){ s.hidden = s.dataset.p!==p; });
   Array.prototype.forEach.call($('camTabs').querySelectorAll('button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.p===p)); });
 }
@@ -3369,7 +3402,7 @@ bkSeg('bkMode','k',function(v){ BK.k=parseFloat(v); });
 bkSeg('bkDist','d',function(v){ BK.far=v==='far'; });
 
 /* ---------- gözlük takılı: resim kayar, cam sabit ---------- */
-var BW={x:0,y:0,ready:false,playing:false,t:0,last:0,drag:null,hold:null,n:{}};
+var BW={rt:2,x:0,y:0,ready:false,playing:false,t:0,last:0,drag:null,hold:null,n:{}};
 function bwWorld(defs){
   var w=svgEl('g',{id:'bwWorld'}); defs.appendChild(w);
   function A(tag,at,t){ var e=svgEl(tag,at); w.appendChild(e); if(t!=null) e.textContent=t; return e; }
@@ -3398,53 +3431,62 @@ function bwWorld(defs){
   for(var gx=0;gx<1600;gx+=200) A('line',{x1:gx,y1:0,x2:gx,y2:900,stroke:'rgba(255,255,255,.18)','stroke-width':1});
   for(var gy=0;gy<900;gy+=150) A('line',{x1:0,y1:gy,x2:1600,y2:gy,stroke:'rgba(255,255,255,.18)','stroke-width':1});
 }
+function lensPctQ(q){
+  if(!_c2d) return 25;
+  try{ var lp=new Path2D(LENS), zp=new Path2D(zonePath(q,0,Lmm())), a=0,b=0,x,y;
+    for(x=0;x<360;x+=6) for(y=0;y<240;y+=6){ if(_c2d.isPointInPath(lp,x,y)){ b++; if(_c2d.isPointInPath(zp,x,y)) a++; } }
+    return b?Math.round(a/b*100):0; }catch(e){ return 25; }
+}
 function bwBuild(){
-  var sv=$('bwSvg'), n=BW.n; sv.textContent='';
+  var sv=$('bwSvg'), n=BW.n; sv.textContent=''; n.l=[];
   function V(tag,at,par){ var e=svgEl(tag,at); (par||sv).appendChild(e); return e; }
   var defs=V('defs',{}); bwWorld(defs);
   [['bwB1',1.4],['bwB2',3],['bwB3',5.2]].forEach(function(f){ var el=V('filter',{id:f[0],filterUnits:'userSpaceOnUse',x:0,y:0,width:360,height:240},defs); V('feGaussianBlur',{stdDeviation:f[1]},el); });
-  n.cp=[0,1,2].map(function(i){ var c=V('clipPath',{id:'bwCp'+i},defs); return V('path',{},c); });
-  var cl=V('clipPath',{id:'bwL'},defs); V('rect',{x:0,y:0,width:180,height:240},cl); var cr=V('clipPath',{id:'bwR'},defs); V('rect',{x:180,y:0,width:180,height:240},cr);
-  lensShadow(sv);
-  n.wrap=V('g',{id:'bwMove'});
-  function lay(clipId,filt,sk){
-    var g=V('g',{'clip-path':'url(#'+clipId+')'});
-    if(sk===0){ V('use',{href:'#bwWorld',filter:'url(#'+filt+')'},g); return; }
-    [['bwL',-1],['bwR',1]].forEach(function(h){
-      var hg=V('g',{'clip-path':'url(#'+h[0]+')'},g);
-      var tg=V('g',{transform:'translate(180 120) skewX('+(h[1]*sk)+') translate(-180 -120)'},hg);
-      V('use',{href:'#bwWorld',filter:'url(#'+filt+')'},tg);
-    });
-  }
-  // dıştan içe: ölü bölge, orta, hafif, net
-  var full=V('clipPath',{id:'bwFull'},defs); V('path',{d:LENS},full);
-  lay('bwFull','bwB3',7); lay('bwCp2','bwB2',4); lay('bwCp1','bwB1',2);
-  var g0=V('g',{'clip-path':'url(#bwCp0)'}); V('use',{href:'#bwWorld'},g0);
-  var ov=V('g',{'clip-path':'url(#bwFull)'});
-  n.bandG=V('g',{},ov); n.bands=[0,1,2].map(function(){ return V('path',{'class':'plDead',opacity:0.12},n.bandG); });
-  n.clr=V('path',{'class':'gvDash'},ov);
-  n.ringG=V('g',{},ov); [10,20,30].forEach(function(a){ V('circle',{cx:180,cy:100,r:a*PPD,'class':'bwRing'},n.ringG); var t=V('text',{x:180+a*PPD+2,y:98,'class':'bwTxt'},n.ringG); t.textContent=a+'°'; });
-  V('line',{x1:170,y1:100,x2:190,y2:100,stroke:'#fbbf24','stroke-width':1.5},n.ringG); V('line',{x1:180,y1:90,x2:180,y2:110,stroke:'#fbbf24','stroke-width':1.5},n.ringG);
-  var gt=V('text',{x:184,y:114,'class':'bwTxt'},n.ringG); gt.textContent='göz';
-  lensFrame(sv);
+  var S=.46, TX=[6,190], TY=22, LBL=[['Standart · dar alan','#fdba74'],['Markalı · geniş alan','#86efac']];
+  [0,1].forEach(function(i){
+    var o={}, sfx='_'+i;
+    o.cp=[0,1,2].map(function(k){ var c=V('clipPath',{id:'bwCp'+k+sfx},defs); return V('path',{},c); });
+    var cl=V('clipPath',{id:'bwL'+sfx},defs); V('rect',{x:0,y:0,width:180,height:240},cl); var cr=V('clipPath',{id:'bwR'+sfx},defs); V('rect',{x:180,y:0,width:180,height:240},cr);
+    var full=V('clipPath',{id:'bwFull'+sfx},defs); V('path',{d:LENS},full);
+    var G=V('g',{transform:'translate('+TX[i]+' '+TY+') scale('+S+')'});
+    V('ellipse',{cx:180,cy:246,rx:128,ry:6,fill:'rgba(0,0,0,.14)'},G);
+    function lay(clipId,filt,sk){
+      var g=V('g',{'clip-path':'url(#'+clipId+')'},G);
+      if(sk===0){ V('use',{href:'#bwWorld',filter:'url(#'+filt+')'},g); return; }
+      [['bwL'+sfx,-1],['bwR'+sfx,1]].forEach(function(h){ var hg=V('g',{'clip-path':'url(#'+h[0]+')'},g); var tg=V('g',{transform:'translate(180 120) skewX('+(h[1]*sk)+') translate(-180 -120)'},hg); V('use',{href:'#bwWorld',filter:'url(#'+filt+')'},tg); });
+    }
+    lay('bwFull'+sfx,'bwB3',7); lay('bwCp2'+sfx,'bwB2',4); lay('bwCp1'+sfx,'bwB1',2);
+    var g0=V('g',{'clip-path':'url(#bwCp0'+sfx+')'},G); V('use',{href:'#bwWorld'},g0);
+    var ov=V('g',{'clip-path':'url(#bwFull'+sfx+')'},G);
+    o.bandG=V('g',{},ov); o.bands=[0,1,2].map(function(){ return V('path',{'class':'plDead',opacity:0.12},o.bandG); });
+    o.clr=V('path',{'class':'gvDash'},ov);
+    o.ringG=V('g',{},ov); [10,20,30].forEach(function(a){ V('circle',{cx:180,cy:100,r:a*PPD,'class':'bwRing'},o.ringG); var t=V('text',{x:180+a*PPD+2,y:98,'class':'bwTxt'},o.ringG); t.textContent=a+'°'; });
+    V('line',{x1:170,y1:100,x2:190,y2:100,stroke:'#fbbf24','stroke-width':1.5},o.ringG); V('line',{x1:180,y1:90,x2:180,y2:110,stroke:'#fbbf24','stroke-width':1.5},o.ringG);
+    V('path',{d:LENS,fill:'none',stroke:'#111827','stroke-width':7,'stroke-linejoin':'round'},G);
+    if(i) V('line',{x1:334,y1:44,x2:356,y2:40,stroke:'#111827','stroke-width':6,'stroke-linecap':'round'},G); else V('line',{x1:26,y1:44,x2:4,y2:40,stroke:'#111827','stroke-width':6,'stroke-linecap':'round'},G);
+    var lt=V('text',{x:TX[i]+180*S,y:14,'text-anchor':'middle','font-size':11,'font-weight':'700',fill:LBL[i][1]}); lt.textContent=LBL[i][0];
+    n.l.push(o);
+  });
+  V('path',{d:'M'+(TX[0]+334*S)+','+(TY+34*S)+' Q181,'+(TY-4)+' '+(TX[1]+26*S)+','+(TY+34*S),fill:'none',stroke:'#111827','stroke-width':3.5,'stroke-linecap':'round'});
   BW.ready=true;
 }
 function bwMap(){
-  var n=BW.n, L=Lmm(), q=curP;
-  n.cp.forEach(function(p,i){ p.setAttribute('d',zonePath(q,[0,14,30][i],L)); });
-  n.bands.forEach(function(b,i){ b.setAttribute('d','M0,0 H360 V240 H0 Z '+zonePath(q,[0,14,30][i],L)); });
-  n.clr.setAttribute('d',zoneSides(q,0,L));
-  var pct=lensPct(); $('bwNet').textContent='%'+pct; $('bwDead').textContent='%'+(100-pct);
+  var n=BW.n, L=Lmm(), qs=[TIER[0],TIER[BW.rt]], pc=[];
+  qs.forEach(function(q,i){ var o=n.l[i];
+    o.cp.forEach(function(p,k){ p.setAttribute('d',zonePath(q,[0,14,30][k],L)); });
+    o.bands.forEach(function(b,k){ b.setAttribute('d','M0,0 H360 V240 H0 Z '+zonePath(q,[0,14,30][k],L)); });
+    o.clr.setAttribute('d',zoneSides(q,0,L)); pc.push(lensPctQ(q)); });
+  $('bwNet').textContent='%'+pc[0]+' / %'+pc[1]; $('bwDead').textContent='%'+(100-pc[0])+' / %'+(100-pc[1]);
 }
 function bwRender(){
   if(!BW.ready) return;
   var n=BW.n;
   document.getElementById('bwWorld').setAttribute('transform','translate('+(180-(800+BW.x))+','+(120-(450+BW.y))+')');
-  n.bandG.style.display=$('bwBands').checked?'':'none'; n.ringG.style.display=$('bwRings').checked?'':'none';
+  n.l.forEach(function(o){ o.bandG.style.display=$('bwBands').checked?'':'none'; o.ringG.style.display=$('bwRings').checked?'':'none'; });
   var dx=-BW.x/PPD, dy=-BW.y/PPD;
   $('bwX').textContent=Math.abs(Math.round(dx))+'°'+(dx>1?' sağa':dx<-1?' sola':'');
   $('bwY').textContent=Math.abs(Math.round(dy))+'°'+(dy>1?' aşağı':dy<-1?' yukarı':'');
-  $('bwCap').textContent=(Math.abs(dx)<1&&Math.abs(dy)<1)?'Resim ortada. Net alan camın ortasında; kenarlar ölü bölge.':'Resim camın altında kayıyor. Hangi nesne net alana girerse netleşir, kenara giden bulanıklaşır ve eğrilir.';
+  $('bwCap').textContent=(Math.abs(dx)<1&&Math.abs(dy)<1)?'Resim ortada. Soldaki standart camda net alan dar, sağdaki markalı camda daha geniş.':'Resim iki camın altında birlikte kayıyor. Aynı nesne markalı camda daha uzun net kalır, standart camda daha çabuk bulanıklaşır ve eğrilir.';
   $('bwPlay').textContent=BW.playing?'⏸ Durdur':'▶ Oynat';
 }
 function bwClamp(){ BW.x=Math.max(-620,Math.min(620,BW.x)); BW.y=Math.max(-330,Math.min(330,BW.y)); }
@@ -3459,23 +3501,27 @@ function bwTick(ts){
 function bwStart(){ BW.last=performance.now(); requestAnimationFrame(bwTick); }
 $('bwPlay').addEventListener('click',function(){ BW.playing=!BW.playing; BW.hold=null; if(BW.playing) bwStart(); bwRender(); });
 $('bwReset').addEventListener('click',function(){ BW.playing=false; BW.hold=null; BW.x=0; BW.y=0; bwRender(); });
+$('bwRight').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; BW.rt=parseInt(b.dataset.t,10)||2; Array.prototype.forEach.call($('bwRight').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); if(BW.ready){ bwMap(); bwRender(); } });
 $('bwBands').addEventListener('change',bwRender); $('bwRings').addEventListener('change',bwRender);
 $('bwPad').addEventListener('pointerdown',function(e){ var b=e.target.closest('button'); if(!b) return; e.preventDefault(); BW.playing=false; BW.hold=[parseFloat(b.dataset.dx),parseFloat(b.dataset.dy)]; bwStart(); });
 ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ $('bwPad').addEventListener(ev,function(){ BW.hold=null; }); });
-$('bwSvg').addEventListener('pointerdown',function(e){ BW.playing=false; BW.hold=null; var r=$('bwSvg').getBoundingClientRect(); BW.drag={x:e.clientX,y:e.clientY,k:360/r.width}; try{ $('bwSvg').setPointerCapture(e.pointerId); }catch(x){} $('bwSvg').style.cursor='grabbing'; bwRender(); });
-$('bwSvg').addEventListener('pointermove',function(e){ if(!BW.drag) return; BW.x-=(e.clientX-BW.drag.x)*BW.drag.k; BW.y-=(e.clientY-BW.drag.y)*BW.drag.k; BW.drag.x=e.clientX; BW.drag.y=e.clientY; bwClamp(); bwRender(); });
-['pointerup','pointercancel'].forEach(function(ev){ $('bwSvg').addEventListener(ev,function(){ BW.drag=null; $('bwSvg').style.cursor='grab'; }); });
+$('bwSvg').addEventListener('pointerdown',function(e){ var r=$('bwSvg').getBoundingClientRect(); BW.drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,k:360/r.width,mv:false}; });
+$('bwSvg').addEventListener('pointermove',function(e){ var d=BW.drag; if(!d) return; if(!d.mv){ if(Math.abs(e.clientX-d.sx)>8&&Math.abs(e.clientX-d.sx)>Math.abs(e.clientY-d.sy)){ d.mv=true; BW.playing=false; BW.hold=null; if(BN.on) bnStop(); try{ $('bwSvg').setPointerCapture(e.pointerId); }catch(x){} $('bwSvg').style.cursor='grabbing'; } else return; } BW.x-=(e.clientX-d.x)*d.k; d.x=e.clientX; d.y=e.clientY; bwClamp(); bwRender(); });
+$('bwSvg').addEventListener('pointerup',function(e){ var d=BW.drag; BW.drag=null; $('bwSvg').style.cursor='grab'; if(d&&!d.mv&&Math.abs(e.clientX-d.sx)<8&&Math.abs(e.clientY-d.sy)<8&&!BW.playing&&!BW.hold&&!BN.on){ BW.playing=true; bwStart(); bwRender(); } });
+$('bwSvg').addEventListener('pointercancel',function(){ BW.drag=null; $('bwSvg').style.cursor='grab'; });
 $('bkTabs').addEventListener('click',function(e){
-  var b=e.target.closest('button'); if(!b) return; var worn=b.dataset.m==='wo';
+  var b=e.target.closest('button'); if(!b) return; var worn=b.dataset.m==='wo', dsm=b.dataset.m==='ds';
   Array.prototype.forEach.call($('bkTabs').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); });
-  $('bkHE').hidden=worn; $('bkWorn').hidden=!worn;
+  $('bkHE').hidden=worn||dsm; $('bkWorn').hidden=!worn; $('bkDS').hidden=!dsm; $('bkNote').hidden=dsm;
+  if(dsm){ BK.playing=false; BW.playing=false; dsRender(); if(!REDUCE) dsStart(); return; }
+  dsStop();
   if(worn){ BK.playing=false; if(!BW.ready){ bwBuild(); bwMap(); } bwMap(); bwRender(); if(!REDUCE){ BW.playing=true; bwStart(); } }
   else { BW.playing=false; renderBak(performance.now()); }
 });
 
 /* ---------- görüş alanı: 3 mesafe + marka profilleri ---------- */
-var GKEY='pd-gorus-profil-v1';
-var PDEF=[{n:'Normal progresif',f:72,m:30,y:38},{n:'Nikon',f:92,m:42,y:52},{n:'Kodak',f:104,m:52,y:62},{n:'Zeiss',f:116,m:62,y:72}];
+var GKEY='pd-gorus-profil-v2';
+var PDEF=[{n:'Normal progresif',f:72,m:30,y:38},{n:'Essilor',f:94,m:44,y:54},{n:'Kodak',f:98,m:47,y:57},{n:'Nikon',f:102,m:50,y:60},{n:'Zeiss',f:106,m:53,y:63}];
 var DISTS=[
   {k:'f',t:'UZAK GÖRÜŞ ALANI',d:'Uzak mesafeleri net görmenizi sağlar.',key:'f'},
   {k:'m',t:'ORTA GÖRÜŞ ALANI',d:'Bilgisayar ve ekran gibi orta mesafelerde netlik sunar.',key:'m'},
@@ -3486,7 +3532,7 @@ function gvClamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function cleanProf(a){
   var out=PDEF.map(function(d){ return {n:d.n,f:d.f,m:d.m,y:d.y}; });
   if(!Array.isArray(a)) return out;
-  a.slice(0,4).forEach(function(x,i){ if(!x||typeof x!=='object') return;
+  a.slice(0,5).forEach(function(x,i){ if(!x||typeof x!=='object') return;
     var n=cl(x.n,24).trim(); if(n) out[i].n=n;
     ['f','m','y'].forEach(function(k){ var v=parseInt(x[k],10); if(v>=20&&v<=140) out[i][k]=v; }); });
   return out;
@@ -3500,13 +3546,20 @@ function gvScenes(defs){
   function G(id){ var g=svgEl('g',{id:id}); defs.appendChild(g); return function(tag,at,t){ var e=svgEl(tag,at); g.appendChild(e); if(t!=null) e.textContent=t; return e; }; }
   [['gvB1',1.5],['gvB3',4.2]].forEach(function(f){ var el=svgEl('filter',{id:f[0],filterUnits:'userSpaceOnUse',x:0,y:0,width:300,height:190}); el.appendChild(svgEl('feGaussianBlur',{stdDeviation:f[1]})); defs.appendChild(el); });
   var A=G('gvS_f');
-  A('rect',{x:0,y:0,width:900,height:260,fill:'#9ec5e3'}); A('rect',{x:0,y:90,width:900,height:100,fill:'#c8dff0'});
-  A('polygon',{points:'0,260 120,140 230,210 360,90 470,200 560,120 700,230 820,150 900,200 900,260',fill:'#6f87a3'});
-  A('polygon',{points:'300,150 360,90 420,150 390,140 360,160 330,138',fill:'#f3f6f9'}); A('polygon',{points:'520,160 560,120 600,160 580,152 560,166 540,152',fill:'#f3f6f9'});
-  A('rect',{x:0,y:250,width:900,height:270,fill:'#3d7fa3'});
-  A('polygon',{points:'0,260 120,380 230,310 360,430 470,320 560,400 700,290 820,370 900,320 900,260',fill:'#5b7894',opacity:.55});
-  [[40,250],[90,262],[820,255],[870,265]].forEach(function(t){ A('polygon',{points:(t[0]-22)+','+(t[1]+60)+' '+t[0]+','+t[1]+' '+(t[0]+22)+','+(t[1]+60),fill:'#2f5d3a'}); });
-  A('rect',{x:440,y:196,width:3,height:36,fill:'#444'}); A('rect',{x:443,y:196,width:44,height:14,fill:'#fff',stroke:'#334155'}); A('text',{x:465,y:207,'text-anchor':'middle','font-size':9,'font-weight':'700',fill:'#1e3a8a','font-family':'sans-serif'},'500 m');
+  var A0=A, AW=A0('g',{transform:'translate(0,78)'}); A=function(tag,at,t){ var el=svgEl(tag,at); AW.appendChild(el); if(t!=null) el.textContent=t; return el; };
+  A('rect',{x:0,y:-100,width:900,height:700,fill:'#bfe0f5'}); A('rect',{x:0,y:120,width:900,height:140,fill:'#dff0fa'});
+  [[0,150,90,170,'#8795a8'],[95,110,70,210,'#9aa8ba'],[170,170,100,150,'#7d8ba0'],[640,130,80,190,'#9aa8ba'],[725,160,90,160,'#8795a8'],[820,100,80,220,'#7d8ba0']].forEach(function(r){ A('rect',{x:r[0],y:r[1],width:r[2],height:r[3],fill:r[4]}); for(var wy=r[1]+14;wy<r[1]+r[3]-30;wy+=26) for(var wx=r[0]+10;wx<r[0]+r[2]-14;wx+=22) A('rect',{x:wx,y:wy,width:10,height:14,fill:'#e8f1f8',opacity:.85}); });
+  A('rect',{x:300,y:120,width:300,height:200,fill:'#ead9bd'}); A('rect',{x:300,y:120,width:300,height:10,fill:'#c9b48f'});
+  A('rect',{x:318,y:138,width:264,height:52,rx:6,fill:'#1e3a8a'}); A('text',{x:450,y:174,'text-anchor':'middle','font-size':32,'font-weight':'700',fill:'#fff','font-family':'sans-serif'},'AYSİMA OPTİK');
+  A('rect',{x:300,y:200,width:300,height:20,fill:'#b91c1c'}); for(var ai=0;ai<10;ai++) A('rect',{x:300+ai*30,y:200,width:15,height:20,fill:'#fff',opacity:.9});
+  A('rect',{x:322,y:228,width:150,height:80,fill:'#fde68a',opacity:.9}); A('rect',{x:488,y:222,width:76,height:98,fill:'#92400e'}); A('circle',{cx:552,cy:272,r:4,fill:'#fde047'});
+  [[336,250],[380,250],[424,250]].forEach(function(g){ A('rect',{x:g[0],y:g[1],width:30,height:12,rx:5,fill:'#1f2937'}); });
+  A('rect',{x:0,y:320,width:900,height:18,fill:'#d6d3d1'}); A('rect',{x:0,y:338,width:900,height:182,fill:'#475569'});
+  for(var ri=0;ri<9;ri++) A('rect',{x:20+ri*105,y:420,width:60,height:6,fill:'#e2e8f0'});
+  A('rect',{x:245,y:200,width:6,height:122,fill:'#334155'}); A('circle',{cx:248,cy:196,r:10,fill:'#fde047'});
+  A('rect',{x:628,y:268,width:8,height:52,fill:'#5b3a1e'}); A('circle',{cx:632,cy:250,r:34,fill:'#3f7d4e'});
+  A('rect',{x:80,y:372,width:110,height:34,rx:10,fill:'#dc2626'}); A('rect',{x:100,y:352,width:66,height:26,rx:8,fill:'#b91c1c'}); A('circle',{cx:108,cy:408,r:10,fill:'#111827'}); A('circle',{cx:164,cy:408,r:10,fill:'#111827'});
+  A('rect',{x:690,y:380,width:120,height:36,rx:10,fill:'#2563eb'}); A('rect',{x:708,y:358,width:70,height:28,rx:8,fill:'#1d4ed8'}); A('circle',{cx:716,cy:418,r:10,fill:'#111827'}); A('circle',{cx:784,cy:418,r:10,fill:'#111827'});
   var B=G('gvS_m');
   B('rect',{x:0,y:0,width:900,height:520,fill:'#d9dee3'}); B('rect',{x:0,y:330,width:900,height:190,fill:'#b08a62'});
   B('rect',{x:70,y:60,width:150,height:110,fill:'#eef2f6',stroke:'#9aa4ad'}); B('line',{x1:145,y1:60,x2:145,y2:170,stroke:'#9aa4ad'});
@@ -3555,9 +3608,10 @@ function gvPanel(parent,kind,title,desc){
   var pnl={set:function(hv,label){
       var m=hv; pc.setAttribute('d',gvPath(kind,m)); pc2.setAttribute('d',gvPath(kind,m+12)); dash.setAttribute('d',gvSides(kind,m));
       cap.textContent=label; }, svg:sv, icon:ic};
-  sv.addEventListener('pointerdown',function(e){ GV.playing=false; GV.hold=null; var r=sv.getBoundingClientRect(); GV.drag={x:e.clientX,y:e.clientY,k:340/r.width}; try{ sv.setPointerCapture(e.pointerId); }catch(x){} sv.style.cursor='grabbing'; gvReadBtn(); });
-  sv.addEventListener('pointermove',function(e){ if(!GV.drag) return; GV.x-=(e.clientX-GV.drag.x)*GV.drag.k; GV.y-=(e.clientY-GV.drag.y)*GV.drag.k; GV.drag.x=e.clientX; GV.drag.y=e.clientY; gvLimit(); gvWorldT(); });
-  ['pointerup','pointercancel'].forEach(function(ev){ sv.addEventListener(ev,function(){ GV.drag=null; sv.style.cursor='grab'; }); });
+  sv.addEventListener('pointerdown',function(e){ var r=sv.getBoundingClientRect(); GV.drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,k:340/r.width,mv:false}; });
+  sv.addEventListener('pointermove',function(e){ var d=GV.drag; if(!d) return; if(!d.mv){ if(Math.abs(e.clientX-d.sx)>8&&Math.abs(e.clientX-d.sx)>Math.abs(e.clientY-d.sy)){ d.mv=true; GV.playing=false; GV.hold=null; gvReadBtn(); try{ sv.setPointerCapture(e.pointerId); }catch(x){} sv.style.cursor='grabbing'; } else return; } GV.x-=(e.clientX-d.x)*d.k; d.x=e.clientX; d.y=e.clientY; gvLimit(); gvWorldT(); });
+  sv.addEventListener('pointerup',function(e){ var d=GV.drag; GV.drag=null; sv.style.cursor='grab'; if(d&&!d.mv&&Math.abs(e.clientX-d.sx)<8&&Math.abs(e.clientY-d.sy)<8&&!GV.playing&&!GV.hold){ GV.playing=true; gvGo(); gvReadBtn(); } });
+  sv.addEventListener('pointercancel',function(){ GV.drag=null; sv.style.cursor='grab'; });
   return pnl;
 }
 function gvLimit(){ GV.x=gvClamp(GV.x,-290,290); GV.y=gvClamp(GV.y,-160,160); }
@@ -3613,9 +3667,183 @@ $('gvPad').addEventListener('pointerdown',function(e){ var b=e.target.closest('b
 $('gvDistSel').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; GV.cmpD=parseInt(b.dataset.d,10)||0;
   Array.prototype.forEach.call($('gvDistSel').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); gvCmpScene(); gvRender(); });
 var gvSeen=false;
-function gvEnter(){ if(!GV.ready) gvBuild(); if(!gvSeen){ gvSeen=true; if(!REDUCE){ GV.playing=true; gvGo(); gvReadBtn(); } } }
+function gvEnter(){ if(!GV.ready) gvBuild(); gvSeen=true; if(!REDUCE && !GV.playing){ GV.hold=null; GV.playing=true; gvGo(); gvReadBtn(); } }
 var bkSeen=false;
 function bkEnter(){ if(!BK.ready){ bkBuild(); bkLensMap(); } renderBak(0); if(!bkSeen){ bkSeen=true; if(!REDUCE) bkPlay(true); } }
+
+/* ---------- Bakış: sesli anlatım ---------- */
+var BN={tok:0,on:false};
+function bnSeg(id,attr,val){ Array.prototype.forEach.call($(id).querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x.dataset[attr]===String(val))); }); }
+function bnStop(){ BN.tok++; BN.on=false; try{ if(window.__anlStop) window.__anlStop(); }catch(e){} $('bkNar').textContent='🔊 Sesli anlat'; $('bkNarCap').classList.remove('live'); }
+function bnAnim(from,to,ms,set,tok){ var t0=performance.now(); (function f(ts){ if(tok!==BN.tok) return; var p=Math.min(1,(ts-t0)/ms), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; set(from+(to-from)*e); if(p<1) requestAnimationFrame(f); })(t0); }
+function bnHE(tok){
+  function th(v){ BK.th=v; renderBak(performance.now()); }
+  function mode(k){ BK.k=k; bnSeg('bkMode','k',String(k)); renderBak(performance.now()); }
+  return [
+   {s:'Gözlükle çevreye bakarken iki hareket birlikte çalışır: başınız ve gözünüz. Üstteki kuşbakışı çizimde baş, göz ve gözlüğü görüyorsunuz. Altta ise gözlükten gördüğünüz görüntü var.',run:function(){ BK.playing=false; BK.far=true; bnSeg('bkDist','d','far'); mode(.7); th(0); }},
+   {s:'Hedef karşıdayken baş da göz de düz. Bakış camın tam ortasından geçiyor ve görüntü tertemiz.',run:function(){ th(0); }},
+   {s:'Şimdi hedefi yana alıyoruz ve sadece gözümüzü çeviriyoruz.',run:function(){ mode(0); bnAnim(0,30,3000,th,tok); }},
+   {s:'Göz yana kayınca bakış, camın kenarına geliyor. Progresif camlarda yan bölgeler doğal olarak daha yumuşaktır, bu yüzden görüntüde hafif bir bulanıklık hissedersiniz.',run:function(){ th(30); }},
+   {s:'Çözüm çok kolay: başı hedefe çevirmek. Böylece göz camın ortasında kalıyor ve görüntü yeniden tertemiz oluyor.',run:function(){ mode(.95); }},
+   {s:'Yakına, yani okumaya bakarken de aynı kural geçerli. Okuma bölgesi camın alt kısmındadır. Satırları gözünüzle değil, başınızı hafifçe çevirerek takip etmek en rahatı.',run:function(){ BK.far=false; bnSeg('bkDist','d','near'); bnAnim(30,-18,3200,th,tok); }},
+   {s:'Özetle: hedefe başınızla dönün, gözünüzle ince ayar yapın. Çoğu kişi bu alışkanlığa kısa sürede alışır ve sonrasında progresif gözlük çok doğal gelir. Alışma sürecinde size yardımcı olmaktan memnuniyet duyarız.',run:function(){ BK.far=true; bnSeg('bkDist','d','far'); bnAnim(-18,0,2200,th,tok); }}
+  ];
+}
+function bnWO(tok){
+  function bx(v){ BW.x=v; bwClamp(); bwRender(); } function by(v){ BW.y=v; bwClamp(); bwRender(); }
+  return [
+   {s:'Burada gözlüğün iki camı birlikte görünüyor. Solda standart bir progresif, sağda markalı, geniş alanlı bir progresif. Resim camların altından kayıyor, tıpkı başınızı çevirdiğinizde dünyanın kayması gibi.',run:function(){ BW.playing=false; BW.hold=null; BW.x=0; BW.y=0; bwRender(); }},
+   {s:'Camların ortasındaki alanlar net görüş alanı. Kenarlarda ise görüntünün yumuşadığı bölgeler var. Şimdi bu bölgeleri işaretliyoruz. Markalı camda net alanın çok daha geniş olduğunu görüyorsunuz.',run:function(){ $('bwBands').checked=true; bwRender(); }},
+   {s:'Resmi yavaşça kaydırıyoruz, yani başımızı sağa çeviriyoruz. Tabela markalı camda daha uzun süre net kalıyor, standart camda ise çabuk kenara kayıp yumuşuyor.',run:function(){ bnAnim(0,320,3200,bx,tok); }},
+   {s:'Şimdi başımızı sola çeviriyoruz. Yine aynı fark var. Markalı camda daha geniş bir alanı rahatça görüyorsunuz, bu da gün boyu daha az baş hareketi demek.',run:function(){ bnAnim(320,-380,4200,bx,tok); }},
+   {s:'Aşağı inerken okuma bölgesi devreye giriyor. Markalı camda okuma alanı daha geniş. Yani satırları başınızı çok oynatmadan okuyabiliyorsunuz.',run:function(){ bnAnim(-380,0,1800,bx,tok); bnAnim(0,210,3600,by,tok); }},
+   {s:'Başınızı hedefe doğru çevirdiğinizde hedef net alana giriyor ve görüntü netleşiyor. Markalı camda bunu yapmak çok daha doğal ve kolay.',run:function(){ bnAnim(210,0,2400,by,tok); }},
+   {s:'İyi bir progresifte net alan geniş, yan bölgeler ise yumuşak geçişlidir. Hareketler daha rahat olur ve alışma kolaylaşır. Size en uygun camı birlikte seçelim.',run:function(){ $('bwBands').checked=false; bwRender(); }}
+  ];
+}
+function bnPlay(){
+  if(BN.on){ bnStop(); return; }
+  var worn=!$('bkWorn').hidden, dsm=!$('bkDS').hidden; BK.playing=false; BW.playing=false; BW.hold=null; if(typeof dsStop==='function') dsStop(); try{ if(window.__anlStop) window.__anlStop(); }catch(e){}
+  var tok=++BN.tok; BN.on=true; $('bkNar').textContent='⏹ Durdur'; $('bkNarCap').hidden=false; $('bkNarCap').classList.add('live');
+  if(!worn && !dsm && !BK.ready){ bkBuild(); bkLensMap(); } if(worn && !BW.ready){ bwBuild(); bwMap(); }
+  var L=dsm?bnDS(tok):worn?bnWO(tok):bnHE(tok), i=0;
+  (function next(){
+    if(tok!==BN.tok) return;
+    if(i>=L.length||$('bakSec').hidden||$('viewCam').hidden){ if(tok===BN.tok){ BN.on=false; $('bkNar').textContent='🔊 Tekrar anlat'; $('bkNarCap').classList.remove('live'); } return; }
+    var q=L[i++]; $('bkNarCap').textContent=q.s; try{ q.run(); }catch(e){}
+    (window.__anlSay||function(t,d){ setTimeout(d,t.length*62+700); })(q.s,function(){ if(tok!==BN.tok) return; setTimeout(next,350); });
+  })();
+}
+$('bkNar').addEventListener('click',bnPlay);
+['bkTh','bkMode','bkDist','bkPlay','bwPlay','bwReset','bwPad','dsDist','dsPit','dsPre'].forEach(function(id){ $(id).addEventListener('pointerdown',function(){ if(BN.on) bnStop(); }); });
+$('bkTabs').addEventListener('click',function(){ if(BN.on) bnStop(); $('bkNarCap').hidden=true; $('bkNar').textContent='🔊 Sesli anlat'; });
+
+/* ---------- Bakış: mesafe ve baş eğimi (progresif) ---------- */
+var DS={v:100,p:0};
+function dsGeo(){
+  var d=0.3*Math.pow(20,DS.v/100), p=DS.p, piv={x:90,y:178}, e0={x:122,y:102};
+  var rad=p*Math.PI/180, c=Math.cos(rad), s=Math.sin(rad), dx=e0.x-piv.x, dy=e0.y-piv.y;
+  var ew={x:piv.x+dx*c-dy*s, y:piv.y+dx*s+dy*c};
+  var a=Math.atan(0.25/d), ox=122+45+50*Math.log(d/0.3), oy=102+(ox-122)*Math.tan(a);
+  var r=Math.atan2(oy-ew.y,ox-ew.x)*180/Math.PI-p;
+  var need=d>2.5?'far':d>0.8?'mid':'near', zone=r<7?'far':r<17?'mid':'near';
+  var iv={far:[-90,7],mid:[7,17],near:[17,34]}[need];
+  var m=r<iv[0]?iv[0]-r:r>iv[1]?r-iv[1]:0;
+  return {d:d,p:p,ew:ew,ox:ox,oy:oy,r:r,need:need,zone:zone,m:m,sdS:m<1?0:Math.min(8,(m-1)*0.6),sdB:m<3.5?0:Math.min(5,(m-3.5)*0.35),piv:piv,e0:e0};
+}
+var DSN={far:'Uzak',mid:'Ara',near:'Yakın'};
+function dsFmt(d){ return (d<2?d.toFixed(2):d<10?d.toFixed(1):String(Math.round(d))).replace('.',',')+' m'; }
+function dsYz(r){ return 102+44*Math.tan(r*Math.PI/180); }
+function dsRender(){
+  var g=dsGeo(), okS=g.sdS<.4, okB=g.sdB<1.2, ok=okS&&okB, h='', i;
+  h+='<defs><linearGradient id="dsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dbeafe"/><stop offset="1" stop-color="#f1f5f9"/></linearGradient></defs><rect width="360" height="230" fill="url(#dsSky)"/>';
+  h+='<path d="M10,232 Q20,188 90,184 Q160,188 170,232 Z" fill="#334155"/>';
+  var ty=Math.max(68,Math.min(138,dsYz(g.r)));
+  h+='<g transform="rotate('+g.p.toFixed(2)+' 90 178)"><rect x="78" y="140" width="24" height="46" rx="8" fill="#e2b392"/><circle cx="90" cy="110" r="46" fill="#f0c8a8"/>'
+   +'<path d="M43,112 A46 46 0 0 1 131,95 Q96,68 60,100 Q50,104 43,112 Z" fill="#2b2118"/><ellipse cx="84" cy="114" rx="6" ry="10" fill="#e5b99a"/>'
+   +'<path d="M134,104 q9,10 1,17 l-7,0" fill="#f0c8a8" stroke="#d9a98a" stroke-width="1.5"/>'
+   +'<ellipse cx="122" cy="102" rx="7" ry="5.5" fill="#fff" stroke="#9ca3af"/><circle cx="'+(124.5)+'" cy="'+(102+Math.max(-15,Math.min(38,g.r))*0.11).toFixed(1)+'" r="2.8" fill="#1f2937"/>'
+   +'<line x1="136" y1="101" x2="160" y2="96" stroke="#111827" stroke-width="2.5"/><line x1="160" y1="80" x2="84" y2="100" stroke="#111827" stroke-width="3" stroke-linecap="round"/>'
+   +'<rect x="161" y="70" width="10" height="'+(dsYz(7)-70).toFixed(1)+'" fill="#60a5fa"/><rect x="161" y="'+dsYz(7).toFixed(1)+'" width="10" height="'+(dsYz(17)-dsYz(7)).toFixed(1)+'" fill="#fbbf24"/><rect x="161" y="'+dsYz(17).toFixed(1)+'" width="10" height="'+(138-dsYz(17)).toFixed(1)+'" fill="#34d399"/>'
+   +'<rect x="159" y="68" width="14" height="72" rx="6" fill="none" stroke="#111827" stroke-width="2.5"/>'
+   +'<circle cx="166" cy="'+ty.toFixed(1)+'" r="4.5" fill="#fff" stroke="'+(ok?'#16a34a':okB?'#f59e0b':'#dc2626')+'" stroke-width="2.5"/></g>';
+  h+='<line x1="'+g.ew.x.toFixed(1)+'" y1="'+g.ew.y.toFixed(1)+'" x2="'+g.ox.toFixed(1)+'" y2="'+g.oy.toFixed(1)+'" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5 4"/>';
+  var ox=g.ox, oy=g.oy;
+  if(g.need==='far') h+='<line x1="'+ox+'" y1="'+(oy+4)+'" x2="'+ox+'" y2="'+(oy+40)+'" stroke="#64748b" stroke-width="3"/><rect x="'+(ox-22)+'" y="'+(oy-12)+'" width="44" height="18" rx="3" fill="#1e3a8a"/><text x="'+ox+'" y="'+(oy+1)+'" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">AYSİMA</text>';
+  else if(g.need==='mid') h+='<rect x="'+(ox-18)+'" y="'+(oy-13)+'" width="36" height="25" rx="3" fill="#111827"/><rect x="'+(ox-15)+'" y="'+(oy-10)+'" width="30" height="19" fill="#bae6fd"/><line x1="'+ox+'" y1="'+(oy+12)+'" x2="'+ox+'" y2="'+(oy+20)+'" stroke="#111827" stroke-width="3"/>';
+  else h+='<rect x="'+(ox-13)+'" y="'+(oy-10)+'" width="26" height="20" rx="2" fill="#fff" stroke="#64748b"/><line x1="'+(ox-8)+'" y1="'+(oy-4)+'" x2="'+(ox+8)+'" y2="'+(oy-4)+'" stroke="#94a3b8"/><line x1="'+(ox-8)+'" y1="'+oy+'" x2="'+(ox+8)+'" y2="'+oy+'" stroke="#94a3b8"/><line x1="'+(ox-8)+'" y1="'+(oy+4)+'" x2="'+(ox+3)+'" y2="'+(oy+4)+'" stroke="#94a3b8"/>';
+  h+='<text x="'+ox+'" y="'+(g.need==='near'?oy+27:oy-19)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">'+dsFmt(g.d)+'</text>';
+  $('dsTop').innerHTML=h;
+  var sc=dsScene(g.need), K=0.49;
+  var v='<defs><filter id="dsBs" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="'+(g.sdS/K).toFixed(2)+'"/></filter><filter id="dsBb" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="'+(g.sdB/K).toFixed(2)+'"/></filter>'
+   +'<linearGradient id="dsSun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b7db1"/><stop offset=".6" stop-color="#f9b872"/><stop offset="1" stop-color="#fcd9a0"/></linearGradient>'
+   +'<linearGradient id="dsWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient>'
+   +'<linearGradient id="dsWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b7791f"/><stop offset="1" stop-color="#8b5a2b"/></linearGradient>'
+   +'<radialGradient id="dsLamp" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#fde68a" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></radialGradient>'
+   +'<clipPath id="dsC0"><rect x="10" y="40" width="164" height="112" rx="42"/></clipPath><clipPath id="dsC1"><rect x="186" y="40" width="164" height="112" rx="42"/></clipPath></defs>';
+  v+='<rect width="360" height="230" fill="#1e293b"/>';
+  [[10,'dsC0','dsBs'],[186,'dsC1','dsBb']].forEach(function(l){ v+='<g clip-path="url(#'+l[1]+')"><g transform="translate('+(l[0]-6)+' 40) scale('+K+')" filter="url(#'+l[2]+')">'+sc+'</g></g><rect x="'+l[0]+'" y="40" width="164" height="112" rx="42" fill="none" stroke="#0b1220" stroke-width="6"/>'; });
+  v+='<path d="M174,82 Q180,64 186,82" fill="none" stroke="#0b1220" stroke-width="5" stroke-linecap="round"/><line x1="14" y1="62" x2="2" y2="54" stroke="#0b1220" stroke-width="5" stroke-linecap="round"/><line x1="346" y1="62" x2="358" y2="54" stroke="#0b1220" stroke-width="5" stroke-linecap="round"/>';
+  v+='<text x="92" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#fdba74">Standart cam</text><text x="268" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#86efac">Markalı cam</text>';
+  [[92,okS],[268,okB]].forEach(function(q){ v+='<rect x="'+(q[0]-40)+'" y="160" width="80" height="24" rx="12" fill="'+(q[1]?'#16a34a':'#dc2626')+'"/><text x="'+q[0]+'" y="176" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">'+(q[1]?'Net':'Bulanık')+'</text>'; });
+  v+='<rect y="194" width="360" height="36" fill="rgba(2,6,23,.85)"/><text x="180" y="217" text-anchor="middle" font-size="13" fill="#e2e8f0">Baktığınız: '+(g.r>34?'alt kenar':DSN[g.zone])+' bölge · Gereken: '+DSN[g.need]+' bölge</text>';
+  $('dsView').innerHTML=v;
+  var cap;
+  if(ok) cap={far:'Uzağa bakıyorsunuz: gözünüz camın üst bölümünden geçiyor. Görüntü net.',mid:'Bilgisayar mesafesi: bakışınız ara bölgeye iniyor. Görüntü net.',near:'Okuma mesafesi: gözünüz camın alt bölümünde. Yazı net.'}[g.need];
+  else if(okB) cap='Standart cam bulanıklaşıyor; markalı cam daha geniş net alanı sayesinde hâlâ net. Yine de duruşu düzeltmek en rahatı.';
+  else if(g.r<(g.need==='mid'?7:17)) cap='Çene fazla aşağıda: gözünüz camın üst bölümünden bakıyor ve yakın yazı bulanıklaşıyor. Başı kaldırıp gözleri aşağı indirin.';
+  else cap='Çene fazla yukarıda: uzağa camın alt bölümünden bakıyorsunuz. Çenenizi hafifçe indirip camın üstünden bakın.';
+  $('dsCap').textContent=cap;
+  $('dsDl').textContent=dsFmt(g.d);
+  $('dsRd').textContent=dsFmt(g.d);
+  $('dsPt').textContent=Math.abs(Math.round(g.p))+'°'+(g.p>1?' çene aşağı':g.p<-1?' çene yukarı':'');
+  $('dsZ').textContent=g.r>34?'Alt kenar':DSN[g.zone];
+  $('dsN').textContent=DSN[g.need];
+  $('dsS').textContent=(okS?'Net':'Bulanık')+' / '+(okB?'Net':'Bulanık'); $('dsS').className=ok?'good':'bad';
+  Array.prototype.forEach.call($('dsPre').querySelectorAll('button'),function(b){ var t=+b.dataset.v; b.setAttribute('aria-pressed',String(Math.abs(DS.v-t)<6)); });
+  $('dsDist').value=DS.v; $('dsPit').value=DS.p;
+}
+var DSK=[[0,100,0],[2.5,100,0],[4.5,45,0],[6.5,45,0],[8.5,8,0],[10,8,0],[11.5,8,21],[13.5,8,21],[15,8,25],[17,8,25],[18.5,8,0],[19.5,8,0],[21.5,100,0],[22.5,100,-10],[24,100,-10],[25.5,100,-20],[27,100,-20],[28.5,100,0],[30,100,0]];
+function dsTick(ts){
+  if(!DS.playing) return; var t=(ts/1000)%30, i=1; while(i<DSK.length-1&&DSK[i][0]<t) i++;
+  var a=DSK[i-1], b=DSK[i], u=Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))); u=u*u*(3-2*u);
+  DS.v=a[1]+(b[1]-a[1])*u; DS.p=a[2]+(b[2]-a[2])*u; dsRender(); requestAnimationFrame(dsTick);
+}
+function dsStart(){ if(DS.playing) return; DS.playing=true; $('dsPlay').textContent='⏸ Durdur'; requestAnimationFrame(dsTick); }
+function dsStop(){ DS.playing=false; $('dsPlay').textContent='▶ Oynat'; }
+$('dsPlay').addEventListener('click',function(){ if(BN.on) bnStop(); DS.playing?dsStop():dsStart(); });
+function dsScene(need){
+  var h='', i;
+  if(need==='far'){
+    h+='<rect width="360" height="230" fill="url(#dsSun)"/><circle cx="64" cy="112" r="24" fill="#fde68a" opacity=".95"/>';
+    h+='<rect x="0" y="96" width="46" height="84" fill="#5b4b6e"/><rect x="50" y="80" width="34" height="100" fill="#6b5b7e"/><rect x="92" y="110" width="60" height="70" fill="#7a6a8a"/>';
+    h+='<rect x="168" y="58" width="180" height="124" fill="#ead9bd"/><rect x="168" y="104" width="180" height="14" fill="#b91c1c"/>';
+    h+='<rect x="186" y="66" width="144" height="32" rx="4" fill="#1e3a8a"/><text x="258" y="89" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">AYSİMA OPTİK</text>';
+    h+='<rect x="186" y="124" width="100" height="48" fill="#fde68a" opacity=".9"/><rect x="296" y="122" width="34" height="50" fill="#92400e"/>';
+    for(i=0;i<3;i++) h+='<rect x="'+(196+i*30)+'" y="134" width="20" height="8" rx="3" fill="#1f2937"/>';
+    h+='<rect x="0" y="176" width="360" height="12" fill="#d6d3d1"/><rect x="0" y="188" width="360" height="42" fill="#475569"/><rect x="40" y="206" width="40" height="4" fill="#e2e8f0"/><rect x="140" y="206" width="40" height="4" fill="#e2e8f0"/>';
+    h+='<rect x="150" y="104" width="4" height="74" fill="#334155"/><circle cx="152" cy="102" r="7" fill="#fde047"/>';
+    h+='<rect x="22" y="146" width="6" height="34" fill="#5b3a1e"/><circle cx="25" cy="136" r="24" fill="#3f7d4e"/>';
+    h+='<rect x="96" y="192" width="64" height="20" rx="6" fill="#dc2626"/><rect x="108" y="182" width="38" height="14" rx="5" fill="#b91c1c"/><circle cx="112" cy="213" r="6" fill="#111827"/><circle cx="146" cy="213" r="6" fill="#111827"/>';
+  } else if(need==='mid'){
+    h+='<rect width="360" height="230" fill="url(#dsWall)"/><rect x="0" y="168" width="360" height="62" fill="url(#dsWood)"/>';
+    h+='<rect x="64" y="22" width="232" height="130" rx="8" fill="#111827"/><rect x="72" y="30" width="216" height="114" fill="#eff6ff"/>';
+    h+='<text x="84" y="50" font-size="15" font-weight="700" fill="#0f172a">Satış raporu</text>';
+    var bs=[34,52,44,66,58,80]; for(i=0;i<6;i++) h+='<rect x="'+(86+i*30)+'" y="'+(132-bs[i])+'" width="20" height="'+bs[i]+'" fill="'+(i===5?'#16a34a':'#2563eb')+'"/>';
+    h+='<polyline points="96,96 126,80 156,88 186,64 216,70 246,48" fill="none" stroke="#f59e0b" stroke-width="3"/>';
+    h+='<rect x="170" y="152" width="20" height="14" fill="#6b7280"/><rect x="104" y="184" width="152" height="20" rx="4" fill="#374151"/>';
+    h+='<rect x="316" y="176" width="30" height="34" rx="4" fill="#fff"/><path d="M346,184 q12,6 0,16" fill="none" stroke="#fff" stroke-width="4"/>';
+    h+='<rect x="12" y="172" width="36" height="38" rx="4" fill="#92400e"/><circle cx="20" cy="160" r="12" fill="#22c55e"/><circle cx="36" cy="154" r="14" fill="#16a34a"/><circle cx="44" cy="166" r="10" fill="#22c55e"/>';
+  } else {
+    h+='<rect width="360" height="230" fill="url(#dsWood)"/><rect width="360" height="230" fill="url(#dsLamp)"/>';
+    h+='<rect x="28" y="22" width="150" height="186" rx="4" fill="#fffbeb" stroke="#d6c7a1"/><rect x="182" y="22" width="150" height="186" rx="4" fill="#fffdf5" stroke="#d6c7a1"/>';
+    h+='<text x="40" y="50" font-size="17" font-weight="700" fill="#1f2937">Aysima Optik</text>';
+    var L=['Küçük yazıları','rahatça okuyun.','Kitap ve telefon','için ideal mesafe','35–40 cm.','0123456789'];
+    for(i=0;i<L.length;i++) h+='<text x="40" y="'+(78+i*24)+'" font-size="14" fill="#374151">'+L[i]+'</text>';
+    var R=['Gözleriniz yavaşça','camın alt bölümüne','iner. Başınızı hafif','kaldırın, gözlerinizi','indirin. Yazı net.','Keyifli okumalar'];
+    for(i=0;i<R.length;i++) h+='<text x="194" y="'+(52+i*24)+'" font-size="14" fill="#374151">'+R[i]+'</text>';
+    h+='<rect x="300" y="190" width="50" height="10" rx="5" fill="#1e3a8a" transform="rotate(-20 325 195)"/>';
+  }
+  return h;
+}
+
+function dsSetV(x){ DS.v=x; dsRender(); } function dsSetP(x){ DS.p=x; dsRender(); }
+$('dsDist').addEventListener('input',function(){ dsStop(); DS.v=+this.value; dsRender(); });
+$('dsPit').addEventListener('input',function(){ dsStop(); DS.p=+this.value; dsRender(); });
+$('dsPre').addEventListener('click',function(e){ dsStop(); var b=e.target.closest('button'); if(!b) return; bnAnim(DS.v,+b.dataset.v,700,dsSetV,BN.tok); });
+function bnDS(tok){
+  return [
+   {s:'Progresif camın üst bölümü uzağı, orta bölümü bilgisayarı, alt bölümü okumayı gösterir. Doğru mesafeyi bulmak için gözünüzün camın doğru yerinden bakması yeterli.',run:function(){ DS.p=0; DS.v=100; dsRender(); }},
+   {s:'Önce uzağa bakalım, tabela karşıda. Baş düz, gözünüz camın üst bölümünden geçiyor ve görüntü net.',run:function(){ }},
+   {s:'Şimdi bilgisayara bakıyoruz. Bakışınız hafifçe alçalıyor ve camın orta bölümüne geçiyor. Mesafeyi böyle ayarlıyorsunuz.',run:function(){ bnAnim(100,45,2600,dsSetV,tok); }},
+   {s:'Telefona ya da kitaba bakarken gözleriniz camın alt bölümüne iniyor. Okuma bölgesi tam burası, yazı net.',run:function(){ bnAnim(45,8,2600,dsSetV,tok); }},
+   {s:'Dikkat: okurken çenenizi fazla öne eğerseniz gözünüz camın üst bölümünden bakar. Soldaki standart cam hemen bulanıklaşır; sağdaki markalı cam geniş net alanı sayesinde daha uzun süre net kalır.',run:function(){ bnAnim(0,25,4200,dsSetP,tok); }},
+   {s:'Çözüm çok kolay: başınızı biraz kaldırın, gözlerinizi aşağı indirin. Yazı hemen netleşiyor.',run:function(){ bnAnim(25,0,2400,dsSetP,tok); }},
+   {s:'Uzağa bakarken ise tersi geçerli. Çene çok yukarıdaysa camın alt bölümünden bakarsınız. Çeneyi biraz indirince tabela yeniden netleşir.',run:function(){ bnAnim(8,100,1800,dsSetV,tok); setTimeout(function(){ if(tok===BN.tok){ bnAnim(0,-20,2400,dsSetP,tok); setTimeout(function(){ if(tok===BN.tok) bnAnim(-20,0,2600,dsSetP,tok); },4200); } },1800); }},
+   {s:'Kısacası mesafeyi gözünüzle, yönü başınızla ayarlıyorsunuz. Kitabı otuz beş kırk santimde, ekranı kol boyu uzaklıkta tutmak en rahatı. Size en uygun progresifi birlikte seçelim.',run:function(){ bnAnim(DS.p,0,800,dsSetP,tok); }}
+  ];
+}
+
 var proSeen=false;
 function proEnter(){ if(proSeen) return; proSeen=true; if(!REDUCE) setPlaying(true); }
 function setPro(q){ updatePoly(q); if(BK.ready){ bkLensMap(); renderBak(performance.now()); } if(BW.ready) bwMap(); }
@@ -3785,7 +4013,7 @@ function say(text,done){
   try{ speechSynthesis.speak(u); }catch(e){ f(); }
 }
 function narStop(){ NAR.tok++; NAR.on=false; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} var b=$('anPlay'); if(b) b.textContent='🔊 Sesli anlat'; var c=$('anCap'); if(c) c.classList.remove('live'); }
-window.__anlStop=narStop;
+window.__anlStop=narStop; window.__anlSay=say;
 function narPlay(lines,onLine){
   narStop(); var tok=++NAR.tok, i=0; NAR.on=true; $('anPlay').textContent='⏹ Durdur'; $('anCap').classList.add('live');
   (function next(){
@@ -4174,28 +4402,172 @@ var IDLINES=[
 ];
 
 /* ================= 6) MAVİ IŞIK ================= */
-var BL={f:.5,on:true};
+var BL={f:.8,on:false,k:0,red:.12,t:0,look:0,lookEnd:0,ph:''};
+function mix(a,b,t){ return a+(b-a)*t; }
+function mixc(a,b,t){ return [mix(a[0],b[0],t),mix(a[1],b[1],t),mix(a[2],b[2],t)]; }
+function rgbs(a,al){ return 'rgba('+Math.round(a[0])+','+Math.round(a[1])+','+Math.round(a[2])+','+(al==null?1:al)+')'; }
+function tnt(b,L,br){ return [b[0]*L[0]*br,b[1]*L[1]*br,b[2]*L[2]*br]; }
+function blInset(c,k,wa,L){
+  var cx0=58, cy0=64, R=46, b0=(1-k)*.2, t=BL.t/1000, P=BL.on?2.8:6.2, ph=t%P, b=ph<.24?Math.sin(ph/.24*Math.PI):0, bl=Math.max(b0,b), red=BL.red, lk=BL.look;
+  c.save(); c.translate(46,50); c.scale(.83,.83); c.translate(-58,-64);
+  c.save(); c.beginPath(); c.arc(cx0,cy0,R,0,TAU); c.clip();
+  var sk=tnt([232,194,164],mixc([.88,.92,1],[1,.97,.92],wa),1); c.fillStyle=rgbs(sk); c.fillRect(cx0-R,cy0-R,2*R,2*R);
+  c.fillStyle='rgba(120,70,50,.18)'; c.beginPath(); c.ellipse(cx0,cy0-26,52,16,0,0,TAU); c.fill();
+  c.beginPath(); c.moveTo(cx0-40,cy0); c.quadraticCurveTo(cx0,cy0-28,cx0+40,cy0); c.quadraticCurveTo(cx0,cy0+28,cx0-40,cy0); c.closePath(); c.fillStyle=rgbs(mixc([246,242,238],[232,150,140],red*.95)); c.fill(); c.save(); c.clip();
+  var gx=cx0-9*lk, gy=cy0-3*lk-1;
+  var ir=c.createRadialGradient(gx,gy,2,gx,gy,17); ir.addColorStop(0,'#1c1208'); ir.addColorStop(.4,'#6b5230'); ir.addColorStop(.85,'#3f6b4c'); ir.addColorStop(1,'#1d2e22'); c.fillStyle=ir; c.beginPath(); c.arc(gx,gy,17,0,TAU); c.fill();
+  c.fillStyle='#000'; c.beginPath(); c.arc(gx,gy,7.5,0,TAU); c.fill(); c.fillStyle='rgba(255,255,255,.92)'; c.beginPath(); c.arc(gx-5,gy-6,3.2,0,TAU); c.fill();
+  c.strokeStyle='rgba(205,40,36,'+(0.95*red)+')'; c.lineWidth=1.5; c.lineCap='round';
+  [[-40,-2,-22,-4],[-40,3,-22,5],[-38,-6,-24,-12],[40,-2,22,-4],[40,4,22,6],[38,-7,24,-12],[-34,8,-22,10],[34,8,22,10],[-30,-10,-20,-14],[30,-10,20,-14]].forEach(function(v){ c.beginPath(); c.moveTo(cx0+v[0],cy0+v[1]); c.quadraticCurveTo(cx0+(v[0]+v[2])/2,cy0+(v[1]+v[3])/2+3,cx0+v[2],cy0+v[3]); c.stroke(); });
+  c.restore();
+  var cy2=mix(cy0-28,cy0+28,bl); c.beginPath(); c.moveTo(cx0-40,cy0); c.quadraticCurveTo(cx0,cy2,cx0+40,cy0); c.lineTo(cx0+R,cy0); c.lineTo(cx0+R,cy0-R); c.lineTo(cx0-R,cy0-R); c.lineTo(cx0-R,cy0); c.closePath(); c.fillStyle=rgbs(sk); c.fill();
+  c.strokeStyle='#2a1810'; c.lineWidth=3; c.beginPath(); c.moveTo(cx0-40,cy0); c.quadraticCurveTo(cx0,cy2,cx0+40,cy0); c.stroke();
+  c.strokeStyle='rgba(110,60,44,.5)'; c.lineWidth=1.4; c.beginPath(); c.moveTo(cx0-36,cy0-9); c.quadraticCurveTo(cx0,cy0-40,cx0+36,cy0-9); c.stroke();
+  c.restore();
+  c.strokeStyle=rgbs(mixc([110,150,255],[168,240,200],k)); c.lineWidth=3.5; c.beginPath(); c.arc(cx0,cy0,R,0,TAU); c.stroke();
+  /* göz konforu çubuğu */
+  var bw=88, bx=cx0-bw/2, by=cy0+R+10; c.fillStyle='rgba(8,12,22,.8)'; rr(c,bx-6,by-4,bw+12,34,12); c.fill(); c.fillStyle='rgba(255,255,255,.12)'; rr(c,bx,by+2,bw,7,3.5); c.fill();
+  var cf=clamp(1-red,.05,1); c.fillStyle=rgbs(mixc([235,80,70],[110,225,160],cf)); rr(c,bx,by+2,Math.max(7,bw*cf),7,3.5); c.fill();
+  c.fillStyle='#fff'; c.font='700 9px system-ui'; c.textAlign='center'; c.textBaseline='alphabetic'; c.fillText('GÖZ KONFORU',cx0,by+22);
+  c.restore();
+}
 function blDraw(c){
-  c.fillStyle='#0f1620'; c.fillRect(0,0,W,H);
-  var x0=20, x1=W-20, sw=x1-x0, nm=function(n){ return x0+(n-380)/(700-380)*sw; };
-  var g=c.createLinearGradient(x0,0,x1,0); [[0,'#5b2a9a'],[.1,'#3a3cd8'],[.22,'#1f7cf0'],[.38,'#1fc4c0'],[.5,'#31d060'],[.62,'#e6e03a'],[.78,'#ff9a2a'],[1,'#e8402a']].forEach(function(s){ g.addColorStop(s[0],s[1]); });
-  c.fillStyle=g; c.fillRect(x0,60,sw,36);
-  c.fillStyle='rgba(255,255,255,.14)'; c.fillRect(nm(400),52,nm(455)-nm(400),52); c.strokeStyle='#fff'; c.setLineDash([3,3]); c.strokeRect(nm(400),52,nm(455)-nm(400),52); c.setLineDash([]);
-  c.fillStyle='#fff'; c.font='600 11px system-ui'; c.textAlign='center'; c.fillText('400–455 nm',(nm(400)+nm(455))/2,44); c.fillStyle='#9fb0c4'; ['400','450','500','600','700'].forEach(function(n){ c.fillText(n,nm(+n),118); });
-  c.fillStyle='rgba(8,12,20,.65)'; var cut=BL.on?BL.f:0;
-  c.fillStyle='rgba(8,12,20,'+(0.78*cut)+')'; c.fillRect(nm(410),60,nm(450)-nm(410),36);
-  /* ekran */
-  var sx=W/2-70, sy=146, sw2=140, sh2=98;
-  c.fillStyle='#1b2230'; if(c.roundRect){ c.beginPath(); c.roundRect(sx-6,sy-6,sw2+12,sh2+12,10); c.fill(); } else c.fillRect(sx-6,sy-6,sw2+12,sh2+12);
-  var warm=BL.on?BL.f:0, r=255, gg=Math.round(255-18*warm), b=Math.round(255-70*warm); c.fillStyle='rgb('+r+','+gg+','+b+')'; c.fillRect(sx,sy,sw2,sh2);
-  c.fillStyle='rgba(60,70,90,.8)'; for(var i=0;i<5;i++) c.fillRect(sx+10,sy+12+i*16,sw2-20-(i%2)*30,5);
-  pill(c,W/2,H-18,BL.on?('filtre açık · ekran biraz sarımsı görünür'):'filtresiz','#fff');
+  var k=BL.k, wa=k*(.4+.6*BL.f), L=mixc([.34,.55,1],[1,.88,.7],wa), br=mix(1,.84,k), s=1-k, t=BL.t/1000, lk=BL.look, i;
+  var bg=c.createLinearGradient(0,0,0,H); bg.addColorStop(0,rgbs(mixc([3,7,20],[36,34,42],k))); bg.addColorStop(1,rgbs(mixc([8,16,46],[60,52,60],k))); c.fillStyle=bg; c.fillRect(0,0,W,H);
+  if(k>.02){ var lg=c.createRadialGradient(40,100,0,40,100,230); lg.addColorStop(0,'rgba(255,205,150,'+(0.2*k)+')'); lg.addColorStop(1,'rgba(255,205,150,0)'); c.fillStyle=lg; c.fillRect(0,0,W,H); }
+  c.fillStyle=rgbs(mixc([7,13,38],[74,56,48],k)); c.fillRect(0,214,W,H-214); c.fillStyle=rgbs(mixc([40,70,170],[130,100,80],k),.6); c.fillRect(0,214,W,1.5);
+  /* sandalye arkası */
+  rr(c,26,140,30,132,12); c.fillStyle=rgbs(tnt([36,42,66],L,br)); c.fill();
+  /* monitör */
+  c.fillStyle=rgbs(mixc([8,12,28],[24,24,30],k)); c.fillRect(298,168,14,48); rr(c,262,208,86,8,4); c.fill();
+  c.beginPath(); c.moveTo(226,50); c.lineTo(338,70); c.lineTo(338,172); c.lineTo(226,188); c.closePath(); c.fillStyle=rgbs(mixc([8,12,28],[26,26,32],k)); c.fill();
+  c.beginPath(); c.moveTo(231,57); c.lineTo(333,75); c.lineTo(333,167); c.lineTo(231,182); c.closePath();
+  var sg=c.createRadialGradient(270,118,4,270,118,110); sg.addColorStop(0,rgbs(mixc([228,242,255],[255,247,228],wa))); sg.addColorStop(.55,rgbs(mixc([72,122,255],[246,224,190],wa))); sg.addColorStop(1,rgbs(mixc([30,60,212],[224,198,162],wa))); c.fillStyle=sg; c.fill();
+  c.save(); c.clip(); c.fillStyle='rgba(40,50,70,'+(0.45*wa)+')'; for(i=0;i<7;i++){ c.fillRect(244,70+i*15+(i*1.1),70-(i%3)*16,4); } c.restore();
+  /* klavye */
+  c.beginPath(); c.moveTo(150,226); c.lineTo(266,214); c.lineTo(310,226); c.lineTo(176,242); c.closePath(); c.fillStyle=rgbs(tnt([36,42,64],L,1.1)); c.fill(); c.strokeStyle='rgba(180,200,255,.25)'; c.lineWidth=.8; for(i=1;i<5;i++){ c.beginPath(); c.moveTo(150+i*5+(i*2),226+i*3.2-i*.3); c.lineTo(266+i*9,214+i*2.6); c.stroke(); }
+  /* kişi */
+  var Sh={x:mix(98,116,s),y:mix(150,168,s)}, N={x:Sh.x+mix(4,14,s),y:Sh.y-mix(14,10,s)}, Hc={x:N.x+mix(10,30,s),y:N.y-mix(30,22,s)};
+  var skin=[226,186,152], skc=rgbs(tnt(skin,L,br)), skd=rgbs(tnt([196,150,118],L,br)), shirt=rgbs(tnt([100,118,168],L,br)), shirtD=rgbs(tnt([60,72,112],L,br)), jean=rgbs(tnt([40,48,78],L,br));
+  c.fillStyle=jean; c.beginPath(); c.moveTo(60,236); c.lineTo(176,232); c.quadraticCurveTo(190,246,176,262); c.lineTo(60,268); c.closePath(); c.fill(); c.fillRect(160,258,22,44);
+  var bx=Sh.x-24, by=Sh.y-6; c.beginPath(); c.moveTo(40,266); c.bezierCurveTo(40,232,bx-6,by+60,bx,by+4); c.bezierCurveTo(bx+6,by-14,Sh.x+14,by-16,Sh.x+22,by+2); c.bezierCurveTo(Sh.x+34,by+34,Sh.x+10,226,104,266); c.closePath();
+  var tg=c.createLinearGradient(40,by,150,266); tg.addColorStop(0,shirtD); tg.addColorStop(1,shirt); c.fillStyle=tg; c.fill();
+  c.strokeStyle=skd; c.lineWidth=17; c.lineCap='round'; c.beginPath(); c.moveTo(N.x-2,N.y+6); c.lineTo(Hc.x-6,Hc.y+20); c.stroke();
+  c.strokeStyle=shirt; c.lineWidth=19; c.beginPath(); c.moveTo(Sh.x+2,Sh.y+8); c.quadraticCurveTo(Sh.x+mix(18,36,s),210,210,216); c.stroke();
+  c.fillStyle=skc; c.beginPath(); c.ellipse(214,217,11,6,-.1,0,TAU); c.fill();
+  c.save(); c.translate(Hc.x,Hc.y); c.rotate((10*s-6*lk)*Math.PI/180);
+  c.fillStyle=skc; c.beginPath(); c.ellipse(0,0,22,26,0,0,TAU); c.fill();
+  c.beginPath(); c.moveTo(14,-14); c.lineTo(22,-8); c.lineTo(21,-2); c.lineTo(32,10); c.lineTo(23,13); c.lineTo(24,18); c.lineTo(21,21); c.lineTo(23,25); c.lineTo(19,31); c.lineTo(6,30); c.lineTo(-8,14); c.closePath(); c.fill();
+  var fg=c.createLinearGradient(-22,0,30,0); fg.addColorStop(0,'rgba(10,14,30,.45)'); fg.addColorStop(.55,'rgba(10,14,30,0)'); c.fillStyle=fg; c.beginPath(); c.ellipse(0,0,22,26,0,0,TAU); c.fill();
+  c.strokeStyle=rgbs(mixc([150,190,255],[255,226,190],wa),.75); c.lineWidth=1.3; c.beginPath(); c.moveTo(14,-14); c.lineTo(22,-8); c.lineTo(21,-2); c.lineTo(32,10); c.lineTo(23,13); c.lineTo(24,18); c.lineTo(21,21); c.lineTo(23,25); c.lineTo(19,31); c.stroke();
+  c.fillStyle=skd; c.beginPath(); c.ellipse(-4,4,5,8,0,0,TAU); c.fill();
+  c.fillStyle=rgbs(tnt([44,30,24],L,br*.9)); c.beginPath(); c.moveTo(-23,8); c.bezierCurveTo(-30,-30,6,-36,20,-20); c.bezierCurveTo(14,-20,6,-16,2,-8); c.bezierCurveTo(-4,-12,-10,-6,-12,6); c.closePath(); c.fill();
+  c.strokeStyle='#2a1a10'; c.lineWidth=2; c.beginPath(); c.moveTo(8,-11); c.lineTo(19,-12); c.stroke();
+  c.fillStyle='#f4efe9'; c.beginPath(); c.ellipse(13,-4,4.2,2.6,0,0,TAU); c.fill(); c.fillStyle='#2a1a10'; c.beginPath(); c.arc(14-3*lk,-4-.8*lk,2,0,TAU); c.fill();
+  c.strokeStyle='#3a1a12'; c.lineWidth=1.1; c.beginPath(); c.moveTo(9,-4); c.quadraticCurveTo(13,-8,17,-4); c.stroke();
+  c.strokeStyle='rgba(120,40,40,.8)'; c.lineWidth=1.3; c.beginPath(); c.moveTo(17,22); c.lineTo(22,21); c.stroke();
+  var ga=clamp((k-.35)/.4,0,1); if(ga>0){ c.globalAlpha=ga; c.fillStyle='rgba(170,210,255,.22)'; c.strokeStyle='#161b26'; c.lineWidth=1.9; c.beginPath(); c.ellipse(16,-3,6,8.5,0,0,TAU); c.fill(); c.stroke(); c.beginPath(); c.moveTo(10,-5); c.lineTo(-7,0); c.stroke(); c.beginPath(); c.moveTo(21,-1); c.lineTo(24,7); c.stroke(); c.globalAlpha=1; }
+  c.restore();
+  /* ekran ışığı yayılımı */
+  c.save(); c.globalCompositeOperation='lighter'; var gg=c.createRadialGradient(226,118,0,226,118,230), gcol=mixc([70,120,255],[255,214,160],wa), ga2=mix(.5,.16,k); gg.addColorStop(0,rgbs(gcol,ga2)); gg.addColorStop(1,rgbs(gcol,0)); c.fillStyle=gg; c.fillRect(0,0,W,H); c.restore();
+  blInset(c,k,wa,L);
+  pill(c,236,22,BL.on?'SONRA · mavi ışık filtreli gözlük':'ÖNCE · gözlüksüz',BL.on?'#a8f0c8':'#ffd0a0');
+  if(lk>.25) pill(c,236,50,'mola · 20 sn uzağa bak','#fff',clamp(lk,0,1));
+  pill(c,W/2+18,H-16,BL.on?'ferah ışık · rahat duruş':'sert mavi ışık · seyrek göz kırpma',BL.on?'#a8f0c8':'#ffd0a0');
 }
 var BLLINES=[
- {s:'Mavi ışık, güneşte, telefon ve bilgisayar ekranlarında, LED aydınlatmada bulunan mor-mavi renkteki ışıktır. Günümüzde hepimiz ekranlara bakarak çok vakit geçiriyoruz.',on:false},
- {s:'Mavi ışık filtreli camlar, bu mor-mavi ışığın bir kısmını süzer. Parlak ekran karşısında daha yumuşak, daha rahat bir görüntü hissi verir. Camın üzerinde hafif mavimsi ya da sarımsı bir yansıma görürsünüz. Bu, filtrenin işaretidir.',on:true},
- {s:'Ekran başında çalışanlar, öğrenciler ve telefonla çok vakit geçirenler için modern ve akıllı bir seçenek.',on:true},
- {s:'Doğru numara, doğru ekran mesafesi ve arada verilen küçük molalarla birleşince, gözlüğünüz konforlu bir ekran deneyiminin parçası olur.',on:true}
+ {s:'Gün boyu ekran karşısındayız: bilgisayar, telefon, televizyon. Ekranlar, mor-mavi renkte bir ışık yayar. İşte mavi ışık dediğimiz şey bu.',on:false,ph:'intro'},
+ {s:'Ekrana odaklandıkça göz kırpmayı unutuyoruz. Göz seyrek kırpınca yüzey kurur, yanma ve batma hissi başlar, gözler kızarır. Çoğumuzun tanıdığı bir durum. Duruş da yavaş yavaş öne doğru kayar.',on:false,ph:'dry'},
+ {s:'Şimdi mavi ışık filtreli gözlüğü takıyoruz. Ekranın sert mavi parlaklığı yumuşuyor, görüntü daha sıcak ve ferah bir hâle geliyor.',on:true,ph:'put'},
+ {s:'Kişi geriye yaslanıyor, ekrana doğru mesafede oturuyor. Çalışma çok daha konforlu.',on:true,ph:'relax'},
+ {s:'Ve işin sırrı: her yirmi dakikada bir, yirmi saniye uzağa bakmak. Gözünüzü dinlendirir. Filtreli gözlük, doğru mesafe ve küçük molalar birlikte tam bir konfor sağlar.',on:true,ph:'break'},
+ {s:'Ekran başında çalışanlar, öğrenciler, oyun oynayanlar ve telefonla çok vakit geçirenler için modern bir tercih. Size en uygun filtreli camı birlikte seçelim.',on:true,ph:'end'}
+];
+
+/* ================= 7) PROGRESİF (gerçek gözlük, baş hareketi) ================= */
+var PG={hx:0,thx:0,gx:80,gy:32,tx:80,ty:32,lock:'sign',out:false,t:0,sc:null,blur:null,mask:null,tmp:null};
+var PW=160, PH=220, PY=34, PX=[10,190], SWD=300;
+var PGO={sign:[152,32],mon:[152,122],book:[152,196],phone:[84,204],cup:[213,207]};
+var HWN=[[0,.64],[.28,.66],[.55,.26],[.66,.22],[.74,.24],[1,.46]], HWW=[[0,.98],[.30,.98],[.55,.55],[.66,.50],[.74,.60],[1,.88]];
+function hwf(i,v){ var T=i?HWW:HWN, k; v=clamp(v,0,1); for(k=0;k<T.length-1;k++){ if(v<=T[k+1][0]){ var u=(v-T[k][0])/(T[k+1][0]-T[k][0]); u=u*u*(3-2*u); return T[k][1]+(T[k+1][1]-T[k][1])*u; } } return T[T.length-1][1]; }
+function pgClear(i,x,y){ var u=Math.abs(x-PW/2)/(PW/2); return clamp((hwf(i,y/PH)-u)/.16+.5,0,1); }
+function blurC(src,f,n){ var w=src.width,h=src.height,cur=src,k; for(k=0;k<n;k++){ var s=mkc(Math.max(2,Math.round(w/f)),Math.max(2,Math.round(h/f))), sx=s.getContext('2d'); sx.imageSmoothingQuality='high'; sx.drawImage(cur,0,0,s.width,s.height); var b=mkc(w,h), bx=b.getContext('2d'); bx.imageSmoothingQuality='high'; bx.drawImage(s,0,0,w,h); cur=b; } return cur; }
+function lensPath(c,w,h,sd){ var to=26,ti=34,bo=64,bi=54, tl=sd?ti:to, tr=sd?to:ti, bl=sd?bi:bo, br=sd?bo:bi; c.beginPath(); c.moveTo(tl,0); c.lineTo(w-tr,0); c.quadraticCurveTo(w,0,w,tr); c.lineTo(w,h-br); c.quadraticCurveTo(w,h,w-br,h); c.lineTo(bl,h); c.quadraticCurveTo(0,h,0,h-bl); c.lineTo(0,tl); c.quadraticCurveTo(0,0,tl,0); c.closePath(); }
+function pgScene(){
+  var c=mkc(SWD,PH), x=c.getContext('2d'), g, i;
+  g=x.createLinearGradient(0,0,0,86); g.addColorStop(0,'#8fc0ea'); g.addColorStop(1,'#e3f2fb'); x.fillStyle=g; x.fillRect(0,0,SWD,86);
+  [[2,40,28,46],[32,52,24,34],[74,36,26,50],[98,48,22,38],[182,30,24,56],[204,44,30,42],[162,56,20,30],[252,36,26,50],[276,48,24,38]].forEach(function(b){ x.fillStyle=(b[0]%2)?'#93a4bd':'#a9b8cc'; x.fillRect(b[0],b[1],b[2],b[3]); x.fillStyle='rgba(255,255,255,.55)'; for(var r=0;r<5;r++) for(var q=0;q<3;q++) x.fillRect(b[0]+3+q*7,b[1]+4+r*9,4,5); });
+  x.fillStyle='#4f8a4a'; [[86,76,12],[220,78,13],[130,78,10],[20,76,11],[285,78,12]].forEach(function(t){ x.beginPath(); x.arc(t[0],t[1],t[2],0,TAU); x.fill(); });
+  x.fillStyle='#5b6068'; x.fillRect(0,78,SWD,10); x.fillStyle='rgba(255,255,255,.7)'; for(i=0;i<15;i++) x.fillRect(4+i*21,82,11,2);
+  x.fillStyle='#6f7783'; x.fillRect(150,38,4,44); rr(x,106,16,92,26,3); x.fillStyle='#1c5fb5'; x.fill(); x.strokeStyle='#fff'; x.lineWidth=1.4; rr(x,108,18,88,22,2); x.stroke(); x.fillStyle='#fff'; x.font='700 10.5px system-ui,sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('AYSİMA OPTİK',152,29.5);
+  x.fillStyle='#c93a2e'; rr(x,182,70,28,11,3); x.fill(); x.fillStyle='#e8f2fb'; x.fillRect(188,72,16,4); x.fillStyle='#111'; x.beginPath(); x.arc(189,82,3,0,TAU); x.arc(204,82,3,0,TAU); x.fill();
+  g=x.createLinearGradient(0,88,0,PH); g.addColorStop(0,'#b78d62'); g.addColorStop(1,'#8f6a46'); x.fillStyle=g; x.fillRect(0,88,SWD,PH-88);
+  x.fillStyle='#cfd8e0'; x.fillRect(0,88,SWD,52);
+  rr(x,104,92,96,60,4); x.fillStyle='#161a22'; x.fill(); g=x.createLinearGradient(0,96,0,146); g.addColorStop(0,'#eaf4ff'); g.addColorStop(1,'#bcd4f2'); x.fillStyle=g; x.fillRect(109,97,86,48);
+  x.fillStyle='#16345c'; x.font='700 8px system-ui,sans-serif'; x.textAlign='left'; x.fillText('RAPOR',114,105); [[116,20,'#3a7bd5'],[130,32,'#e0a030'],[144,26,'#3aa86a'],[158,40,'#d54a4a'],[172,30,'#3a7bd5']].forEach(function(b){ x.fillStyle=b[2]; x.fillRect(b[0],142-b[1],9,b[1]); });
+  x.fillStyle='#161a22'; x.fillRect(148,152,8,9); rr(x,132,159,40,5,2); x.fill();
+  rr(x,106,172,92,46,3); x.fillStyle='#fbf7ee'; x.fill(); x.fillStyle='#222'; x.font='8px Georgia,serif'; x.textAlign='left'; x.textBaseline='alphabetic'; ['Yakın okuma alanında','satırlar net görünür.','Koridor geniş olursa','okumak çok rahattır.'].forEach(function(t,k){ x.fillText(t,111,184+k*10); });
+  x.save(); x.translate(70,182); x.rotate(-.12); rr(x,0,0,28,44,5); x.fillStyle='#10131a'; x.fill(); g=x.createLinearGradient(0,4,0,40); g.addColorStop(0,'#5aa0ff'); g.addColorStop(1,'#1f4fb0'); x.fillStyle=g; x.fillRect(2,5,24,34); x.fillStyle='#fff'; x.font='700 7px system-ui,sans-serif'; x.fillText('Mesaj',5,15); x.font='6px system-ui,sans-serif'; x.fillText('Siparişiniz hazır',5,23); x.fillText('gözlük teslim',5,30); x.restore();
+  rr(x,200,194,26,26,6); x.fillStyle='#f4f4f2'; x.fill(); x.fillStyle='#4a2a18'; x.beginPath(); x.ellipse(213,197,11,4,0,0,TAU); x.fill(); x.strokeStyle='#f4f4f2'; x.lineWidth=3; x.beginPath(); x.arc(227,207,6,-1.2,1.2); x.stroke();
+  [['#c0392b',14,176,44,8],['#2e6fb5',16,184,40,8],['#e0a030',12,192,46,8]].forEach(function(b){ x.fillStyle=b[0]; rr(x,b[1],b[2],b[3],b[4],2); x.fill(); });
+  x.fillStyle='#7a4a2a'; rr(x,252,192,28,26,4); x.fill(); x.fillStyle='#3f8a46'; [[260,184,10],[272,180,11],[266,172,9]].forEach(function(l){ x.beginPath(); x.arc(l[0],l[1],l[2],0,TAU); x.fill(); });
+  return c;
+}
+function pgMask(i){
+  var m=mkc(PW,PH), x=m.getContext('2d'), v; x.fillStyle='#fff'; x.beginPath(); x.moveTo(PW/2-hwf(i,0)*PW/2,0);
+  for(v=0;v<=1.001;v+=.02) x.lineTo(PW/2-hwf(i,v)*PW/2,v*PH); for(v=1;v>=-.001;v-=.02) x.lineTo(PW/2+hwf(i,v)*PW/2,v*PH); x.closePath(); x.fill();
+  return blurC(m,i?4:2.6,2);
+}
+function pgInit(){
+  if(PG.sc) return; PG.sc=pgScene(); PG.blur=blurC(PG.sc,5,3); PG.mask=[pgMask(0),pgMask(1)]; PG.tmp=[mkc(PW,PH),mkc(PW,PH)];
+}
+function pgOutline(c,i){ var v; c.beginPath(); c.moveTo(PW/2-hwf(i,0)*PW/2,0); for(v=0;v<=1.001;v+=.02) c.lineTo(PW/2-hwf(i,v)*PW/2,v*PH); c.moveTo(PW/2+hwf(i,0)*PW/2,0); for(v=0;v<=1.001;v+=.02) c.lineTo(PW/2+hwf(i,v)*PW/2,v*PH); c.stroke(); }
+function pgSx(){ return clamp(70+PG.hx*70+Math.sin(PG.t/1000*.9)*1.1,0,SWD-PW); }
+function prgDraw(c){
+  var t=PG.t/1000, i, y, sx=pgSx();
+  c.fillStyle='#07090d'; c.fillRect(0,0,W,H);
+  c.save(); c.globalAlpha=.55; c.drawImage(PG.blur,-(sx/140)*120-6,-10,480,352); c.restore(); c.fillStyle='rgba(4,6,10,.5)'; c.fillRect(0,0,W,H);
+  for(i=0;i<2;i++){
+    var px=PX[i], amp=i?1.1:3.6, cl=pgClear(i,PG.gx,PG.gy), tc=PG.tmp[i], tx=tc.getContext('2d');
+    tx.globalCompositeOperation='source-over'; tx.clearRect(0,0,PW,PH); tx.drawImage(PG.sc,sx,0,PW,PH,0,0,PW,PH); tx.globalCompositeOperation='destination-in'; tx.drawImage(PG.mask[i],0,0); tx.globalCompositeOperation='source-over';
+    c.save(); c.translate(px,PY); lensPath(c,PW,PH,i); c.clip();
+    c.drawImage(PG.blur,sx,0,PW,PH,0,0,PW,PH);
+    for(y=0;y<PH;y+=4){ var off=amp*Math.sin(y*.07+t*1.4+i*1.7); c.drawImage(PG.blur,sx,y,PW,4,off,y,PW,4); }
+    c.drawImage(tc,0,0);
+    var vg=c.createRadialGradient(PW/2,PH/2,PH*.36,PW/2,PH/2,PH*.78); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.4)'); c.fillStyle=vg; c.fillRect(0,0,PW,PH);
+    var sg=c.createLinearGradient(0,0,PW,PH); sg.addColorStop(0,'rgba(255,255,255,.16)'); sg.addColorStop(.35,'rgba(255,255,255,0)'); c.fillStyle=sg; c.fillRect(0,0,PW,PH);
+    c.strokeStyle='rgba(255,255,255,.22)'; c.lineWidth=2; c.beginPath(); c.arc(PW*.5,PH*.5,PH*.46,Math.PI*1.1,Math.PI*1.32); c.stroke();
+    c.strokeStyle='rgba(140,255,190,.18)'; c.lineWidth=2; lensPath(c,PW-5,PH-5,i); c.save(); c.translate(2.5,2.5); c.stroke(); c.restore();
+    if(PG.out){ c.strokeStyle=i?'rgba(120,255,180,.95)':'rgba(255,190,110,.95)'; c.lineWidth=2; c.setLineDash([5,4]); pgOutline(c,i); c.setLineDash([]); }
+    var gc=cl>.6?'rgba(120,255,180,1)':(cl<.35?'rgba(255,150,100,1)':'rgba(255,225,120,1)'), pu=1+.08*Math.sin(t*5);
+    c.strokeStyle=gc; c.lineWidth=2.6; c.beginPath(); c.arc(PG.gx,PG.gy,12*pu,0,TAU); c.stroke(); c.fillStyle=gc; c.beginPath(); c.arc(PG.gx,PG.gy,2.6,0,TAU); c.fill();
+    c.restore();
+    /* çerçeve */
+    c.save(); c.translate(px,PY); c.lineJoin='round';
+    c.shadowColor='rgba(0,0,0,.6)'; c.shadowBlur=8; c.shadowOffsetY=3; c.strokeStyle='#10131a'; c.lineWidth=10; lensPath(c,PW,PH,i); c.stroke(); c.shadowColor='transparent';
+    var fg=c.createLinearGradient(0,0,PW,PH); fg.addColorStop(0,'rgba(255,255,255,.4)'); fg.addColorStop(.3,'rgba(255,255,255,.04)'); fg.addColorStop(1,'rgba(255,255,255,.12)'); c.strokeStyle=fg; c.lineWidth=2; c.save(); c.translate(-3,-3); lensPath(c,PW+6,PH+6,i); c.stroke(); c.restore();
+    c.restore();
+    pill(c,px+PW/2,13,i?'Markalı · geniş koridor':'Standart · dar koridor',i?'#a8f0c8':'#ffd0a0');
+    pill(c,px+PW/2,H-13,cl>.6?'net görüş':(cl<.35?'bulanık':'kısmen net'),cl>.6?'#a8f0c8':(cl<.35?'#ffb08a':'#ffe08a'));
+  }
+  /* kaş çubuğu, köprü, burun pedleri, saplar */
+  var bg2=c.createLinearGradient(0,22,0,38); bg2.addColorStop(0,'#1b2029'); bg2.addColorStop(1,'#0b0d12'); c.fillStyle=bg2; rr(c,0,24,W,12,5); c.fill();
+  rr(c,166,40,28,16,7); c.fillStyle='#10131a'; c.fill(); c.fillStyle='rgba(255,255,255,.16)'; c.fillRect(170,42,20,2);
+  [172,188].forEach(function(nx){ var ng=c.createLinearGradient(nx-5,0,nx+5,0); ng.addColorStop(0,'rgba(220,235,255,.05)'); ng.addColorStop(.5,'rgba(220,235,255,.4)'); ng.addColorStop(1,'rgba(220,235,255,.05)'); c.fillStyle=ng; c.beginPath(); c.ellipse(nx,186,5,16,0,0,TAU); c.fill(); });
+  [0,1].forEach(function(sd){ var xx=sd?W-12:0, gr=c.createLinearGradient(xx,0,xx+12,0); gr.addColorStop(sd?1:0,'rgba(8,10,14,.95)'); gr.addColorStop(sd?0:1,'rgba(8,10,14,0)'); c.fillStyle=gr; c.fillRect(xx,36,12,H-80); });
+  /* baş göstergesi */
+  rr(c,148,H-25,64,24,12); c.fillStyle='rgba(8,12,20,.85)'; c.fill(); c.fillStyle='#9fb0c4'; c.font='700 9px system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('◀',160,H-12.5); c.fillText('▶',200,H-12.5); c.fillStyle='#fff'; c.beginPath(); c.arc(180+PG.hx*14,H-13,4,0,TAU); c.fill();
+}
+var PRLINES=[
+ {s:'Şimdi gözlüğü takan kişinin gözünden bakıyoruz. Tek bir gözlük, ama iki cam farklı. Solda standart bir progresif, dar koridorlu. Sağda markalı bir progresif, geniş koridorlu.',g:'sign',h:0,out:true},
+ {s:'Uzağa bakınca, geniş koridorlu camda sokağın tamamı net. Standart camda ise uzak bölge de daha dar, kenarlar yumuşuyor. Ortadaki Aysima Optik tabelasını ikisinde de okuyoruz.',g:'sign',h:0},
+ {s:'Bilgisayar ekranına bakarken göz, camın ortasındaki koridordan geçer. Dar koridorda net alan sınırlı, ekranın kenarları yumuşar. Geniş koridorda ise ekranın tamamı daha rahat net.',g:'mon',h:0},
+ {s:'Okuma alanına inince fark daha da belirgin. Geniş koridorlu camda satırların başı da sonu da net. Dar koridorda ise satır uçları bulanıklaşıyor.',g:'book',h:0},
+ {s:'Şimdi yan tarafa, telefona sadece gözümüzle bakıyoruz. Dar koridorlu camda telefon bulanık. Geniş koridorlu camda ise çok daha kolay görünüyor.',g:'phone',h:0},
+ {s:'Başımızı yavaşça sola çeviriyoruz. Telefon camın ortasına geliyor. Geniş koridorlu camda çok az çevirmek yetiyor. Dar koridorlu camda başı daha fazla çevirmek gerekiyor.',g:'phone',h:-.75},
+ {s:'Şimdi sağdaki fincana bakalım. Başımızı sağa çeviriyoruz. Yine geniş koridor, daha az hareketle net görüş veriyor.',g:'cup',h:.75},
+ {s:'Markalı progresiflerde koridor daha geniş, geçişler daha yumuşak ve yan bulanıklık alanları daha az. Bu, alışmayı kolaylaştırır ve her bakışı daha doğal hissettirir.',g:'mon',h:0,out:true},
+ {s:'Bilgisayar başında çalışanlar, çok okuyanlar ve gün boyu aktif olanlar farkı en çok hisseder. Her yüz ve her reçete farklı; size en uygun tasarımı ölçülerinizle birlikte seçelim.',g:'sign',h:0,out:false}
 ];
 
 /* ---------- konu tablosu ---------- */
@@ -4204,8 +4576,9 @@ var TOP=[
  {id:'drv',ic:'🌙',t:'Driver',lines:DRLINES,info:{ne:'Akşam ve gece sürüşü için geliştirilen özel yansıma önleyici kaplama. Karşıdan gelen farların, alçak güneşin ve ıslak yolun yarattığı parlamayı azaltır.',an:'"Gün batımında ve gece sürüşünde farlar daha az göz alır, ışıkların etrafındaki haleler azalır, yol çok daha net görünür."',di:'Adı ve özellikleri markaya göre değişir. Bazı üreticilerde sürüşe özel cam tasarımı da vardır. Size en uygun seçeneği birlikte belirleriz.'}},
  {id:'trn',ic:'🌗',t:'Transitions',lines:TRLINES,info:{ne:'Fotokromik, yani renk değiştiren cam. Güneşten gelen mor ötesi ışınla koyulaşır, içeride yeniden berraklaşır. Kaplama değil, camın kendi özelliğidir.',an:'"Tek gözlük hem içeride hem dışarıda. Ayrıca güneş gözlüğü taşımaya gerek yok, güneşte kendiliğinden koyulaşır."',di:'Araç içinde de koyulaşmasını istiyorsanız bunun için tasarlanmış özel serileri seçin. Renk seçenekleri marka ve seriye göre değişir.'}},
  {id:'ar',ic:'✨',t:'Anti-reflex',lines:ARLINES,info:{ne:'Çok ince katmanlarla cam yüzeyindeki yansımayı neredeyse yok eder. Kaplamasız camda ışığın yaklaşık yüzde sekizi yansıp kaybolur, yüksek indekste daha fazlası. Anti-reflex ile bu oran yaklaşık yüzde bire iner.',an:'"Gözleriniz fotoğrafta ve karşınızdaki kişiye net görünür, gözlüğünüz sanki yokmuş gibi durur. Gece farlardaki parlama da azalır."',di:'Parmak izi ve yağ daha kolay fark edildiği için su ve yağ iticilik özelliği olan modelleri öneriyoruz. Kaplamanın hafif yeşil ya da mor yansıması normaldir.'}},
+ {id:'prg',ic:'👓',t:'Progresif',lines:PRLINES,info:{ne:'Tek camda uzak, orta ve yakın görüşü birleştiren numara geçişi. Camın ortasında net bir koridor vardır, yanlarda görüntü doğal olarak yumuşar.',an:'"Tek gözlükle uzağı, bilgisayarı ve kitabı görürsünüz. Markalı tasarımlarda koridor daha geniş, geçiş daha yumuşak olduğu için alışmak ve rahat kullanmak daha kolaydır."',di:'Koridor genişliği tasarıma, marka ve modele göre değişir. Çerçeve yüksekliği, göz bebeği merkezi ve kullanım alışkanlığınıza göre en uygun camı birlikte seçelim.'}},
  {id:'idx',ic:'📏',t:'Kalınlık',lines:IDLINES,info:{ne:'İndeks yükseldikçe aynı numara daha ince camla verilir. Eksi camda kenar, artı camda merkez incelir.',an:'"Numaranız yüksek, yüksek indeksle gözlüğünüz çok daha ince, hafif ve şık olur."',di:'Düşük numaralarda standart cam çoğu zaman yeterlidir. Gerçek kalınlık çerçeveye ve göz bebeği merkezine göre değişir, size özel hesaplarız.'}},
- {id:'blu',ic:'🔵',t:'Mavi ışık',lines:BLLINES,info:{ne:'Mor-mavi ışığın (yaklaşık 400–455 nm) bir kısmını süzen filtre. Cam hafif mavimsi ya da sarımsı yansımalı görünebilir.',an:'"Ekranlı bir hayat için modern bir seçenek: ekran ışığını yumuşatır, görüntüde ferah bir konfor hissi verir."',di:'Doğru numara, doğru ekran mesafesi ve düzenli molalar konforu artırır. Filtreyi bunlarla birlikte öneriyoruz.'}}
+ {id:'blu',ic:'🔵',t:'Mavi ışık',lines:BLLINES,info:{ne:'Mor-mavi ışığın (yaklaşık 400–455 nm) bir kısmını süzen filtre. Cam hafif mavimsi ya da sarımsı yansımalı görünebilir.',an:'"Ekranlı bir hayat için modern bir seçenek: ekran ışığını yumuşatır, görüntüde ferah bir konfor hissi verir."',di:'Ekrana odaklanınca göz kırpma azalır ve gözde kuruluk hissi olabilir. Filtreyi doğru numara, doğru ekran mesafesi ve her 20 dakikada 20 saniyelik uzağa bakma molasıyla birlikte öneriyoruz.'}}
 ];
 
 /* ---------- arayüz ---------- */
@@ -4234,9 +4607,14 @@ function controls(){
   else if(id==='idx'){
     slider('Numara (D)',-10,8,ID.F,.25,function(v){ ID.F=v===0?0.25:v; },function(v){ return (v>0?'+':'')+v.toFixed(2).replace('.',','); });
     chips(IX.map(function(x){ return 'Sonra '+x.l; }).slice(1),ID.after-1,function(i){ ID.after=i+1; });
+  } else if(id==='prg'){
+    chips(['Gözlük gözünden','Koridor çizgileri'],PG.out?1:0,function(i){ PG.out=i===1; });
+    chips(['Tabela','Bilgisayar','Kitap','Telefon','Fincan'],-1,function(i){ PG.lock=['sign','mon','book','phone','cup'][i]; });
+    slider('Baş hareketi',-1,1,PG.thx,.05,function(v){ PG.thx=v; },function(v){ return v<-.04?'sola '+Math.round(-v*100)+'%':(v>.04?'sağa '+Math.round(v*100)+'%':'karşıya'); });
+    b.appendChild(el('div',{'class':'muted small'},'Düğmelerle bakılan şeyi seçin, çubukla başı sola ya da sağa çevirin.'));
   } else if(id==='blu'){
-    chips(['Filtre açık','Filtresiz'],BL.on?0:1,function(i){ BL.on=i===0; });
-    slider('Filtre gücü',0,1,BL.f,.01,function(v){ BL.f=v; },function(v){ return Math.round(v*100)+'%'; });
+    chips(['Filtresiz','Filtreli gözlük'],BL.on?1:0,function(i){ BL.on=i===1; });
+    slider('Filtre tonu',0,1,BL.f,.01,function(v){ BL.f=v; },function(v){ return Math.round(v*100)+'%'; });
   }
 }
 function infoCard(){
@@ -4245,7 +4623,7 @@ function infoCard(){
 }
 function draw(){
   var id=cur.id; cx.clearRect(0,0,W,H);
-  if(id==='hid'){ hyInit(); hyDraw(cx); } else if(id==='drv'){ drInit(); drDraw(cx); } else if(id==='trn'){ trInit(); trDraw(cx); } else if(id==='ar'){ arDraw(cx); } else if(id==='idx'){ idDraw(cx); } else blDraw(cx);
+  if(id==='hid'){ hyInit(); hyDraw(cx); } else if(id==='drv'){ drInit(); drDraw(cx); } else if(id==='trn'){ trInit(); trDraw(cx); } else if(id==='ar'){ arDraw(cx); } else if(id==='prg'){ pgInit(); prgDraw(cx); } else if(id==='idx'){ idDraw(cx); } else blDraw(cx);
 }
 function loop(ts){
   raf=0; if(!sec || sec.hidden) return;
@@ -4254,13 +4632,16 @@ function loop(ts){
     if(HYTILT.on){ var p=clamp((ts-HYTILT.t0)/4500,0,1); HY.tilt=.3+.6*p; if(p>=1) HYTILT.on=false; var s=$('anCtl').querySelector('input[type=range]'); if(s) s.value=HY.tilt; }
     hyInit(); hyStep(dt); live=true;
   }
+  if(id==='prg'){ PG.t=ts; PG.hx+=(PG.thx-PG.hx)*Math.min(1,dt*1.3); var sx0=pgSx(); if(PG.lock){ var ob=PGO[PG.lock]; PG.tx=clamp(ob[0]-sx0,8,PW-8); PG.ty=ob[1]; } var ee=Math.min(1,dt*5); PG.gx+=(PG.tx-PG.gx)*ee; PG.gy+=(PG.ty-PG.gy)*ee; live=true; }
+  if(id==='blu'){ BL.t=ts; var now=performance.now(); BL.k+=((BL.on?1:0)-BL.k)*Math.min(1,dt*1.4); BL.red+=BL.on?((.05-BL.red)*Math.min(1,dt*.7)):Math.min(.95-BL.red,dt*.085); BL.look+=((now<BL.lookEnd?1:0)-BL.look)*Math.min(1,dt*3); live=true; }
   if(id==='ar'){ AR.t=ts; var T=arTarget(), e=Math.min(1,dt*4); AR.z+=(T.z-AR.z)*e; AR.fx+=(T.fx-AR.fx)*e; AR.fy+=(T.fy-AR.fy)*e; live=true; }
   if(id==='trn'){ var tg=TR.target; if(Math.abs(TR.cur-tg)>.002){ TR.cur+=(tg-TR.cur)*Math.min(1,dt*1.6); live=true; } else TR.cur=tg; }
   if(live||dirty){ draw(); dirty=false; }
   raf=requestAnimationFrame(loop);
 }
 function kick(){ if(!raf) raf=requestAnimationFrame(loop); }
-function pick(i){ narStop(); cur=TOP[i]; cv.style.touchAction=(cur.id==='drv')?'pan-y':'auto'; HY.rain=false; HY.hl=0; HYTILT.on=false; AR.hl='both';
+function pick(i){ narStop(); cur=TOP[i]; if(cur.id==='prg'){ PG.hx=PG.thx=0; PG.lock='sign'; PG.out=false; PG.gx=80; PG.gy=32; }
+  if(cur.id==='blu'){ BL.on=false; BL.k=0; BL.red=.12; BL.look=0; BL.lookEnd=0; } cv.style.touchAction=(cur.id==='drv'||cur.id==='prg')?'pan-y':'auto'; HY.rain=false; HY.hl=0; HYTILT.on=false; AR.hl='both';
   Array.prototype.forEach.call($('anTabs').children,function(b,k){ b.setAttribute('aria-pressed',String(k===i)); });
   $('anCap').textContent='Sesli anlatım için düğmeye basın.'; controls(); infoCard(); dirty=true; if(cur.id==='trn'){ TR.scen='in'; TR.target=trTarget(); TR.cur=TR.target; } if(cur.id==='hid'){ hyInit(); hyReset(); } kick(); }
 function onLine(L){
@@ -4270,10 +4651,11 @@ function onLine(L){
   else if(id==='ar'){ AR.hl=L.hl||'both'; controls(); }
   else if(id==='trn'){ TR.scen=L.scen; TR.split=!!L.split; if(L.temp!=null) TR.temp=L.temp; TR.target=trTarget(); controls(); }
   else if(id==='idx'){ ID.F=L.F; ID.after=L.af; controls(); }
-  else if(id==='blu'){ BL.on=L.on; controls(); }
+  else if(id==='prg'){ PG.lock=L.g||'sign'; if(L.h!=null) PG.thx=L.h; if(L.out!=null) PG.out=L.out; controls(); }
+  else if(id==='blu'){ BL.on=L.on; BL.ph=L.ph; if(L.ph==='dry') BL.red=Math.max(BL.red,.45); if(L.ph==='break') BL.lookEnd=performance.now()+5200; controls(); }
   dirty=true; kick();
 }
-function drag(e){ if(cur.id!=='drv') return; var r=cv.getBoundingClientRect(), v=clamp((e.clientX-r.left)/r.width,.03,.97); DR.split=v; dirty=true; kick(); }
+function drag(e){ if(cur.id==='prg'){ var r2=cv.getBoundingClientRect(), qx=(e.clientX-r2.left)/r2.width*W, qy=(e.clientY-r2.top)/r2.height*H, lx=qx<180?qx-PX[0]:qx-PX[1]; PG.lock=null; PG.tx=clamp(lx,8,PW-8); PG.ty=clamp(qy-PY,8,PH-8); dirty=true; kick(); return; } if(cur.id!=='drv') return; var r=cv.getBoundingClientRect(), v=clamp((e.clientX-r.left)/r.width,.03,.97); DR.split=v; dirty=true; kick(); }
 function build(){
   sec=document.querySelector('.cp[data-p="anl"]'); if(!sec) return;
   var box=sec.querySelector('.results');
@@ -4288,7 +4670,7 @@ function build(){
   pick(0);
 }
 window.__anlEnter=function(){ if(!cv) build(); setup(); dirty=true; kick(); };
-window.__anlT={TOP:TOP,pick:function(i){ pick(i); },play:function(){ narPlay(cur.lines,onLine); },draw:function(){ draw(); },state:function(){ return {HY:HY,TR:TR,DR:DR,ID:ID}; }};
+window.__anlT={TOP:TOP,pick:function(i){ pick(i); },play:function(){ narPlay(cur.lines,onLine); },draw:function(){ draw(); },state:function(){ return {HY:HY,TR:TR,DR:DR,ID:ID,BL:BL,AR:AR,PG:PG}; }};
 document.addEventListener('DOMContentLoaded',function(){});
 })();
 
