@@ -145,6 +145,8 @@ input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
 .prow .nm{font-weight:600;overflow-wrap:anywhere}
 .prow .meta{color:var(--muted);font-size:12px}
 .prow .chev{color:var(--muted);flex:none;font:500 18px var(--mono)}
+.ino{display:inline-block;background:var(--ink);color:var(--bg);border-radius:6px;padding:1px 7px;font:700 13px var(--mono);margin-right:4px}
+.isum{font:600 13px var(--mono);margin-top:3px}
 .pdet{padding:0 0 12px;display:flex;flex-direction:column;gap:8px}
 .pdet .rec{border-top:1px dashed var(--line)}
 .tp{font:600 11px var(--mono);padding:2px 6px;border-radius:4px;background:var(--surface2);color:var(--muted);margin-left:6px}
@@ -330,7 +332,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v40</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v41</span>
   </header>
 
   <div id="dftBanner" hidden></div>
@@ -399,7 +401,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <input type="text" class="plain" id="easyName" maxlength="60" placeholder="Hasta adı soyadı (kaydetmek için)" autocomplete="off" list="patList" style="width:100%;box-sizing:border-box;margin-bottom:8px">
           <div class="tiles" style="grid-template-columns:1fr 1fr"><button class="btn sm" id="easyFind">✨ Otomatik bul</button><button class="btn sm" id="easyCard">📏 Kartla kesinleştir</button></div>
         </div>
-        <div class="tiles" style="grid-template-columns:1fr 1fr;margin-top:10px"><button class="btn sm" id="easyRecs">🗂 Hastalar</button><button class="btn sm" id="easyAdv">Gelişmiş adımlar</button></div>
+        <div class="tiles" style="grid-template-columns:1fr 1fr;margin-top:10px"><button class="btn sm" id="easyRecs">🗂 İşlemler</button><button class="btn sm" id="easyAdv">Gelişmiş adımlar</button></div>
       </div>
       <!-- 1 -->
       <div class="sp" data-for="photo">
@@ -607,9 +609,9 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       </section>
 
       <section class="results" id="recsWrap">
-        <div class="rHead"><h2>Hastalar</h2><span class="sub" id="recsCount"></span></div>
-        <input type="text" class="plain" id="patQ" placeholder="Ad veya telefonla ara" autocomplete="off" aria-label="Hasta ara">
-        <div class="muted small" id="recsEmpty">Henüz hasta kaydı yok. Ölçümü kaydedince hasta otomatik eklenir.</div>
+        <div class="rHead"><h2>İşlemler</h2><span class="sub" id="recsCount"></span></div>
+        <input type="text" class="plain" id="patQ" placeholder="İşlem no, ad veya telefonla ara" autocomplete="off" aria-label="İşlem ara">
+        <div class="muted small" id="recsEmpty">Henüz işlem yok. Ölçümü kaydedince işlem numarası otomatik verilir.</div>
         <div class="recs" id="recs"></div>
         <label class="f">Dükkân WhatsApp numarası (ölçümler bu numaraya gider)
           <input type="text" id="waNo" inputmode="tel" maxlength="20" placeholder="05xx xxx xx xx" autocomplete="off">
@@ -1994,11 +1996,28 @@ function cleanDB(d){
     rids[id]=1;
     var n={id:id,pid:pid,t:t,kind:r.kind==='v'?'v':'f',text:cl(r.text,800)};
     ['pd','mR','mL','hR','hL','dbl','vd','pt','wR','wL','bR','bL','edR','edL','pad'].forEach(function(k){ if(r[k]!=null){ var x=cl(r[k],12); if(x) n[k]=x; } });
+    var nn=parseInt(r.no,10); if(nn>0 && nn<1e7){ n.no=nn; if(nn>(out.seq||0)) out.seq=nn; }
     if(r.ex===true) n.ex=true; if(r.img===true) n.img=true; var uu=cl(r.u,40); if(uu && !isNaN(Date.parse(uu))) n.u=uu;
     out.records.push(n);
   });
+  var sq=parseInt(d.seq,10); if(sq>(out.seq||0) && sq<1e7) out.seq=sq;
   return out;
 }
+function ensureNos(d){
+  var ch=false, last={}; d.seq=d.seq||0;
+  d.records.forEach(function(r){ if(r.no>d.seq) d.seq=r.no; });
+  d.records.slice().sort(function(a,b){ return a.t<b.t?-1:1; }).forEach(function(r){
+    var g=last[r.pid];
+    if(!r.no){
+      if(g && !g.k[r.kind] && (new Date(r.t)-new Date(g.t))<=45*60000) r.no=g.no; else r.no=++d.seq;
+      ch=true;
+    }
+    if(!g || g.no!==r.no) g=last[r.pid]={no:r.no,t:r.t,k:{}};
+    g.k[r.kind]=1; g.t=r.t;
+  });
+  return ch;
+}
+function noStr(n){ return '#'+('000'+n).slice(-4); }
 function writeDB(d){ try{ store.setItem(DBKEY,JSON.stringify(d)); return true; }catch(e){ return false; } }
 function readDB(){
   if(!store) return emptyDB();
@@ -2065,10 +2084,11 @@ function saveRecord(){
     var g=glasses(); if(g){ rec.dbl=f1(R(g.dbl)); rec.wR=f1(R(g.e.R.A)); rec.wL=f1(R(g.e.L.A)); rec.bR=f1(R(g.e.R.B)); rec.bL=f1(R(g.e.L.B)); rec.edR=f1(R(g.e.R.ed)); rec.edL=f1(R(g.e.L.ed)); rec.pad=(g.padGuess?'~':'')+f1(R(g.pad)); }
   }
   if(!edit) d.records.push(rec);
+  ensureNos(d);
   if(!S.demo && S.src) rec.img=true;
   if(writeDB(d)){
     if(rec.img) imgPut(rec.id,snapState());
-    S.editRec=null; try{ barUpdate(); }catch(e){} openPid=p.id; editPid=null; phoneAuto=true; renderPatients(); toast((edit?'Güncellendi: ':'Kaydedildi: ')+p.name+' · '+fmtDate(now)); if(!edit){ try{ dftMarkSaved(); }catch(e){} } return rec; }
+    S.editRec=null; try{ barUpdate(); }catch(e){} openPid=String(rec.no); editPid=null; phoneAuto=true; renderPatients(); toast((edit?'Güncellendi: ':'Kaydedildi: ')+noStr(rec.no)+' · '+p.name); if(!edit){ try{ dftMarkSaved(); }catch(e){} } return rec; }
   toast('Kaydedilemedi.'); return null;
 }
 $('btnSave').addEventListener('click',saveRecord);
@@ -2107,7 +2127,7 @@ function patientDetail(d,x){
     var dd=readDB(); dd.records.forEach(function(r){ if(r.pid===p.id && r.img) imgDel(r.id); }); dd.patients=dd.patients.filter(function(q){ return q.id!==p.id; }); dd.records=dd.records.filter(function(r){ return r.pid!==p.id; });
     writeDB(dd); openPid=null; editPid=null; renderPatients();
   });
-  act.appendChild(del); box.appendChild(act);
+  act.appendChild(del); act.className='row pact';
   if(editPid===p.id){
     var f=document.createElement('div'); f.className='stack';
     var g=document.createElement('div'); g.className='grid2';
@@ -2132,7 +2152,7 @@ function patientDetail(d,x){
   } else if(p.note){
     var n=document.createElement('div'); n.className='muted small'; n.textContent='Not: '+p.note; box.appendChild(n);
   }
-  if(!rs.length){ var e=document.createElement('div'); e.className='muted small'; e.textContent='Bu hastaya ait ölçüm yok.'; box.appendChild(e); }
+  
   rs.forEach(function(rec){
     var d1=document.createElement('div'); d1.className='rec';
     var h=document.createElement('div'); h.className='h';
@@ -2151,18 +2171,21 @@ function patientDetail(d,x){
     ac.appendChild(db);
     d1.appendChild(h); d1.appendChild(v); d1.appendChild(ac); box.appendChild(d1);
   });
+  var lab=document.createElement('div'); lab.className='muted small'; lab.textContent='Hasta: '+p.name; box.appendChild(lab); box.appendChild(act);
   return box;
 }
 function patientRow(d,x){
-  var p=x.p, rs=x.rs, wrapEl=document.createElement('div'), open=openPid===p.id;
+  var p=x.p, rs=x.rs, key=String(x.no), wrapEl=document.createElement('div'), open=openPid===key;
   var head=document.createElement('button'); head.className='prow'; head.setAttribute('aria-expanded',String(open));
-  var L=document.createElement('div'), nm=document.createElement('div'), meta=document.createElement('div');
-  nm.className='nm'; nm.textContent=p.name; meta.className='meta';
-  meta.textContent=[p.phone, rs.length+' ölçüm', rs.length ? 'son: '+fmtDate(rs[0].t) : 'kayıt: '+fmtDate(p.created)].filter(Boolean).join(' · ');
-  L.appendChild(nm); L.appendChild(meta);
+  var L=document.createElement('div'), top=document.createElement('div'), nm=document.createElement('div'), meta=document.createElement('div'), sm=document.createElement('div');
+  top.className='nm'; var no=document.createElement('span'); no.className='ino'; no.textContent=noStr(x.no); top.appendChild(no); top.appendChild(document.createTextNode(' '+p.name));
+  meta.className='meta'; meta.textContent=[fmtDate(x.t), p.phone].filter(Boolean).join(' · ');
+  var f=rs.filter(function(r){ return r.kind==='f'; })[0], v=rs.filter(function(r){ return r.kind==='v'; })[0];
+  sm.className='isum'; sm.textContent=[f&&('PD '+f.pd), v&&('Verteks '+v.vd+' mm'), v&&v.pt&&v.pt!=='—'&&('Pantoskopik '+v.pt), (!f&&!v)&&'ölçüm yok'].filter(Boolean).join('  ·  ');
+  L.appendChild(top); L.appendChild(meta); L.appendChild(sm);
   var ch=document.createElement('span'); ch.className='chev'; ch.textContent=open?'−':'+';
   head.appendChild(L); head.appendChild(ch);
-  head.addEventListener('click',function(){ openPid = open ? null : p.id; editPid=null; renderPatients(); });
+  head.addEventListener('click',function(){ openPid = open ? null : key; editPid=null; renderPatients(); });
   wrapEl.appendChild(head);
   if(open) wrapEl.appendChild(patientDetail(d,x));
   return wrapEl;
@@ -2170,21 +2193,23 @@ function patientRow(d,x){
 function renderPatients(){
   var wrap=$('recsWrap');
   if(!store){ wrap.hidden=true; return; }
-  var d=readDB(), box=$('recs'); box.textContent='';
+  var d=readDB(); if(ensureNos(d)) writeDB(d);
+  var box=$('recs'); box.textContent='';
   var pl=$('patList'); pl.textContent='';
   d.patients.forEach(function(p){ var o=document.createElement('option'); o.value=p.name; pl.appendChild(o); });
-  var qq=norm($('patQ').value);
-  var list=d.patients.map(function(p){
-    var rs=d.records.filter(function(r){ return r.pid===p.id; }).sort(function(a,b){ return a.t<b.t?1:-1; });
-    return {p:p,rs:rs,last:rs.length?rs[0].t:p.created};
-  }).filter(function(x){ return !qq || norm(x.p.name).indexOf(qq)>=0 || (x.p.phone||'').replace(/\s/g,'').indexOf(qq.replace(/\s/g,''))>=0 || (x.p.tc||'').indexOf(qq)>=0; })
-    .sort(function(a,b){ return a.last<b.last?1:-1; });
-  $('recsCount').textContent = d.patients.length ? d.patients.length+' hasta · '+d.records.length+' ölçüm' : '';
+  var qq=norm($('patQ').value).replace(/^#/,''), byP={}, G={};
+  d.patients.forEach(function(p){ byP[p.id]=p; });
+  d.records.forEach(function(r){ var g=G[r.no]||(G[r.no]={no:r.no,p:byP[r.pid],rs:[],t:r.t}); g.rs.push(r); if(r.t>g.t) g.t=r.t; });
+  var all=Object.keys(G).map(function(k){ return G[k]; }).filter(function(g){ return g.p; });
+  all.forEach(function(g){ g.rs.sort(function(a,b){ return a.kind===b.kind ? (a.t<b.t?1:-1) : (a.kind==='f'?-1:1); }); });
+  var list=all.filter(function(g){ var p=g.p; return !qq || norm(p.name).indexOf(qq)>=0 || (p.phone||'').replace(/\s/g,'').indexOf(qq.replace(/\s/g,''))>=0 || (p.tc||'').indexOf(qq)>=0 || String(g.no)===qq.replace(/^0+/,'') || noStr(g.no).slice(1).indexOf(qq)===0; })
+    .sort(function(a,b){ return a.t<b.t?1:-1; });
+  $('recsCount').textContent = all.length ? all.length+' işlem · '+d.records.length+' ölçüm' : '';
   var em=$('recsEmpty');
-  if(!d.patients.length){ em.textContent='Henüz hasta kaydı yok. Ölçümü kaydedince hasta otomatik eklenir.'; em.hidden=false; }
-  else if(!list.length){ em.textContent='Eşleşen hasta yok.'; em.hidden=false; }
+  if(!all.length){ em.textContent='Henüz işlem yok. Ölçümü kaydedince işlem numarası otomatik verilir.'; em.hidden=false; }
+  else if(!list.length){ em.textContent='Eşleşen işlem yok.'; em.hidden=false; }
   else em.hidden=true;
-  list.forEach(function(x){ box.appendChild(patientRow(d,x)); });
+  list.forEach(function(g){ box.appendChild(patientRow(d,g)); });
 }
 function renderRecs(){ renderPatients(); }
 $('patQ').addEventListener('input',renderPatients);
@@ -2213,7 +2238,7 @@ function numOrNull(v){ if(v==null || v==='' || v==='—') return null; var n=par
 function exportObj(list,byId){
   return { format:'aysima-olcum', surum:2, birim:'mm', olusturma:new Date().toISOString(), olcumler:list.map(function(r){
     var p=byId[r.pid]||{name:'',phone:'',tc:''};
-    return { id:r.id, tarih:r.t, tur:r.kind==='v'?'yandan':'onden',
+    return { id:r.id, islem_no:r.no||null, tarih:r.t, tur:r.kind==='v'?'yandan':'onden',
       hasta:{ ad:p.name, telefon:p.phone||'', tc:p.tc||'' },
       pd:numOrNull(r.pd), pd_sag:numOrNull(r.mR), pd_sol:numOrNull(r.mL),
       yukseklik_sag:numOrNull(r.hR), yukseklik_sol:numOrNull(r.hL), dbl:numOrNull(r.dbl),
