@@ -299,6 +299,12 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 #ovShot{width:72px;height:72px;border-radius:50%;border:6px solid var(--c);background:#fff;color:#111;font-weight:800;font-size:14px}
 #camOv.bad #ovShot{background:#fff;color:#111}
 #ovX,#ovFree{background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:18px;padding:10px 14px;font-size:14px}
+#ovSeq{position:absolute;top:calc(100px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:92%;padding:7px 16px;border-radius:18px;background:rgba(37,99,235,.92);color:#fff;font-weight:800;font-size:15px;text-align:center}
+#ovSkip{background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:18px;padding:10px 14px;font-size:14px}
+#dftBanner{margin:8px 0;padding:10px 12px;border-radius:12px;background:#fff4d6;border:2px solid #f5b301;color:#4a3300}
+#dftBanner .dft{display:flex;gap:8px;align-items:center;margin-top:8px}
+#dftBanner .dft>div{flex:1}
+#dftBanner small{display:block;color:#7a5b00}
 #ovAutoL{position:absolute;left:0;right:0;bottom:calc(112px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-size:13px}
 #ovCount{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:800;color:#fff;text-shadow:0 2px 12px #000;pointer-events:none}
 .vsub button{min-height:44px}
@@ -324,9 +330,10 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v37</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v39</span>
   </header>
 
+  <div id="dftBanner" hidden></div>
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
     <button data-v="olcum" aria-pressed="true">Ölçüm</button>
     <button data-v="cam" aria-pressed="false">Cam rehberi</button>
@@ -398,7 +405,8 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="sp" data-for="photo">
         <h2 id="photoTitle">Hastanın fotoğrafını çekin</h2>
         <div class="row">
-          <button class="btn primary" id="btnCam">Kamerayı aç</button>
+          <button class="btn primary" id="btnSeq">📷 Düz + yan, tek seferde</button>
+          <button class="btn" id="btnCam">Tek fotoğraf çek</button>
           <button class="btn" id="btnGal">Galeriden seç</button>
         </div>
         <div class="seg" id="facing" role="group" aria-label="Kamera">
@@ -499,6 +507,19 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       <div class="sp" data-for="vertex" hidden>
         <h2 id="vTitle">Adım 1/2 · Kornea ucunu işaretleyin</h2>
         <p class="muted" id="vTxt"></p>
+        <svg viewBox="0 0 320 130" style="width:100%;height:auto;border-radius:10px;background:#eef2f6;margin:2px 0 8px" aria-label="Verteks şeması">
+          <path d="M20 40 C60 20 120 24 150 50 C168 66 178 80 172 96 C150 110 90 112 50 100 C30 92 18 70 20 40 Z" fill="#e8c9a8" stroke="#8a6a4a" stroke-width="2"/>
+          <ellipse cx="128" cy="62" rx="22" ry="12" fill="#fff" stroke="#8a6a4a" stroke-width="1.5"/>
+          <circle cx="146" cy="62" r="9" fill="#5b3a29"/><circle cx="146" cy="62" r="4" fill="#000"/>
+          <path d="M146 62 L172 62" stroke="none"/>
+          <circle cx="156" cy="62" r="16" fill="rgba(255,230,80,.25)" stroke="#22d3ee" stroke-width="2.5"/>
+          <rect x="196" y="22" width="7" height="86" rx="3" fill="#bcd8f5" stroke="#1e3a8a" stroke-width="2"/>
+          <path d="M156 84 L196 84" stroke="#111827" stroke-width="2.5"/><path d="M156 84 l9 -5 v10 z M196 84 l-9 -5 v10 z" fill="#111827"/>
+          <text x="176" y="102" font-size="12" font-weight="700" text-anchor="middle" fill="#111827">verteks ≈ 12 mm</text>
+          <text x="156" y="40" font-size="11" font-weight="700" text-anchor="middle" fill="#0e7490">1 · kornea ucu</text>
+          <text x="262" y="30" font-size="11" font-weight="700" text-anchor="middle" fill="#92400e">2 · camın arka yüzü</text>
+          <path d="M214 34 L206 40" stroke="#92400e" stroke-width="1.5"/>
+        </svg>
         <div class="row"><button class="btn sm primary" id="autoFind3">Otomatik bul (internet varsa)</button></div>
         <div class="seg vsub" id="vSub" role="group" aria-label="Verteks adımları">
           <button data-v="apex" aria-pressed="true">1 Kornea ucu</button>
@@ -899,6 +920,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 </div>
 
 <input type="file" id="inCam" accept="image/*" capture="environment" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" tabindex="-1" aria-hidden="true">
+<div id="nsq" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:24px"><div style="background:#fff;color:#111;border-radius:18px;padding:22px;max-width:340px;width:100%;text-align:center;font:16px system-ui"><div style="font-weight:800;font-size:13px;letter-spacing:.06em;color:#0a7">2/2 · YAN FOTOĞRAF</div><div style="font-size:48px;margin:6px 0">🙂➡️</div><div style="margin-bottom:14px">Düz fotoğraf kaydedildi ✓<br>Hastayı <b>yan çevirin</b>, kart yüzün yanında olsun, sonra çekin.</div><button id="nsqGo" type="button" style="width:100%;padding:16px;border:0;border-radius:12px;background:#0a7;color:#fff;font:700 18px system-ui">📷 Yan fotoğrafı çek</button><button id="nsqSkip" type="button" style="width:100%;padding:12px;margin-top:8px;border:0;background:none;color:#555;font:15px system-ui">Yan çekmeden bitir</button></div></div>
 <input type="file" id="inGal" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" tabindex="-1" aria-hidden="true">
 
 <div id="camOv" hidden>
@@ -908,7 +930,8 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
   <div id="ovChips"><span class="ovChip" id="ovC1"><i></i><span>Dik</span></span><span class="ovChip" id="ovC2"><i></i><span>Düz</span></span><span class="ovChip" id="ovC3" hidden><i></i><span>Mesafe</span></span></div>
   <div id="ovHint"></div>
   <label id="ovAutoL"><input type="checkbox" id="ovAuto"> Yeşilde otomatik çek</label>
-  <div id="ovBar"><button id="ovX" type="button">Kapat</button><button id="ovShot" type="button">ÇEK</button><button id="ovFree" type="button">Kilitsiz çek</button></div>
+  <div id="ovBar"><button id="ovX" type="button">Kapat</button><button id="ovShot" type="button">ÇEK</button><button id="ovFree" type="button">Kilitsiz çek</button><button id="ovSkip" type="button" hidden>Yan çekmeden bitir</button></div>
+  <div id="ovSeq" hidden></div>
   <div id="ovCount" hidden></div>
 </div>
 <script>
@@ -1551,7 +1574,7 @@ function barUpdate(){
   if(S.edit && !S.adv){
     h='<button data-act="back">‹ Geri</button><button data-act="undo"'+(UD.u.length?'':' class="off"')+'>↶ Geri al</button><button data-act="redo" aria-label="İleri al"'+(UD.r.length?'':' class="off"')+'>↷</button><button class="gr" data-act="done">✔ Tamam</button>'; cols='1fr 1.3fr .6fr 1.3fr'; }
   else if(easyOn()){
-    if(S.demo){ h='<button class="bl" data-act="cam">📷 Kamerayı aç</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
+    if(S.demo){ h='<button class="bl" data-act="cam">📷 Düz + yan çek</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
     else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">'+(S.editRec?'✔ Güncelle':'✔ Kaydet')+'</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
   }
   if(bar.dataset.h!==h){ bar.innerHTML=h; bar.dataset.h=h; }
@@ -1606,7 +1629,7 @@ function enterEdit(step){ S.edit=true; S.adv=false; renderSteps(); go(step); }
 function doneEdit(){ S.edit=false; S.adv=false; renderSteps(); go('easy'); }
 $('bar').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(!b) return; var a=b.dataset.act;
-  if(a==='cam') $('btnCam').click();
+  if(a==='cam') startSeq();
   else if(a==='gal') $('btnGal').click();
   else if(a==='fix') enterEdit(S.mode==='side'?'vertex':'pupil');
   else if(a==='done') doneEdit();
@@ -1685,6 +1708,7 @@ function go(step){
   var nm=STEP_SETS[S.mode]; $('next').textContent = i<list.length-1 ? 'İleri · '+nm[i+1][1]+' ›' : 'Son adım'; $('prev').textContent = i>0 ? '‹ '+nm[i-1][1] : 'Geri';
   $('demoNote').hidden = !S.demo;
   if(step==='vertex' && typeof VTXT!=='undefined' && VTXT){ var _t=VTXT[S.vsub||'apex']; $('vTitle').textContent=_t[0]; $('vTxt').textContent=_t[1]; Array.prototype.forEach.call(document.querySelectorAll('#vSub button'),function(b){ b.setAttribute('aria-pressed',String(b.dataset.v===(S.vsub||'apex'))); }); }
+  if(step==='vertex' && S.mode==='side' && !S.vzDone && S.z===1 && !S.demo){ S.vzDone=true; setZoom(3); }
   if(S.sel && S.z>1) centerOn(handlePos(S.sel));
   try{ easyUpdate(); }catch(e){}
   schedule();
@@ -1734,8 +1758,10 @@ function setImage(canvas,demo){
   $('calMm').value=f1(S.calMm).replace('.',',');
   syncMode();
   layout(); results(); schedule();
+  S.vzDone=false;
+  if(!demo && !DFT_SKIP){ try{ dftShot(S.mode,canvas); }catch(e){} }
 }
-function loadFile(file){
+function loadFile(file,seq){
   if(!file || (file.type && file.type.indexOf('image/')!==0)){ toast('Bu dosya bir fotoğraf değil.'); return; }
   var url=URL.createObjectURL(file), im=new Image();
   im.onload=function(){
@@ -1743,6 +1769,8 @@ function loadFile(file){
     var c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
     c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     URL.revokeObjectURL(url);
+    if(seq==='front'){ setImage(c,false); NA.front=true; setMode('side'); nsqShow(true); toast('Düz fotoğraf alındı. Şimdi YAN fotoğraf.'); return; }
+    if(seq==='side'){ setImage(c,false); NA.side=true; setMode('front'); nsqShow(false); toast('İki fotoğraf da kaydedildi. Düz sayfada değerleri girin, sonra Yan sekmesine geçin.'); return; }
     setImage(c,false); go(easyOn()?'easy':ids()[1]); afAuto();
     toast('Fotoğraf yüklendi. Otomatik bulunuyor…');
   };
@@ -1752,7 +1780,7 @@ function loadFile(file){
 var inCam=$('inCam'), inGal=$('inGal');
 
 /* ---------- uygulama içi kamera + duruş göstergesi ---------- */
-var OV={stream:null,beta:null,gamma:null,okSince:0,count:0,state:'na',raf:0,has:false,t0:0};
+var OV={seq:null,stream:null,beta:null,gamma:null,okSince:0,count:0,state:'na',raf:0,has:false,t0:0};
 function ovOrient(e){
   if(e.beta==null || e.gamma==null) return;
   if(!OV.has){ OV.beta=e.beta; OV.gamma=e.gamma; OV.has=true; }
@@ -1839,11 +1867,21 @@ function ovShoot(){
   var m=2000, k=Math.min(1,m/Math.max(v.videoWidth,v.videoHeight)), c=document.createElement('canvas');
   c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k);
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  if(OV.seq==='front'){
+    setImage(c,false); NA.front=true; OV.seq='side'; OV.okSince=0; $('ovCount').hidden=true;
+    setMode('side'); ovSeqUI(); toast('Düz fotoğraf alındı. Şimdi YAN fotoğraf.'); return;
+  }
+  if(OV.seq==='side'){
+    ovClose(); setImage(c,false); NA.side=true; OV.seq=null; ovSeqUI(); setMode('front');
+    toast('İki fotoğraf da kaydedildi. Düz sayfada değerleri girin, sonra Yan sekmesine geçin.'); return;
+  }
   ovClose();
   setImage(c,false); go(easyOn()?'easy':ids()[1]); afAuto();
   toast('Fotoğraf çekildi. Otomatik bulunuyor…');
 }
-function nativeCam(){ inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); }
+var NSQ=null;
+function nativeCam(){ NSQ=OV.seq||null; OV.seq=null; ovSeqUI(); inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); }
+function nsqShow(on){ var e=$('nsq'); if(e) e.style.display=on?'flex':'none'; }
 function openCamOv(){
   if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ nativeCam(); return; }
   var perm = (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==='function')
@@ -1856,17 +1894,23 @@ function openCamOv(){
     var pl=v.play(); if(pl && pl.catch) pl.catch(function(){});
     $('camOv').hidden=false; $('ovAuto').checked=false;
     window.addEventListener('deviceorientation',ovOrient);
-    OV.tOk=false; OV.rOk=false; ovDistStart();
+    OV.tOk=false; OV.rOk=false; ovDistStart(); ovSeqUI();
     cancelAnimationFrame(OV.raf); OV.raf=requestAnimationFrame(ovEval);
   }).catch(function(){ nativeCam(); });
 }
-$('btnCam').addEventListener('click',openCamOv);
+$('btnCam').addEventListener('click',function(){ OV.seq=null; openCamOv(); });
+$('btnSeq').addEventListener('click',startSeq);
 $('ovX').addEventListener('click',ovClose);
+$('ovX').addEventListener('click',function(){ var q=OV.seq; OV.seq=null; ovSeqUI(); if(q==='side') setMode('front'); });
+$('ovSkip').addEventListener('click',function(){ OV.seq=null; ovSeqUI(); ovClose(); setMode('front'); toast('Yan fotoğraf atlandı.'); });
 $('ovShot').addEventListener('click',function(){ ovShoot(); });
 $('ovFree').addEventListener('click',ovShoot);
 
 $('btnGal').addEventListener('click',function(){ inGal.value=''; inGal.click(); });
-[inCam,inGal].forEach(function(inp){ inp.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) loadFile(f); }); });
+inGal.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) loadFile(f); });
+inCam.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; var q=NSQ; if(!f) return; if(q==='front') NSQ='side'; else NSQ=null; loadFile(f,q); });
+$('nsqGo').addEventListener('click',function(){ NSQ='side'; inCam.setAttribute('capture',S.facing); inCam.value=''; inCam.click(); });
+$('nsqSkip').addEventListener('click',function(){ NSQ=null; nsqShow(false); setMode('front'); toast('Yan fotoğraf atlandı.'); });
 $('facing').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(!b) return;
   S.facing=b.dataset.f;
@@ -2020,7 +2064,7 @@ function saveRecord(){
   if(!S.demo && S.src) rec.img=true;
   if(writeDB(d)){
     if(rec.img) imgPut(rec.id,snapState());
-    S.editRec=null; try{ barUpdate(); }catch(e){} openPid=p.id; editPid=null; phoneAuto=true; renderPatients(); toast((edit?'Güncellendi: ':'Kaydedildi: ')+p.name+' · '+fmtDate(now)); return rec; }
+    S.editRec=null; try{ barUpdate(); }catch(e){} openPid=p.id; editPid=null; phoneAuto=true; renderPatients(); toast((edit?'Güncellendi: ':'Kaydedildi: ')+p.name+' · '+fmtDate(now)); if(!edit){ try{ dftMarkSaved(); }catch(e){} } return rec; }
   toast('Kaydedilemedi.'); return null;
 }
 $('btnSave').addEventListener('click',saveRecord);
@@ -2226,8 +2270,8 @@ function idb(){
   if(idbP) return idbP;
   idbP=new Promise(function(res,rej){
     try{
-      var q=indexedDB.open(IDBN,1);
-      q.onupgradeneeded=function(){ q.result.createObjectStore('img'); };
+      var q=indexedDB.open(IDBN,2);
+      q.onupgradeneeded=function(){ var d=q.result; if(!d.objectStoreNames.contains('img')) d.createObjectStore('img'); if(!d.objectStoreNames.contains('draft')) d.createObjectStore('draft'); };
       q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
     }catch(e){ rej(e); }
   });
@@ -2253,6 +2297,108 @@ function imgPut(id,st){
 function imgGet(id){
   return idb().then(function(db){ return new Promise(function(res){ var q=db.transaction('img').objectStore('img').get(id); q.onsuccess=function(){ res(q.result||null); }; q.onerror=function(){ res(null); }; }); },function(){ return null; });
 }
+/* ---------- taslak (yarım kalan ölçüm) ---------- */
+var DR=null, dftT=null, DFT_SKIP=false, NA={front:false,side:false};
+function dftNew(){ var t=new Date().toISOString(); DR={id:'d'+Date.now(),t:t,u:t,name:'',phone:'',tc:'',shots:{},saved:{}}; }
+function dftPut(d){
+  d=d||DR; if(!d) return Promise.resolve();
+  d.u=new Date().toISOString();
+  if(d===DR){ d.name=($('name').value||'').slice(0,80); d.phone=($('phone').value||'').slice(0,30); d.tc=($('tc').value||'').slice(0,20); }
+  return idb().then(function(db){ return new Promise(function(res){ var tx=db.transaction('draft','readwrite'); tx.objectStore('draft').put(d,d.id); tx.oncomplete=function(){ res(); }; tx.onerror=function(){ res(); }; }); },function(){}).then(function(){ dftBanner(); });
+}
+function dftList(){
+  return idb().then(function(db){ return new Promise(function(res){ var q=db.transaction('draft').objectStore('draft').getAll(); q.onsuccess=function(){ res(q.result||[]); }; q.onerror=function(){ res([]); }; }); },function(){ return []; });
+}
+function dftDelete(id){ return idb().then(function(db){ return new Promise(function(res){ var tx=db.transaction('draft','readwrite'); tx.objectStore('draft').delete(id); tx.oncomplete=function(){ res(); }; tx.onerror=function(){ res(); }; }); },function(){}).then(function(){ dftBanner(); }); }
+function dftShot(mode,c){
+  if(!DR || DR.saved[mode]) dftNew();
+  var my=DR, st=snapState(), k=Math.min(1,1600/Math.max(c.width,c.height)), t=document.createElement('canvas');
+  t.width=Math.round(c.width*k); t.height=Math.round(c.height*k); t.getContext('2d').drawImage(c,0,0,t.width,t.height);
+  st.srcW=c.width; st.srcH=c.height; st.mode=mode;
+  t.toBlob(function(b){ if(!b) return; my.shots[mode]={blob:b,st:st}; delete my.saved[mode]; dftPut(my); },'image/jpeg',0.72);
+}
+function dftSaveCur(){
+  if(!DR || S.demo || !S.src || S.editRec) return;
+  var sh=DR.shots[S.mode]; if(!sh) return;
+  sh.st=snapState(); sh.st.srcW=sh.st.srcW||S.src.width; sh.st.srcH=sh.st.srcH||S.src.height; sh.st.mode=S.mode;
+  dftPut(DR);
+}
+function dftTouch(){ clearTimeout(dftT); dftT=setTimeout(dftSaveCur,1000); }
+['pointerup','change','input','keyup'].forEach(function(n){ document.addEventListener(n,dftTouch,true); });
+document.addEventListener('visibilitychange',function(){ if(document.hidden){ try{ dftSaveCur(); }catch(e){} } else { dftBanner(); } });
+window.addEventListener('pagehide',function(){ try{ dftSaveCur(); }catch(e){} });
+function dftMarkSaved(){
+  if(!DR || !DR.shots[S.mode]) return;
+  DR.saved[S.mode]=true;
+  var rem=Object.keys(DR.shots).filter(function(m){ return !DR.saved[m]; });
+  if(!rem.length){ var id=DR.id; DR=null; dftDelete(id); }
+  else { dftPut(DR); setTimeout(function(){ toast(rem[0]==='side'?'Yan (verteks) ölçüm hâlâ bekliyor.':'Düz ölçüm hâlâ bekliyor.'); },1900); }
+}
+function blobCanvas(blob,st){
+  return new Promise(function(res,rej){
+    var u=URL.createObjectURL(blob), im=new Image();
+    im.onload=function(){ var c=document.createElement('canvas'); c.width=st.srcW||im.naturalWidth; c.height=st.srcH||im.naturalHeight; c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u); res(c); };
+    im.onerror=function(){ URL.revokeObjectURL(u); rej(); }; im.src=u;
+  });
+}
+function restoreShot(c,st){
+  setImage(c,false);
+  Object.keys(st).forEach(function(k){ if(['imgW','imgH','srcW','srcH','mode'].indexOf(k)<0) S[k]=st[k]; });
+  S.demo=false; S.editRec=null;
+  $('rot').value=S.rot||0; $('rotVal').textContent=f1(S.rot||0)+'°'; $('mirror').checked=!!S.mirror; $('round').checked=!!S.round;
+  rebuildBase(); syncMode(); if(S.mode==='side'){ try{ syncSideUI(); }catch(e){} }
+}
+function dftResume(id){
+  try{ dftSaveCur(); }catch(e){}
+  dftList().then(function(l){
+    var d=l.filter(function(x){ return x.id===id; })[0];
+    if(!d){ toast('Taslak bulunamadı.'); dftBanner(); return; }
+    DR=null; DFT_SKIP=true; NA.front=NA.side=false;
+    var modes=['front','side'].filter(function(m){ return d.shots[m]; }), ch=Promise.resolve();
+    modes.forEach(function(m){ ch=ch.then(function(){ return blobCanvas(d.shots[m].blob,d.shots[m].st).then(function(c){ if(S.mode!==m) setMode(m); restoreShot(c,d.shots[m].st); }); }); });
+    ch.then(function(){
+      DFT_SKIP=false; DR=d;
+      $('name').value=d.name||''; $('phone').value=d.phone||''; $('tc').value=d.tc||'';
+      var m=(d.shots.front && !d.saved.front) ? 'front' : (d.shots.side && !d.saved.side ? 'side' : modes[0]);
+      if(S.mode!==m) setMode(m);
+      S.edit=false; S.adv=false; renderSteps(); go('easy'); results(); schedule();
+      try{ window.scrollTo(0,0); }catch(e){}
+      toast('Yarım kalan ölçüm açıldı.');
+    }).catch(function(){ DFT_SKIP=false; toast('Taslak açılamadı.'); });
+  });
+}
+function dftBanner(){
+  var box=$('dftBanner'); if(!box) return;
+  dftList().then(function(l){
+    l=l.filter(function(d){ return Object.keys(d.shots||{}).some(function(m){ return !d.saved[m]; }); }).sort(function(a,b){ return a.u<b.u?1:-1; });
+    if(!l.length){ box.hidden=true; box.innerHTML=''; return; }
+    var part=function(d,m,nm){ return d.shots[m] ? nm+': '+(d.saved[m]?'kaydedildi ✓':'değer bekliyor') : ''; };
+    box.hidden=false;
+    box.innerHTML='<b>⏳ Yarım kalan ölçüm ('+l.length+')</b>'+l.slice(0,4).map(function(d){
+      var nm=(d.name||'İsimsiz hasta').replace(/[<>&"]/g,'');
+      return '<div class="dft"><div style="min-width:0"><b>'+nm+'</b><small>'+fmtDate(d.u)+'</small><small>'+[part(d,'front','Düz'),part(d,'side','Yan')].filter(Boolean).join(' · ')+'</small></div><button class="btn sm primary" data-dr="'+d.id+'">Devam</button><button class="btn sm" data-dd="'+d.id+'">Sil</button></div>';
+    }).join('');
+  });
+}
+$('dftBanner').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.dr) dftResume(b.dataset.dr);
+  if(b.dataset.dd){ if(!confirm('Bu yarım kalan ölçüm silinsin mi?')) return; if(DR && DR.id===b.dataset.dd) DR=null; dftDelete(b.dataset.dd); }
+});
+setTimeout(function(){ dftList().then(function(l){ var n=l.filter(function(d){ return Object.keys(d.shots||{}).some(function(m){ return !d.saved[m]; }); }).length; dftBanner(); if(n) toast(n+' yarım kalan ölçüm var. Üstte "Devam" ile açabilirsiniz.'); }); },700);
+/* tek kamerada önce düz sonra yan */
+function ovSeqUI(){
+  var e=$('ovSeq'); if(!e) return;
+  if(!OV.seq){ e.hidden=true; $('ovSkip').hidden=true; return; }
+  e.hidden=false; e.textContent = OV.seq==='front' ? '1/2 · DÜZ FOTOĞRAF' : '2/2 · YAN FOTOĞRAF · kart yüzün yanında';
+  $('ovSkip').hidden = OV.seq!=='side';
+}
+function startSeq(){
+  try{ dftSaveCur(); }catch(e){}
+  if(S.mode!=='front') setMode('front');
+  DR=null; OV.seq='front'; openCamOv();
+}
+
 function imgDel(id){ idb().then(function(db){ db.transaction('img','readwrite').objectStore('img').delete(id); },function(){}); }
 function editRecord(rec){
   imgGet(rec.id).then(function(o){
@@ -2261,8 +2407,9 @@ function editRecord(rec){
     im.onload=function(){
       var c=document.createElement('canvas'); c.width=o.st.srcW||im.naturalWidth; c.height=o.st.srcH||im.naturalHeight;
       c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u);
+      try{ dftSaveCur(); }catch(e){} DR=null; DFT_SKIP=true;
       var want=rec.kind==='v'?'side':'front'; if(S.mode!==want) setMode(want);
-      setImage(c,false);
+      setImage(c,false); DFT_SKIP=false;
       var st=o.st; ['imgW','imgH','srcW','srcH'].forEach(function(k){ delete st[k]; });
       Object.keys(st).forEach(function(k){ S[k]=st[k]; });
       S.demo=false; S.calibrated=true; S.editRec=rec.id; S.askDone=true;
@@ -2451,9 +2598,13 @@ function ovSide(c,TT,k,ex,step){
   var sd=S.sd, rs=S.calibrated ? computeSide() : null, f=sd.facing;
   var A=TT(sd.apex), B=TT(sd.back), simple=(step==='vertex' && !ex), sub=S.vsub||'apex';
   var tags=ex || S.demo || step==='vertex';
+  function ring(p,col,rad){ c.save(); c.beginPath(); c.arc(p.x,p.y,rad,0,TAU); c.fillStyle='rgba(255,230,80,.16)'; c.fill(); c.lineWidth=3*k; c.strokeStyle=col; c.stroke(); c.restore(); }
+  function arrow(p,dir,col){ c.save(); c.fillStyle=col; c.strokeStyle='rgba(0,0,0,.7)'; c.lineWidth=1.2*k; c.beginPath(); c.moveTo(p.x,p.y); c.lineTo(p.x+dir*13*k,p.y-7*k); c.lineTo(p.x+dir*13*k,p.y+7*k); c.closePath(); c.fill(); c.stroke(); c.restore(); }
   if(simple && sub==='apex'){
     halo(c,[{x:A.x-90*k,y:A.y},{x:A.x+90*k,y:A.y}],'#ffffff',1*k,[4*k,4*k]);
+    ring(A,COL.a,34*k);
     cross(c,A,COL.a,k*1.15);
+    tag(c,'KORNEA UCU',A.x,A.y-50*k,COL.a,k);
     return;
   }
   if(simple && sub==='pant'){
@@ -2467,8 +2618,17 @@ function ovSide(c,TT,k,ex,step){
   halo(c,[{x:gx0,y:A.y},{x:gx1,y:A.y}],'#ffffff',1*k,[4*k,4*k]);
   halo(c,[A,{x:B.x,y:A.y}],'#ffffff',1.8*k);
   halo(c,[{x:B.x,y:A.y-46*k},{x:B.x,y:A.y+46*k}],COL.b,1.2*k,[4*k,4*k]);
+  if(step==='vertex'){
+    var dx=B.x-A.x, dr=dx>=0?1:-1, mid=(A.x+B.x)/2;
+    ring(A,COL.a,30*k);
+    halo(c,[{x:A.x,y:A.y+26*k},{x:B.x,y:B.y+26*k}],'#ffffff',2.6*k);
+    arrow({x:A.x,y:A.y+26*k},dr,'#ffffff'); arrow({x:B.x,y:B.y+26*k},-dr,'#ffffff');
+    halo(c,[{x:A.x,y:A.y+8*k},{x:A.x,y:A.y+34*k}],COL.a,1.6*k); halo(c,[{x:B.x,y:B.y+8*k},{x:B.x,y:B.y+34*k}],COL.b,1.6*k);
+    tag(c,'KORNEA',A.x-(dr>0?28:-28)*k,A.y-46*k,COL.a,k,dr>0?'right':'left');
+    tag(c,'CAM ARKASI',B.x+(dr>0?28:-28)*k,A.y-46*k,COL.b,k,dr>0?'left':'right');
+  }
   cross(c,A,COL.a,k); cross(c,B,COL.b,k);
-  if(rs && tags) tag(c,'Verteks '+f1(R(rs.vd))+' mm',(A.x+B.x)/2,A.y-36*k,'#ffffff',k);
+  if(rs && tags) tag(c,'Verteks '+f1(R(rs.vd))+' mm',(A.x+B.x)/2,A.y+(step==='vertex'?58:-36)*k,'#ffffff',k);
   if(sd.pant && !simple){
     var Tp=TT(sd.top), Bt=TT(sd.bot);
     halo(c,[Tp,Bt],COL.pant,1.8*k);
@@ -2571,10 +2731,12 @@ function renderModeUI(){
 }
 function setMode(m){
   if(m===S.mode) return;
+  try{ dftSaveCur(); }catch(e){}
   V[S.mode]=pickView(); S.mode=m;
   if(V[m]) applyView(V[m]);
   else { S.cal={p1:{x:0,y:0},p2:{x:0,y:0}}; S.calMode='card'; S.calMm=85.6; setImage(m==='side'?drawDemoSide():drawDemo(),true); }
   renderModeUI(); go(ids()[0]); schedule();
+  if(NA[m]){ NA[m]=false; setTimeout(function(){ try{ afAuto(); }catch(e){} },80); }
 }
 $('modeSeg').addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
 $('faceDir').addEventListener('click',function(e){
