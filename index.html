@@ -138,7 +138,8 @@ input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
 .rec .h strong{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .rec .h span{color:var(--muted);font-size:12px;white-space:nowrap}
 .rec .v{font:500 13px var(--mono)}
-.rec .a{display:flex;gap:8px}
+.rec .a{display:flex;gap:8px;flex-wrap:wrap}
+.rec .thumb{width:100%;max-height:150px;object-fit:cover;border-radius:8px;background:var(--line)}
 .danger{color:var(--danger);border-color:var(--danger)}
 .prow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:12px 0;font:inherit;color:inherit;cursor:pointer;min-height:44px}
 .prow .nm{font-weight:600;overflow-wrap:anywhere}
@@ -323,7 +324,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
 <div class="app">
   <header class="top">
     <h1>PD ve Yükseklik Ölçer</h1>
-    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v33</span>
+    <span class="sub">Göz bebekleri arası mesafe, monoküler PD, çerçeve yüksekliği · v35</span>
   </header>
 
   <div class="seg mainTabs" id="mainTabs" role="group" aria-label="Bölüm">
@@ -369,7 +370,18 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <div id="easyF">
             <div class="epd"><small>PD TOPLAM</small><b id="eP">—</b><em>mm</em></div>
             <div class="etbl"><div class="etr"><span></span><span class="eh ea">SAĞ</span><span class="eh eb2">SOL</span></div><div class="etr"><span>Monoküler PD</span><b class="ea" id="eR">—</b><b class="eb2" id="eL">—</b></div><div class="etr"><span>Yükseklik</span><b class="ea" id="eRH">—</b><b class="eb2" id="eLH">—</b></div></div>
+            <div class="etbl" id="eGl" style="margin-top:8px"><div class="etr" style="grid-template-columns:1.5fr 1fr 1fr"><span>Cam eni / boyu</span><b class="ea" id="eA">—</b><b class="eb2" id="eB">—</b></div>
+              <div class="etr" style="grid-template-columns:1.5fr 1fr 1fr"><span>Çapraz (min. cam çapı)</span><b class="ea" id="eEDr">—</b><b class="eb2" id="eEDl">—</b></div>
+              <div class="etr" style="grid-template-columns:1.2fr .5fr 1fr .5fr"><span>Ekartman</span><button class="btn sm" data-adj="dbl" data-s="-0.5">−</button><b id="eDBL">—</b><button class="btn sm" data-adj="dbl" data-s="0.5">+</button></div>
+              <div class="etr" style="grid-template-columns:1.2fr .5fr 1fr .5fr"><span>Burunluk</span><button class="btn sm" data-adj="pad" data-s="-0.5">−</button><b id="ePad">—</b><button class="btn sm" data-adj="pad" data-s="0.5">+</button></div></div>
           </div>
+          <div id="eAsk" class="tile" hidden style="margin-top:8px"><b>Ölçek için kartınız var mı?</b>
+            <div class="tiles" style="grid-template-columns:1fr 1fr;margin:8px 0"><button class="btn sm primary" id="eAskCard">📏 Kart var</button><button class="btn sm" id="eAskNo">Kart yok</button></div>
+            <div id="eAskF" hidden><small class="muted">Çerçeve koluna yazılı ölçüleri girin (örnek 52□18):</small>
+              <div class="grid2" style="margin-top:6px"><label class="f">Cam eni (mm)<input type="text" inputmode="decimal" id="eFA" value="52" autocomplete="off"></label><label class="f">Ekartman (mm)<input type="text" inputmode="decimal" id="eFD" value="18" autocomplete="off"></label></div>
+              <label class="f" style="margin-top:6px">Burunluk (mm, biliyorsanız)<input type="text" inputmode="decimal" id="eFN" placeholder="boş bırakılabilir" autocomplete="off"></label>
+              <div class="tiles" style="grid-template-columns:1fr 1fr;margin-top:8px"><button class="btn sm primary" id="eFGo">Etikete göre ölç</button><button class="btn sm" id="eFSkip">Atla (göz bebeği ölçeği)</button></div></div></div>
+          <button class="btn sm" id="eSidePhoto" style="width:100%;margin-top:8px">↔ Yan fotoğraf çek (isteğe bağlı, verteks)</button>
           <div id="easyS" hidden>
             <div class="epd"><small>VERTEKS MESAFESİ</small><b id="eV">—</b><em>mm</em></div>
             <div class="etbl"><div class="etr" style="grid-template-columns:1.5fr 1fr"><span>Pantoskopik açı</span><b id="eT">—</b></div></div>
@@ -578,7 +590,9 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         </div>
         <div class="muted small" id="waNote">Mesaj hazır açılır, siz Gönder'e basarsınız. Bilgisayardaki WhatsApp'ta gelen mesaj programa yapıştırılınca ölçümler müşteriye eşleşir.</div>
         <div class="actions">
-          <button class="btn sm primary" id="btnProg" hidden>Programa aktar</button>
+          <button class="btn sm primary" id="btnProg" hidden>Yenileri bilgisayara aktar (zip)</button>
+          <button class="btn sm" id="btnZipAll" hidden>Tüm hastaları aktar (zip)</button>
+          <button class="btn sm" id="btnShare" hidden>Paylaş (AirDrop / WhatsApp / e-posta)</button>
           <button class="btn sm" id="btnCsv" hidden>Excel için CSV</button>
           <button class="btn sm" id="btnBak" hidden>Yedek indir</button>
           <button class="btn sm" id="btnRest">Yedekten yükle</button>
@@ -1051,6 +1065,7 @@ function buildText(){
   L.push('Monoküler PD: Sağ '+f1(R(e1.mono))+' | Sol '+f1(R(e2.mono))+' mm');
   L.push('Yükseklik (göz bebeği–kutu altı): Sağ '+f1(R(e1.h))+' | Sol '+f1(R(e2.h))+' mm');
   L.push('A: '+f1(R(e1.w))+' / '+f1(R(e2.w))+' | B: '+f1(R(e1.bb))+' / '+f1(R(e2.bb))+' | DBL: '+f1(R(r.dbl))+' mm');
+  try{ var gt=glText(); if(gt) L.push(gt); }catch(e){}
   return L.join('\n');
 }
 
@@ -1436,6 +1451,7 @@ function afSnap(){
   return total;
 }
 function afApply(P,irisPx){
+  S.askDone=false; S.adjD=0; S.pad=null; try{ $('eAskF').hidden=true; }catch(e){}
   S.pup.a={x:P[0].x,y:P[0].y}; S.pup.b={x:P[1].x,y:P[1].y};
   var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
   var pxmm=cardOk ? 1/mmPerPx() : (irisPx>4 ? irisPx/11.7 : null);
@@ -1511,7 +1527,7 @@ function barUpdate(){
     h='<button data-act="back">‹ Geri</button><button data-act="undo"'+(UD.u.length?'':' class="off"')+'>↶ Geri al</button><button data-act="redo" aria-label="İleri al"'+(UD.r.length?'':' class="off"')+'>↷</button><button class="gr" data-act="done">✔ Tamam</button>'; cols='1fr 1.3fr .6fr 1.3fr'; }
   else if(easyOn()){
     if(S.demo){ h='<button class="bl" data-act="cam">📷 Kamerayı aç</button><button data-act="gal">🖼 Galeriden seç</button>'; cols='1.3fr 1fr'; }
-    else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">✔ Kaydet</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
+    else { h='<button data-act="fix">✏️ Düzelt</button><button class="gr" data-act="save">'+(S.editRec?'✔ Güncelle':'✔ Kaydet')+'</button><button data-act="cam">📷 Yeni</button>'; cols='1fr 1.3fr 1fr'; }
   }
   if(bar.dataset.h!==h){ bar.innerHTML=h; bar.dataset.h=h; }
   bar.style.gridTemplateColumns=cols;
@@ -1540,12 +1556,24 @@ function easyUpdate(){
       note = !S.calibrated ? 'Ölçek yok. "Kartla kesinleştir"e dokunup kart ölçeğini uygulayın.' : ((vn && !vn.hidden) ? vn.textContent : '✓ Kart ölçeğiyle ölçüldü.');
       live = ok2 ? 'Verteks '+f1(R(q.vd))+' mm'+(S.sd.pant?' · '+f1(R(q.tilt))+'°':'') : 'Ölçek yok';
     }
+    (function(){ var g=!side?glasses():null; $('eGl').hidden=!g; $('eSidePhoto').hidden=side;
+      $('eAsk').hidden = side || (S.calMode==='card' && S.calibrated) || !!S.askDone;
+      if(g){ $('eA').textContent=f1(R(g.e.R.A))+' / '+f1(R(g.e.L.A)); $('eB').textContent=f1(R(g.e.R.B))+' / '+f1(R(g.e.L.B)); $('eEDr').textContent=f1(R(g.e.R.ed)); $('eEDl').textContent=f1(R(g.e.L.ed)); $('eDBL').textContent=f1(R(g.dbl)); $('ePad').textContent=(g.padGuess?'~':'')+f1(R(g.pad)); } })();
     $('easyNote').textContent=note; $('editLive').textContent=live;
     if(document.activeElement!==$('easyName') && $('easyName').value!==$('name').value) $('easyName').value=$('name').value;
   }
   barUpdate();
 }
 var _res0=results; results=function(){ _res0.apply(this,arguments); try{ easyUpdate(); }catch(e){} };
+S.adjD=0; S.pad=null;
+function farR2(a,b,dec){ var m=0; for(var i=0;i<360;i++){ var t=i*Math.PI/180; var r=Math.hypot(a*Math.cos(t)+dec,b*Math.sin(t)); if(r>m) m=r; } return m; }
+function glasses(){
+  var r=compute(); if(!(S.calibrated && r)) return null;
+  var key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'}, d=r.dbl+(S.adjD||0), o={dbl:d,e:{}};
+  ['R','L'].forEach(function(E){ var e=r[key[E]], a=e.w/2, b=e.bb/2, dec=(e.w+d-r.pd)/2; o.e[E]={A:e.w,B:e.bb,ed:2*farR2(a,b,dec)}; });
+  o.pad = S.pad!=null ? S.pad : d; o.padGuess = S.pad==null; return o;
+}
+function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R(g.dbl))+' mm | Burunluk: '+(g.padGuess?'~':'')+f1(R(g.pad))+' mm'; }
 function enterEdit(step){ S.edit=true; S.adv=false; renderSteps(); go(step); }
 function doneEdit(){ S.edit=false; S.adv=false; renderSteps(); go('easy'); }
 $('bar').addEventListener('click',function(e){
@@ -1567,6 +1595,13 @@ $('easyFace').addEventListener('click',function(e){ var b=e.target.closest('butt
 $('easyDir').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; var t=document.querySelector('#faceDir button[data-d="'+b.dataset.d+'"]'); if(t) t.click(); });
 $('easyFind').addEventListener('click',function(){ autoFind(function(){ go('easy'); }); });
 $('easyCard').addEventListener('click',function(){ S.calMode='card'; syncMode(); enterEdit('scale'); });
+Array.prototype.forEach.call(document.querySelectorAll('[data-adj]'),function(b){ b.addEventListener('click',function(){ var st=parseFloat(b.dataset.s), g=glasses(); if(!g) return; if(b.dataset.adj==='dbl'){ S.adjD=(S.adjD||0)+st; if(S.padGuessLink) {} } else { S.pad=Math.max(0,g.pad+st); } results(); }); });
+$('eAskCard').addEventListener('click',function(){ $('easyCard').click(); });
+$('eAskNo').addEventListener('click',function(){ $('eAskF').hidden=false; });
+$('eFGo').addEventListener('click',function(){ var a=parseMm($('eFA').value), d=parseMm($('eFD').value), n=parseMm($('eFN').value); if(!(a>0) || !(d>=0)){ toast('Cam eni ve ekartmanı girin.'); return; }
+  S.frameA=a; S.frameD=d; $('fA').value=f1(a); $('fD').value=f1(d); if(n>0) S.pad=n; S.adjD=0; S.calMode='frame'; S.calibrated=true; S.askDone=true; syncMode(); results(); schedule(); toast('Çerçeve etiketine göre ölçüldü.'); });
+$('eFSkip').addEventListener('click',function(){ S.askDone=true; $('eAsk').hidden=true; });
+$('eSidePhoto').addEventListener('click',function(){ setMode('side'); $('btnCam').click(); });
 $('easyRecs').addEventListener('click',function(){ document.body.classList.toggle('showrecs'); var r=$('recsWrap'); if(document.body.classList.contains('showrecs') && r) r.scrollIntoView({behavior:'smooth'}); });
 $('easyAdv').addEventListener('click',function(){ S.adv=true; S.edit=false; renderSteps(); go('photo'); });
 document.body.appendChild($('toast'));
@@ -1654,6 +1689,7 @@ function demoMarks(){
   S.pup.a={x:440,y:455}; S.pup.b={x:763,y:452}; S.noseX=600; S.noseCustom=false;
 }
 function setImage(canvas,demo){
+  S.editRec=null;
   S.src=canvas; S.W=canvas.width; S.H=canvas.height; S.demo=demo; S.rot=0; UD.u=[]; UD.r=[]; syncUiClasses();
   $('rot').value=0; $('rotVal').textContent='0,0°';
   rebuildBase(); S.z=1; S.vx=0; S.vy=0; setZoom(1);
@@ -1876,8 +1912,8 @@ function cleanDB(d){
     if(!id || !pid || !ids[pid] || rids[id] || isNaN(Date.parse(t))) return;
     rids[id]=1;
     var n={id:id,pid:pid,t:t,kind:r.kind==='v'?'v':'f',text:cl(r.text,800)};
-    ['pd','mR','mL','hR','hL','dbl','vd','pt'].forEach(function(k){ if(r[k]!=null){ var x=cl(r[k],12); if(x) n[k]=x; } });
-    if(r.ex===true) n.ex=true;
+    ['pd','mR','mL','hR','hL','dbl','vd','pt','wR','wL','bR','bL','edR','edL','pad'].forEach(function(k){ if(r[k]!=null){ var x=cl(r[k],12); if(x) n[k]=x; } });
+    if(r.ex===true) n.ex=true; if(r.img===true) n.img=true; var uu=cl(r.u,40); if(uu && !isNaN(Date.parse(uu))) n.u=uu;
     out.records.push(n);
   });
   return out;
@@ -1923,7 +1959,7 @@ function findPatient(d,name,tc){
 }
 function recLine(r){
   if(r.kind==='v') return 'Verteks '+r.vd+' mm  ·  pant. '+r.pt;
-  return 'PD '+r.pd+'  ·  mono '+r.mR+' / '+r.mL+'  ·  yük. '+r.hR+' / '+r.hL+(r.dbl?'  ·  DBL '+r.dbl:'');
+  return 'PD '+r.pd+'  ·  mono '+r.mR+' / '+r.mL+'  ·  yük. '+r.hR+' / '+r.hL+(r.dbl?'  ·  ekartman '+r.dbl:'')+(r.edR?'  ·  çapraz '+r.edR+' / '+r.edL:'')+(r.pad?'  ·  burunluk '+r.pad:'');
 }
 function updateStamp(){ $('stamp').textContent='Kayıt tarihi: '+fmtDate(new Date().toISOString()); }
 function saveRecord(){
@@ -1937,15 +1973,21 @@ function saveRecord(){
   var d=readDB(), ph=$('phone').value.trim(), now=new Date().toISOString(), p=findPatient(d,nm,tc);
   if(!p){ p={id:'p'+Date.now(),name:nm,phone:ph,tc:tc,note:'',created:now}; d.patients.push(p); }
   else { if(ph && !p.phone) p.phone=ph; if(tc && !p.tc) p.tc=tc; }
-  var rec={id:'r'+Date.now(),pid:p.id,t:now,kind:side?'v':'f',text:text};
+  var edit=S.editRec ? d.records.filter(function(q){ return q.id===S.editRec; })[0] : null;
+  var rec=edit || {id:'r'+Date.now(),pid:p.id,t:now,kind:side?'v':'f',text:text};
+  if(edit){ rec.pid=p.id; rec.text=text; rec.u=now; delete rec.ex; }
   if(side){
     var rs=computeSide(); rec.vd=f1(R(rs.vd)); rec.pt=S.sd.pant ? f1(R(rs.tilt))+'°' : '—';
   } else {
     var r=compute(), key={R:S.mirror?'b':'a',L:S.mirror?'a':'b'}, e1=r[key.R], e2=r[key.L];
     rec.pd=f1(R(r.pd)); rec.mR=f1(R(e1.mono)); rec.mL=f1(R(e2.mono)); rec.hR=f1(R(e1.h)); rec.hL=f1(R(e2.h)); rec.dbl=f1(R(r.dbl));
+    var g=glasses(); if(g){ rec.dbl=f1(R(g.dbl)); rec.wR=f1(R(g.e.R.A)); rec.wL=f1(R(g.e.L.A)); rec.bR=f1(R(g.e.R.B)); rec.bL=f1(R(g.e.L.B)); rec.edR=f1(R(g.e.R.ed)); rec.edL=f1(R(g.e.L.ed)); rec.pad=(g.padGuess?'~':'')+f1(R(g.pad)); }
   }
-  d.records.push(rec);
-  if(writeDB(d)){ openPid=p.id; editPid=null; phoneAuto=true; renderPatients(); toast('Kaydedildi: '+p.name+' · '+fmtDate(now)); return rec; }
+  if(!edit) d.records.push(rec);
+  if(!S.demo && S.src) rec.img=true;
+  if(writeDB(d)){
+    if(rec.img) imgPut(rec.id,snapState());
+    S.editRec=null; try{ barUpdate(); }catch(e){} openPid=p.id; editPid=null; phoneAuto=true; renderPatients(); toast((edit?'Güncellendi: ':'Kaydedildi: ')+p.name+' · '+fmtDate(now)); return rec; }
   toast('Kaydedilemedi.'); return null;
 }
 $('btnSave').addEventListener('click',saveRecord);
@@ -1981,7 +2023,7 @@ function patientDetail(d,x){
   act.appendChild(mkBtn('Bilgileri düzenle','',function(){ editPid = editPid===p.id ? null : p.id; renderPatients(); }));
   var del=mkBtn('Hastayı sil','',null);
   armBtn(del,'Hasta ve ölçümleri silinsin mi?',function(){
-    var dd=readDB(); dd.patients=dd.patients.filter(function(q){ return q.id!==p.id; }); dd.records=dd.records.filter(function(r){ return r.pid!==p.id; });
+    var dd=readDB(); dd.records.forEach(function(r){ if(r.pid===p.id && r.img) imgDel(r.id); }); dd.patients=dd.patients.filter(function(q){ return q.id!==p.id; }); dd.records=dd.records.filter(function(r){ return r.pid!==p.id; });
     writeDB(dd); openPid=null; editPid=null; renderPatients();
   });
   act.appendChild(del); box.appendChild(act);
@@ -2015,13 +2057,16 @@ function patientDetail(d,x){
     var h=document.createElement('div'); h.className='h';
     var s=document.createElement('strong'); s.textContent=fmtDate(rec.t);
     var tp=document.createElement('span'); tp.className='tp'; tp.textContent = rec.kind==='v' ? 'YANDAN' : 'ÖNDEN'; s.appendChild(tp);
+    if(rec.u){ var up=document.createElement('span'); up.className='tp'; up.textContent='DÜZELTİLDİ'; s.appendChild(up); }
     if(rec.ex){ var tx=document.createElement('span'); tx.className='tp'; tx.textContent='AKTARILDI'; s.appendChild(tx); }
     h.appendChild(s);
     var v=document.createElement('div'); v.className='v'; v.textContent=recLine(rec);
+    if(rec.img){ var th=document.createElement('img'); th.className='thumb'; th.alt=''; imgGet(rec.id).then(function(o){ if(o && o.blob) th.src=URL.createObjectURL(o.blob); }); d1.appendChild(th); }
     var ac=document.createElement('div'); ac.className='a';
+    if(rec.img) ac.appendChild(mkBtn('Düzelt','primary',function(){ editRecord(rec); }));
     ac.appendChild(mkBtn('Kopyala','',function(){ copyText(rec.text||recLine(rec)); }));
     var db=mkBtn('Sil','',null);
-    armBtn(db,'Silinsin mi?',function(){ var dd=readDB(); dd.records=dd.records.filter(function(r){ return r.id!==rec.id; }); writeDB(dd); renderPatients(); });
+    armBtn(db,'Silinsin mi?',function(){ imgDel(rec.id); var dd=readDB(); dd.records=dd.records.filter(function(r){ return r.id!==rec.id; }); writeDB(dd); renderPatients(); });
     ac.appendChild(db);
     d1.appendChild(h); d1.appendChild(v); d1.appendChild(ac); box.appendChild(d1);
   });
@@ -2083,15 +2128,18 @@ $('btnCsv').addEventListener('click',function(){
   var d=readDB(); if(!d.records.length){ toast('Henüz kayıtlı ölçüm yok.'); return; }
   saveFile('hasta-olcumleri-'+stampFile()+'.csv',toCSV(),'CSV kaydedildi.');
 });
-function numOrNull(v){ if(v==null || v==='' || v==='—') return null; var n=parseFloat(String(v).replace(',','.')); return isNaN(n) ? null : n; }
+function numOrNull(v){ if(v==null || v==='' || v==='—') return null; var n=parseFloat(String(v).replace('~','').replace(',','.')); return isNaN(n) ? null : n; }
 function exportObj(list,byId){
-  return { format:'aysima-olcum', surum:1, birim:'mm', olusturma:new Date().toISOString(), olcumler:list.map(function(r){
+  return { format:'aysima-olcum', surum:2, birim:'mm', olusturma:new Date().toISOString(), olcumler:list.map(function(r){
     var p=byId[r.pid]||{name:'',phone:'',tc:''};
     return { id:r.id, tarih:r.t, tur:r.kind==='v'?'yandan':'onden',
       hasta:{ ad:p.name, telefon:p.phone||'', tc:p.tc||'' },
       pd:numOrNull(r.pd), pd_sag:numOrNull(r.mR), pd_sol:numOrNull(r.mL),
       yukseklik_sag:numOrNull(r.hR), yukseklik_sol:numOrNull(r.hL), dbl:numOrNull(r.dbl),
-      verteks:numOrNull(r.vd), pantoskopik_aci:numOrNull(r.pt) };
+      verteks:numOrNull(r.vd), pantoskopik_aci:numOrNull(r.pt),
+      cam_eni_sag:numOrNull(r.wR), cam_eni_sol:numOrNull(r.wL), cam_boyu_sag:numOrNull(r.bR), cam_boyu_sol:numOrNull(r.bL),
+      capraz_sag:numOrNull(r.edR), capraz_sol:numOrNull(r.edL), burunluk:numOrNull(r.pad), burunluk_tahmin:/^~/.test(r.pad||''),
+      guncelleme:r.u||'', resim:r.img?('resimler/'+r.id+'.jpg'):'' };
   }) };
 }
 /* ---------- WhatsApp ---------- */
@@ -2139,18 +2187,111 @@ $('btnWaAll').addEventListener('click',function(e){
   markSent(part);
   if(todo.length>3) toast('İlk 3 ölçüm hazırlandı. Kalan '+(todo.length-3)+' için düğmeye tekrar basın.');
 });
-$('btnProg').addEventListener('click',function(){
-  var d=readDB(), byId={}; d.patients.forEach(function(p){ byId[p.id]=p; });
-  var todo=d.records.filter(function(r){ return !r.ex; }).sort(function(a,b){ return a.t<b.t?-1:1; });
-  if(!todo.length){ toast('Aktarılacak yeni ölçüm yok.'); return; }
-  var out=exportObj(todo,byId);
-  if(!dl) return;
-  dl.save({filename:'olcum-aktarim-'+stampFile()+'-'+pad2(new Date().getHours())+pad2(new Date().getMinutes())+'.json',data:JSON.stringify(out,null,1)}).then(function(){
-    var ids={}; todo.forEach(function(r){ ids[r.id]=1; });
-    var dd=readDB(); dd.records.forEach(function(r){ if(ids[r.id]) r.ex=true; }); writeDB(dd); renderPatients();
-    toast(todo.length+' ölçüm aktarma dosyasına yazıldı.');
-  },function(err){ if(err && err.code==='declined') return; toast('Dosya kaydedilemedi.'); });
-});
+/* ---------- resim deposu (IndexedDB) + düzeltme + zip aktarım ---------- */
+var IDBN='aysima-resim', idbP=null;
+function idb(){
+  if(idbP) return idbP;
+  idbP=new Promise(function(res,rej){
+    try{
+      var q=indexedDB.open(IDBN,1);
+      q.onupgradeneeded=function(){ q.result.createObjectStore('img'); };
+      q.onsuccess=function(){ res(q.result); }; q.onerror=function(){ rej(q.error); };
+    }catch(e){ rej(e); }
+  });
+  idbP.catch(function(){ idbP=null; });
+  return idbP;
+}
+function snapState(){
+  var o={}; ['pup','box','noseX','noseCustom','cal','calMode','calMm','irisMm','frameA','frameD','calibrated','rot','mirror','round','adjD','pad','sd','lens','askDone'].forEach(function(k){ if(S[k]!==undefined) o[k]=S[k]; });
+  return JSON.parse(JSON.stringify(o));
+}
+function imgPut(id,st){
+  var c=S.src; if(!c) return Promise.resolve(false);
+  var k=Math.min(1,1600/Math.max(c.width,c.height)), t=document.createElement('canvas'); t.width=Math.round(c.width*k); t.height=Math.round(c.height*k);
+  t.getContext('2d').drawImage(c,0,0,t.width,t.height);
+  st.imgW=t.width; st.imgH=t.height; st.srcW=c.width; st.srcH=c.height;
+  return new Promise(function(res){
+    t.toBlob(function(blob){
+      if(!blob){ res(false); return; }
+      idb().then(function(db){ var tx=db.transaction('img','readwrite'); tx.objectStore('img').put({blob:blob,st:st},id); tx.oncomplete=function(){ res(true); }; tx.onerror=function(){ res(false); }; },function(){ res(false); });
+    },'image/jpeg',0.72);
+  });
+}
+function imgGet(id){
+  return idb().then(function(db){ return new Promise(function(res){ var q=db.transaction('img').objectStore('img').get(id); q.onsuccess=function(){ res(q.result||null); }; q.onerror=function(){ res(null); }; }); },function(){ return null; });
+}
+function imgDel(id){ idb().then(function(db){ db.transaction('img','readwrite').objectStore('img').delete(id); },function(){}); }
+function editRecord(rec){
+  imgGet(rec.id).then(function(o){
+    if(!o || !o.blob){ toast('Bu kaydın fotoğrafı bulunamadı.'); return; }
+    var u=URL.createObjectURL(o.blob), im=new Image();
+    im.onload=function(){
+      var c=document.createElement('canvas'); c.width=o.st.srcW||im.naturalWidth; c.height=o.st.srcH||im.naturalHeight;
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(u);
+      var want=rec.kind==='v'?'side':'front'; if(S.mode!==want) setMode(want);
+      setImage(c,false);
+      var st=o.st; ['imgW','imgH','srcW','srcH'].forEach(function(k){ delete st[k]; });
+      Object.keys(st).forEach(function(k){ S[k]=st[k]; });
+      S.demo=false; S.calibrated=true; S.editRec=rec.id; S.askDone=true;
+      var d=readDB(), p=d.patients.filter(function(q){ return q.id===rec.pid; })[0];
+      if(p){ $('name').value=p.name; $('phone').value=p.phone||''; $('tc').value=p.tc||''; }
+      $('rot').value=S.rot||0; $('rotVal').textContent=f1(S.rot||0)+'°'; $('mirror').checked=!!S.mirror; $('round').checked=!!S.round;
+      rebuildBase(); syncMode(); if(S.mode==='side'){ try{ syncSideUI(); }catch(e){} }
+      document.body.classList.remove('showrecs'); S.edit=false; S.adv=false; renderSteps(); go('easy'); results(); schedule();
+      try{ window.scrollTo(0,0); }catch(e){}
+      toast('Ölçüm açıldı. Düzeltin, sonra "Güncelle"ye basın.');
+    };
+    im.onerror=function(){ URL.revokeObjectURL(u); toast('Fotoğraf açılamadı.'); };
+    im.src=u;
+  });
+}
+/* basit ZIP (sıkıştırmasız) */
+var CRCT=(function(){ var t=[],c,n,k; for(n=0;n<256;n++){ c=n; for(k=0;k<8;k++) c=c&1?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+function crc32(u){ var c=0xFFFFFFFF; for(var i=0;i<u.length;i++) c=CRCT[(c^u[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zipBlob(files){
+  var enc=new TextEncoder(), parts=[], cen=[], off=0, n=new Date();
+  var dt=((n.getHours()<<11)|(n.getMinutes()<<5)|(n.getSeconds()>>1))&0xFFFF, dd=(((n.getFullYear()-1980)<<9)|((n.getMonth()+1)<<5)|n.getDate())&0xFFFF;
+  files.forEach(function(f){
+    var nm=enc.encode(f.name), c=crc32(f.data), L=new DataView(new ArrayBuffer(30));
+    L.setUint32(0,0x04034b50,true); L.setUint16(4,20,true); L.setUint16(6,0x0800,true); L.setUint16(8,0,true); L.setUint16(10,dt,true); L.setUint16(12,dd,true);
+    L.setUint32(14,c,true); L.setUint32(18,f.data.length,true); L.setUint32(22,f.data.length,true); L.setUint16(26,nm.length,true); L.setUint16(28,0,true);
+    parts.push(L.buffer,nm,f.data);
+    var C=new DataView(new ArrayBuffer(46));
+    C.setUint32(0,0x02014b50,true); C.setUint16(4,20,true); C.setUint16(6,20,true); C.setUint16(8,0x0800,true); C.setUint16(10,0,true); C.setUint16(12,dt,true); C.setUint16(14,dd,true);
+    C.setUint32(16,c,true); C.setUint32(20,f.data.length,true); C.setUint32(24,f.data.length,true); C.setUint16(28,nm.length,true); C.setUint32(42,off,true);
+    cen.push(C.buffer,nm); off+=30+nm.length+f.data.length;
+  });
+  var csz=0; cen.forEach(function(b){ csz+=b.byteLength!==undefined?b.byteLength:b.length; });
+  var E=new DataView(new ArrayBuffer(22)); E.setUint32(0,0x06054b50,true); E.setUint16(8,files.length,true); E.setUint16(10,files.length,true); E.setUint32(12,csz,true); E.setUint32(16,off,true);
+  return new Blob(parts.concat(cen,[E.buffer]),{type:'application/zip'});
+}
+function buildZip(list){
+  var d=readDB(), by=byIdOf(d), enc=new TextEncoder();
+  var files=[{name:'olcumler.json',data:enc.encode(JSON.stringify(exportObj(list,by),null,1))}];
+  files.push({name:'OKU-BENI.txt',data:enc.encode('Aysima Optik ölçüm aktarımı\r\nolcumler.json: ölçümler; resimler/: fotoğraflar.\r\nBilgisayardaki programda "Ölçüm aktar" ile bu zip dosyasını seçin.\r\n')});
+  return Promise.all(list.filter(function(r){ return r.img; }).map(function(r){
+    return imgGet(r.id).then(function(o){ return o && o.blob ? o.blob.arrayBuffer().then(function(b){ files.push({name:'resimler/'+r.id+'.jpg',data:new Uint8Array(b)}); }) : null; });
+  })).then(function(){ return zipBlob(files); });
+}
+function zipName(){ var n=new Date(); return 'aysima-olcumler-'+stampFile()+'-'+pad2(n.getHours())+pad2(n.getMinutes())+'.zip'; }
+function markEx(list){ var ids={}; list.forEach(function(r){ ids[r.id]=1; }); var dd=readDB(); dd.records.forEach(function(r){ if(ids[r.id]) r.ex=true; }); writeDB(dd); renderPatients(); }
+function exportZip(all,share){
+  var d=readDB(), list=d.records.filter(function(r){ return all || !r.ex; }).sort(function(a,b){ return a.t<b.t?-1:1; });
+  if(!list.length){ toast(all?'Henüz kayıtlı ölçüm yok.':'Aktarılacak yeni ölçüm yok.'); return; }
+  toast('Zip hazırlanıyor…');
+  buildZip(list).then(function(blob){
+    var name=zipName(), done=function(){ markEx(list); toast(list.length+' ölçüm zip olarak hazırlandı.'); };
+    var viaDl=function(){ if(!dl){ toast('Dosya kaydı bu görünümde yok.'); return; } dl.save({filename:name,data:blob}).then(done,function(err){ if(err && err.code==='declined') return; toast('Dosya kaydedilemedi.'); }); };
+    if(share && navigator.canShare && window.File){
+      var f=new File([blob],name,{type:'application/zip'});
+      if(navigator.canShare({files:[f]})){ navigator.share({files:[f],title:'Aysima Optik ölçümler'}).then(done,function(err){ if(err && err.name==='AbortError') return; viaDl(); }); return; }
+    }
+    viaDl();
+  },function(){ toast('Zip hazırlanamadı.'); });
+}
+$('btnProg').addEventListener('click',function(){ exportZip(false,false); });
+$('btnZipAll').addEventListener('click',function(){ exportZip(true,false); });
+$('btnShare').addEventListener('click',function(){ exportZip(false,true); });
 $('btnBak').addEventListener('click',function(){
   var d=readDB(); if(!d.patients.length){ toast('Henüz kayıt yok.'); return; }
   saveFile('pd-yedek-'+stampFile()+'.json',JSON.stringify(d),'Yedek kaydedildi.');
@@ -2437,7 +2578,7 @@ go(ids()[0]);
 renderRecs();
 try{
   if(window.claude && window.claude.use){
-    window.claude.use('downloads').then(function(m){ if(m){ dl=m; $('btnImg').hidden=false; $('btnCsv').hidden=false; $('btnBak').hidden=false; $('btnProg').hidden=false; } },function(){});
+    window.claude.use('downloads').then(function(m){ if(m){ dl=m; $('btnImg').hidden=false; $('btnCsv').hidden=false; $('btnBak').hidden=false; $('btnProg').hidden=false; $('btnZipAll').hidden=false; $('btnShare').hidden=false; } },function(){});
   }
 }catch(e){}
 })();
