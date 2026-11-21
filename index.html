@@ -533,7 +533,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <svg id="kSvg" viewBox="0 0 340 192" style="display:block;width:100%;height:auto;margin-top:8px;border-radius:10px;background:#0f1b2a" aria-label="Çerçeve kalıbı" hidden></svg>
           <div id="kTbl" style="margin-top:8px;font-size:14px" hidden></div>
           <div id="kCap" style="margin-top:10px;border-radius:12px;padding:10px;background:#0f3d2e;color:#d9ffe9" hidden></div>
-          <div class="row" style="margin-top:6px"><button class="btn sm" id="kCopy" type="button">Ölçüleri kopyala</button><button class="btn sm" id="kReset" type="button">Girdileri temizle</button></div>
+          <div class="row" style="margin-top:6px"><button class="btn sm" id="kCopy" type="button">Ölçüleri kopyala</button><button class="btn sm" id="kShare" type="button">Şablonu resim olarak paylaş</button><button class="btn sm" id="kReset" type="button">Girdileri temizle</button></div>
         </div>
         <p class="muted small">Camlar ve kutular da bu görüntüde gösterilir: köşelerdeki küçük kareler cam kutusunun köşeleridir.</p>
       </div>
@@ -1955,7 +1955,9 @@ function kalipSvg(c){
   var gx=x0+c.A*sc;
   t+='<line x1="'+gx.toFixed(1)+'" y1="'+(yb-8).toFixed(1)+'" x2="'+(gx+dbl*sc).toFixed(1)+'" y2="'+(yb-8).toFixed(1)+'" stroke="#fff" stroke-width="2"/>';
   if(c.dbl!=null) t+=txt(gx+dbl*sc/2,yb-13,'DBL '+f1(R(c.dbl)),'#fff');
-  t+=txt(170,12,'PD '+f1(R(c.pd)),'#cfe1ff',null,11);
+  if(c.e.R&&c.e.R.mono!=null) t+=txt(85,12,'R PD '+f1(R(c.e.R.mono)),'#35d0ff',null,12.5);
+  t+=txt(170,12,'PD '+f1(R(c.pd)),'#ffffff',null,12.5);
+  if(c.e.L&&c.e.L.mono!=null) t+=txt(255,12,'L PD '+f1(R(c.e.L.mono)),'#ffc533',null,12.5);
   t+=txt(170,186,'yeşil: şakak · pembe: burun · beyaz: alt · kırmızı: en uzun köşe','#a9b8cc','middle',8);
   return t;
 }
@@ -2003,6 +2005,29 @@ function kalipUpdate(){
   });
   ['kModel','kRenk'].forEach(function(id){ var key=id==='kModel'?'model':'renk'; $(id).addEventListener('input',function(){ if(!S.kv) S.kv={}; S.kv[key]=$(id).value; }); });
   $('kReset').addEventListener('click',function(){ S.kv={}; kalipUpdate(); });
+  $('kShare').addEventListener('click',function(){
+    var sv=$('kSvg'); if(!sv||sv.hidden||!sv.innerHTML){ toast('Önce ölçüleri girin / kalıbı çıkarın.'); return; }
+    var W=1360,H=Math.round(W*192/340);
+    var xml='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 192" width="'+W+'" height="'+H+'"><rect width="340" height="192" fill="#0f1b2a"/>'+sv.innerHTML+'</svg>';
+    var img=new Image();
+    img.onload=function(){
+      var cv=document.createElement('canvas'); cv.width=W; cv.height=H; cv.getContext('2d').drawImage(img,0,0,W,H);
+      cv.toBlob(function(b){
+        if(!b){ toast('Resim hazırlanamadı.'); return; }
+        var name='cerceve-kalibi'+((S.kv&&S.kv.model)?'-'+S.kv.model.replace(/[^A-Za-z0-9]+/g,'-').slice(0,30):'')+'.png';
+        var f=window.File?new File([b],name,{type:'image/png'}):null;
+        if(f && navigator.canShare && navigator.canShare({files:[f]})){ navigator.share({files:[f],title:'Çerçeve kalıbı'}).catch(function(err){ if(err&&err.name==='AbortError') return; shown(b); }); return; }
+        shown(b);
+      },'image/png');
+    };
+    img.onerror=function(){ toast('Resim hazırlanamadı.'); };
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+    function shown(b){
+      if(dl){ dl.save({filename:'cerceve-kalibi.png',data:b}).catch(function(){}); return; }
+      var d=document.createElement('div'); d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px';
+      d.innerHTML='<img src="'+URL.createObjectURL(b)+'" style="max-width:100%;border-radius:10px"><div style="color:#fff;font:14px system-ui">Resme basılı tutup kaydedin · kapatmak için dokunun</div>'; d.onclick=function(){ d.remove(); }; document.body.appendChild(d);
+    }
+  });
   $('kCopy').addEventListener('click',function(){ var t=kalipText(); if(!t){ toast('Önce ölçüleri yazın.'); return; } try{ navigator.clipboard.writeText(t).then(function(){ toast('Kopyalandı.'); },function(){ toast('Kopyalanamadı.'); }); }catch(e){ toast('Kopyalanamadı.'); } });
   try{ kalipUpdate(); }catch(e){}
 })();
