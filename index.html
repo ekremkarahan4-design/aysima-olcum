@@ -501,6 +501,23 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <p class="muted">Yeşil iki noktayı, burunluğun (plaket) gözün iki yanında buruna değen iç uçlarına sürükleyin. Yakınlaştırarak daha kesin yerleştirin. Ölçü, kart ya da çerçeve etiketi ölçeğiyle hesaplanır.</p>
         <div class="seg" id="padWho" role="group" aria-label="Hangi uç" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sol uç</button><button data-i="b" aria-pressed="false">Sağ uç</button></div>
         <div class="row"><button class="btn sm" id="padReset">Başlangıç yerine al</button></div>
+        <div id="kalip" style="margin-top:12px;border:1px solid var(--line,#35506f);border-radius:14px;padding:10px">
+          <h3 style="margin:0 0 4px;font-size:16px">Çerçeve kalıbı ve kurtarır çap</h3>
+          <p class="muted small" style="margin:0 0 8px">Ölçüleri kendiniz yazın. Program odak noktasının (göz bebeği) şakak, burun, yükseklik ve en uzun köşe uzaklıklarını ve kurtarır cam çapını hesaplar. Boş bıraktığınız kutu için fotoğraftan ölçülen değer kullanılır.</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <label class="f">PD (mm)<input type="text" inputmode="decimal" id="kPD" autocomplete="off" placeholder="ölçülen"></label>
+            <label class="f">Ekartman (42–70)<input type="text" inputmode="decimal" id="kA" autocomplete="off" placeholder="42–70"></label>
+            <label class="f">Burunluk / DBL (11–24)<input type="text" inputmode="decimal" id="kD" autocomplete="off" placeholder="11–24"></label>
+            <label class="f">Cam boyu (mm)<input type="text" inputmode="decimal" id="kB" autocomplete="off" placeholder="ölçülen"></label>
+            <label class="f">Odak yüksekliği (alttan)<input type="text" inputmode="decimal" id="kH" autocomplete="off" placeholder="ölçülen"></label>
+          </div>
+          <div id="kWarn" class="small" style="margin-top:6px;color:#ff8a8a" hidden></div>
+          <div id="kNote" class="muted small" style="margin-top:8px" hidden></div>
+          <svg id="kSvg" viewBox="0 0 340 182" style="display:block;width:100%;height:auto;margin-top:8px;border-radius:10px;background:#0f1b2a" aria-label="Çerçeve kalıbı" hidden></svg>
+          <div id="kTbl" style="margin-top:8px;font-size:14px" hidden></div>
+          <div id="kCap" style="margin-top:10px;border-radius:12px;padding:10px;background:#0f3d2e;color:#d9ffe9" hidden></div>
+          <div class="row" style="margin-top:6px"><button class="btn sm" id="kCopy" type="button">Ölçüleri kopyala</button><button class="btn sm" id="kReset" type="button">Girdileri temizle</button></div>
+        </div>
         <p class="muted small">Camlar ve kutular da bu görüntüde gösterilir: köşelerdeki küçük kareler cam kutusunun köşeleridir.</p>
       </div>
       <div class="sp" data-for="box" hidden>
@@ -1556,7 +1573,7 @@ function afSnap(){
   return total;
 }
 function afApply(P,irisPx){
-  S.askDone=false; S.adjD=0; S.pad=null; S.nbSet=false; try{ $('eAskF').hidden=true; }catch(e){}
+  S.askDone=false; S.pdOv=null; S.kv={}; S.adjD=0; S.pad=null; S.nbSet=false; try{ $('eAskF').hidden=true; }catch(e){}
   S.pup.a={x:P[0].x,y:P[0].y}; S.pup.b={x:P[1].x,y:P[1].y};
   var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
   var pxmm=cardOk ? 1/mmPerPx() : (irisPx>4 ? irisPx/11.7 : null);
@@ -1688,7 +1705,111 @@ function glasses(){
   nbEnsure(); var cf=corrF(), padM=Math.abs(S.nb.b.x-S.nb.a.x)*r.mm*(cf.on?cf.x:1);
   o.pad = S.pad!=null ? S.pad : (S.nbSet ? padM : d); o.padGuess = S.pad==null && !S.nbSet; return o;
 }
-function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R(g.dbl))+' mm | Burunluk: '+(g.padGuess?'~':'')+f1(R(g.pad))+' mm'; }
+function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R(g.dbl))+' mm | Burunluk: '+(g.padGuess?'~':'')+f1(R(g.pad))+' mm'+(typeof kalipText==='function'&&kalipText()?'\n'+kalipText():''); }
+S.pdOv=null; S.kv={};
+var K_RNG={A:[42,70],D:[11,24]};
+function kalipCalc(){
+  var kv=S.kv||{}, r=null, g=null; try{ g=glasses(); r=compute(); }catch(e){}
+  if(!(S.calibrated&&r)) r=null;
+  var key={R:S.mirror?'b':'a', L:S.mirror?'a':'b'}, warn=[], miss=[];
+  function ok(v,rg){ return v!=null && isFinite(v) && (!rg || (v>=rg[0]&&v<=rg[1])); }
+  if(kv.A!=null && !ok(kv.A,K_RNG.A)) warn.push('Ekartman 42–70 mm arasında olmalı.');
+  if(kv.D!=null && !ok(kv.D,K_RNG.D)) warn.push('Burunluk (DBL) 11–24 mm arasında olmalı.');
+  var A=ok(kv.A,K_RNG.A)?kv.A:null, D=ok(kv.D,K_RNG.D)?kv.D:null, pd=ok(kv.pd)&&kv.pd>0?kv.pd:null;
+  if(A==null && r){ A=(r.a.w+r.b.w)/2; if(!ok(A,K_RNG.A)) A=null; }
+  if(D==null && r){ D=r.dbl+(S.adjD||0); if(!ok(D,K_RNG.D)) D=null; }
+  if(pd==null && r) pd=r.pd;
+  if(pd==null) miss.push('PD'); if(A==null) miss.push('ekartman'); if(D==null) miss.push('burunluk (DBL)');
+  var o={pd:pd,A:A,dbl:D,e:{},warn:warn,miss:miss,fromPhoto:{A:ok(kv.A,K_RNG.A)?false:!!(A!=null&&r),D:ok(kv.D,K_RNG.D)?false:!!(D!=null&&r),pd:!(kv.pd>0)&&!!r}};
+  ['R','L'].forEach(function(E){
+    var m=r?r[key[E]]:null, B=ok(kv.B)&&kv.B>0?kv.B:(m?m.bb:null), H=ok(kv.H)&&kv.H>=0?kv.H:(m?m.h:null);
+    if(B==null && E==='R') miss.push('cam boyu'); if(H==null && E==='R') miss.push('odak yüksekliği');
+    if(pd==null||A==null||D==null||B==null||H==null){ o.e[E]=null; return; }
+    var mono=pd/2; if(r && !(kv.pd>0)) mono=m.mono; else if(r && kv.pd>0) mono=m.mono*(kv.pd/r.pd);
+    var dec=(A+D)/2-mono, tem=A/2+dec, nas=A/2-dec, low=H, up=B-H;
+    var far=Math.max(Math.hypot(tem,low),Math.hypot(tem,up),Math.hypot(nas,low),Math.hypot(nas,up));
+    o.e[E]={A:A,B:B,mono:mono,dec:dec,temple:tem,nasal:nas,low:low,up:up,pad:mono-D/2,far:far,cap:2*far};
+  });
+  o.miss=miss.filter(function(x,i,a){return a.indexOf(x)===i});
+  o.ok=!!(o.e.R&&o.e.L);
+  return o;
+}
+function kalipSvg(c){
+  var W=c.A+c.dbl+c.A, sc=300/W, x0=20, H=Math.max(c.e.R.B,c.e.L.B), yb=24+H*sc, t='';
+  function txt(x,y,s,col,an,sz){ return '<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="'+col+'" font-size="'+(sz||10)+'" text-anchor="'+(an||'middle')+'" font-family="monospace" font-weight="700">'+s+'</text>'; }
+  var xs=x0, cols={R:'#35d0ff',L:'#ffc533'};
+  ['R','L'].forEach(function(E){
+    var e=c.e[E], w=e.A*sc, h=e.B*sc, x=xs, y=yb-h, rad=Math.min(w,h)*.28, nose=(E==='R');
+    var px=x+w/2+(nose?1:-1)*e.dec*sc, py=yb-e.low*sc;
+    t+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="'+rad.toFixed(1)+'" fill="rgba(255,255,255,.06)" stroke="'+cols[E]+'" stroke-width="2"/>';
+    var tx=nose?x:x+w, nx=nose?x+w:x;
+    // en uzun köşe
+    var cxs=[tx,nx], cys=[y,yb], best=null,bd=-1;
+    cxs.forEach(function(cx){ cys.forEach(function(cy){ var d=Math.hypot(cx-px,cy-py); if(d>bd){bd=d;best=[cx,cy];} }); });
+    t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+best[0].toFixed(1)+'" y2="'+best[1].toFixed(1)+'" stroke="#ff5d5d" stroke-width="1.6"/><circle cx="'+best[0].toFixed(1)+'" cy="'+best[1].toFixed(1)+'" r="3" fill="#ff5d5d"/>';
+    t+=txt((px+best[0])/2+(best[0]<px?-2:2),(py+best[1])/2,f1(R(e.far)),'#ff8a8a',best[0]<px?'end':'start');
+    t+='<line x1="'+(px-9).toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+(px+9).toFixed(1)+'" y2="'+py.toFixed(1)+'" stroke="'+cols[E]+'"/><line x1="'+px.toFixed(1)+'" y1="'+(py-9).toFixed(1)+'" x2="'+px.toFixed(1)+'" y2="'+(py+9).toFixed(1)+'" stroke="'+cols[E]+'"/>';
+    t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+tx.toFixed(1)+'" y2="'+py.toFixed(1)+'" stroke="#9fe870" stroke-dasharray="3 2"/>';
+    t+=txt((px+tx)/2,py-4,f1(R(e.temple)),'#9fe870');
+    t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y2="'+py.toFixed(1)+'" stroke="#ff8fb1" stroke-dasharray="3 2"/>';
+    t+=txt((px+nx)/2,py+12,f1(R(e.nasal)),'#ff8fb1');
+    t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+px.toFixed(1)+'" y2="'+yb.toFixed(1)+'" stroke="#fff" stroke-dasharray="3 2"/>';
+    t+=txt(px+(nose?-4:4),(py+yb)/2+3,f1(R(e.low)),'#fff',nose?'end':'start');
+    t+=txt(x+w/2,yb+13,'ekartman '+f1(R(e.A))+' · boy '+f1(R(e.B)),cols[E]);
+    xs+=w+c.dbl*sc;
+  });
+  var gx=x0+c.A*sc;
+  t+='<line x1="'+gx.toFixed(1)+'" y1="'+(yb-8).toFixed(1)+'" x2="'+(gx+c.dbl*sc).toFixed(1)+'" y2="'+(yb-8).toFixed(1)+'" stroke="#fff" stroke-width="2"/>';
+  t+=txt(gx+c.dbl*sc/2,yb+27,'burunluk '+f1(R(c.dbl)),'#fff');
+  t+=txt(170,12,'PD '+f1(R(c.pd)),'#cfe1ff',null,11);
+  t+=txt(170,176,'yeşil: şakak · pembe: burun · beyaz: alt · kırmızı: en uzun köşe','#a9b8cc','middle',8);
+  return t;
+}
+var K_STD=[60,65,70,75,80];
+function kalipCap(c){ var m=Math.max(c.e.R.cap,c.e.L.cap), need=m+2, std=null; for(var i=0;i<K_STD.length;i++){ if(K_STD[i]>=need){ std=K_STD[i]; break; } } return {min:m,need:need,std:std}; }
+function kalipText(){
+  var c=kalipCalc(); if(!c||!c.ok) return '';
+  function ln(E,n){ var e=c.e[E]; return n+': şakak '+f1(R(e.temple))+' | burun '+f1(R(e.nasal))+' | alt '+f1(R(e.low))+' | üst '+f1(R(e.up))+' | en uzun köşe '+f1(R(e.far))+' | kurtarır çap '+f1(R(e.cap)); }
+  var k=kalipCap(c);
+  return 'Çerçeve kalıbı (odak = göz bebeği, mm)\nPD '+f1(R(c.pd))+' | Ekartman '+f1(R(c.A))+' | Burunluk (DBL) '+f1(R(c.dbl))+'\n'+ln('R','Sağ')+'\n'+ln('L','Sol')+'\nMin. kurtarır çap '+f1(R(k.min))+' mm (2 mm payla '+f1(R(k.need))+')'+(k.std?' → '+k.std+' mm cam':'');
+}
+function kalipUpdate(){
+  var sv=$('kSvg'); if(!sv) return; var c=kalipCalc(), act=document.activeElement, kv=S.kv||{};
+  var fm={kPD:'pd',kA:'A',kD:'D',kB:'B',kH:'H'};
+  Object.keys(fm).forEach(function(id){ if(act!==$(id)) $(id).value = kv[fm[id]]!=null ? f1(kv[fm[id]]) : ''; });
+  var e0=c.e.R||null;
+  try{ var r=compute(); if(S.calibrated&&r){ $('kPD').placeholder=f1(R(r.pd)); $('kB').placeholder=f1(R(r.a.bb)); $('kH').placeholder=f1(R(r.a.h)); } }catch(e){}
+  var w=c.warn; $('kWarn').hidden=!w.length; $('kWarn').textContent=w.join(' ');
+  ['kA','kD'].forEach(function(id){ var v=kv[fm[id]], rg=K_RNG[fm[id]]; $(id).style.borderColor=(v!=null&&!(v>=rg[0]&&v<=rg[1]))?'#ff5d5d':''; });
+  $('kNote').hidden=c.ok; if(!c.ok) $('kNote').textContent='Hesap için şunları yazın: '+c.miss.join(', ')+'. Fotoğraf ölçeği uygulanmışsa boş kalanlar ondan alınır.';
+  sv.toggleAttribute('hidden',!c.ok); $('kTbl').hidden=!c.ok; $('kCap').hidden=!c.ok; if(!c.ok) return;
+  sv.innerHTML=kalipSvg(c);
+  function row(n,a,b,st){ return '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.08)'+(st||'')+'"><span>'+n+'</span><b style="text-align:center">'+a+'</b><b style="text-align:center">'+b+'</b></div>'; }
+  var e1=c.e.R,e2=c.e.L, h='<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;font-size:12px;opacity:.7"><span></span><span style="text-align:center">SAĞ</span><span style="text-align:center">SOL</span></div>';
+  h+=row('Monoküler PD',f1(R(e1.mono)),f1(R(e2.mono)));
+  h+=row('Odak → şakak',f1(R(e1.temple)),f1(R(e2.temple)));
+  h+=row('Odak → burun kenarı',f1(R(e1.nasal)),f1(R(e2.nasal)));
+  h+=row('Odak → burunluk',f1(R(e1.pad)),f1(R(e2.pad)));
+  h+=row('Odak → alt (yükseklik)',f1(R(e1.low)),f1(R(e2.low)));
+  h+=row('Odak → üst',f1(R(e1.up)),f1(R(e2.up)));
+  h+=row('Odak → en uzun köşe',f1(R(e1.far)),f1(R(e2.far)),';color:#ff8a8a');
+  h+=row('Desantrasyon',decText(e1.dec),decText(e2.dec));
+  $('kTbl').innerHTML=h;
+  var k=kalipCap(c);
+  $('kCap').innerHTML='<div style="font-size:13px;opacity:.85">Kurtarır çap (en uzun köşe × 2)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px"><div>Sağ<br><b style="font:700 24px var(--mono)">'+f1(R(e1.cap))+'</b></div><div>Sol<br><b style="font:700 24px var(--mono)">'+f1(R(e2.cap))+'</b></div></div><div style="margin-top:6px;font-size:13px">Sipariş için en az <b>'+f1(R(k.min))+' mm</b>; 2 mm kenar payıyla <b>'+f1(R(k.need))+' mm</b>'+(k.std?' → standart <b>'+k.std+' mm</b> cam':' → 80 mm üzeri çap gerekir')+'.</div>';
+}
+(function(){
+  var _r=results; results=function(){ _r.apply(this,arguments); try{ kalipUpdate(); }catch(e){} };
+  var fm={kPD:'pd',kA:'A',kD:'D',kB:'B',kH:'H'};
+  Object.keys(fm).forEach(function(id){
+    $(id).addEventListener('input',function(){ var t=$(id).value.trim(), v=parseMm(t); if(!S.kv) S.kv={}; S.kv[fm[id]]=(t===''||!isFinite(v))?null:v; kalipUpdate(); });
+    $(id).addEventListener('keydown',function(e){ if(e.key==='Enter') $(id).blur(); });
+    $(id).addEventListener('blur',function(){ kalipUpdate(); });
+  });
+  $('kReset').addEventListener('click',function(){ S.kv={}; kalipUpdate(); });
+  $('kCopy').addEventListener('click',function(){ var t=kalipText(); if(!t){ toast('Önce ölçüleri yazın.'); return; } try{ navigator.clipboard.writeText(t).then(function(){ toast('Kopyalandı.'); },function(){ toast('Kopyalanamadı.'); }); }catch(e){ toast('Kopyalanamadı.'); } });
+  try{ kalipUpdate(); }catch(e){}
+})();
 function enterEdit(step){ S.edit=true; S.adv=false; renderSteps(); go(step); }
 function doneEdit(){ S.edit=false; S.adv=false; renderSteps(); go('easy'); }
 $('bar').addEventListener('click',function(e){
@@ -4862,7 +4983,7 @@ layout();
 
 <script>if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
 <script>(function(){
-var C={fb:'aysima-oneri-d18ef68327d75292',build:66,enforce:true,trialDays:20,pub:{"kty":"EC","x":"rKFAJSAU7GM1rNDR36q3iwrCYC2EY8MMw7KPKcOOJug","y":"4MnAbBM54tmbFMpAPdsrDgUQKud78jNfllio9DWTyXk","crv":"P-256"},vurl:'version.json'};
+var C={fb:'aysima-oneri-d18ef68327d75292',build:67,enforce:true,trialDays:20,pub:{"kty":"EC","x":"rKFAJSAU7GM1rNDR36q3iwrCYC2EY8MMw7KPKcOOJug","y":"4MnAbBM54tmbFMpAPdsrDgUQKud78jNfllio9DWTyXk","crv":"P-256"},vurl:'version.json'};
 var mem={};
 function g(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}
 function s(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
