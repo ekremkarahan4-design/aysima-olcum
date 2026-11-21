@@ -531,6 +531,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <div id="kWarn" class="small" style="margin-top:6px;color:#ff8a8a" hidden></div>
           <div id="kNote" class="muted small" style="margin-top:8px" hidden></div>
           <svg id="kSvg" viewBox="0 0 340 192" style="display:block;width:100%;height:auto;margin-top:8px;border-radius:10px;background:#0f1b2a" aria-label="Çerçeve kalıbı" hidden></svg>
+          <button class="btn sm" id="kShare2" type="button" style="width:100%;margin-top:8px" hidden>📤 Bu resmi paylaş / kaydet</button>
           <div id="kTbl" style="margin-top:8px;font-size:14px" hidden></div>
           <div id="kCap" style="margin-top:10px;border-radius:12px;padding:10px;background:#0f3d2e;color:#d9ffe9" hidden></div>
           <div class="row" style="margin-top:6px"><button class="btn sm" id="kCopy" type="button">Ölçüleri kopyala</button><button class="btn sm" id="kShare" type="button">Şablonu resim olarak paylaş</button><button class="btn sm" id="kReset" type="button">Girdileri temizle</button></div>
@@ -1979,7 +1980,7 @@ function kalipUpdate(){
   var w=c.warn; $('kWarn').hidden=!w.length; $('kWarn').textContent=w.join(' ');
   ['kA','kD'].forEach(function(id){ var v=kv[fm[id]], rg=K_RNG[fm[id]]; $(id).style.borderColor=(v!=null&&!(v>=rg[0]&&v<=rg[1]))?'#ff5d5d':''; });
   $('kNote').hidden=c.ok; if(!c.ok) $('kNote').textContent='Hesap için şunları yazın: '+c.miss.join(', ')+'. Fotoğraf ölçeği uygulanmışsa boş kalanlar ondan alınır.';
-  sv.toggleAttribute('hidden',!c.ok); $('kTbl').hidden=!c.ok; $('kCap').hidden=!c.ok; if(!c.ok) return;
+  sv.toggleAttribute('hidden',!c.ok); $('kShare2').hidden=!c.ok; $('kTbl').hidden=!c.ok; $('kCap').hidden=!c.ok; if(!c.ok) return;
   sv.innerHTML=kalipSvg(c);
   function row(n,a,b,st){ return '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.08)'+(st||'')+'"><span>'+n+'</span><b style="text-align:center">'+a+'</b><b style="text-align:center">'+b+'</b></div>'; }
   var e1=c.e.R,e2=c.e.L, h='<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;font-size:12px;opacity:.7"><span></span><span style="text-align:center">SAĞ</span><span style="text-align:center">SOL</span></div>';
@@ -2005,6 +2006,7 @@ function kalipUpdate(){
   });
   ['kModel','kRenk'].forEach(function(id){ var key=id==='kModel'?'model':'renk'; $(id).addEventListener('input',function(){ if(!S.kv) S.kv={}; S.kv[key]=$(id).value; }); });
   $('kReset').addEventListener('click',function(){ S.kv={}; kalipUpdate(); });
+  $('kShare2').addEventListener('click',function(){ $('kShare').click(); });
   $('kShare').addEventListener('click',function(){
     var sv=$('kSvg'); if(!sv||sv.hidden||!sv.innerHTML){ toast('Önce ölçüleri girin / kalıbı çıkarın.'); return; }
     var W=1360,H=Math.round(W*192/340);
