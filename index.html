@@ -401,6 +401,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
               <div class="etr" style="grid-template-columns:1.3fr 1fr"><span>DBL (burun köprüsü, mm)</span><input type="text" inputmode="decimal" id="eDBL" class="plain" autocomplete="off" placeholder="—" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div>
               <div class="etr" style="grid-template-columns:1.3fr 1fr;display:none"><span id="ePadL">Burunluk (mm)</span><input type="text" inputmode="decimal" id="ePad" class="plain" autocomplete="off" placeholder="—" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div></div>
           </div>
+          <button class="btn sm primary" id="kalGoRes" style="width:100%;margin-top:8px">📐 Çerçeve kalıbı: odak şakak · burun · aşağı · en uzak köşe</button>
           <button class="btn sm" id="eNbBtn" style="width:100%;margin-top:8px">📍 Cam köşelerini ve DBL'yi fotoğrafta göster / ayarla</button>
           <div id="eAsk" class="tile" hidden style="margin-top:8px"><b>Ölçek için kartınız var mı?</b>
             <div class="tiles" style="grid-template-columns:1fr 1fr;margin:8px 0"><button class="btn sm primary" id="eAskCard">📏 Kart var</button><button class="btn sm" id="eAskNo">Kart yok</button></div>
@@ -498,7 +499,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       </div>
       <!-- 4 -->
       <div class="sp" data-for="pad" hidden>
-        <h2>Burunluk ölçüsü</h2>
+        <h2>Çerçeve kalıbı ve DBL</h2>
         <p class="muted">Yeşil iki noktayı, burunluğun (plaket) gözün iki yanında buruna değen iç uçlarına sürükleyin. Yakınlaştırarak daha kesin yerleştirin. Ölçü, kart ya da çerçeve etiketi ölçeğiyle hesaplanır.</p>
         <div class="seg" id="padWho" role="group" aria-label="Hangi uç" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sol uç</button><button data-i="b" aria-pressed="false">Sağ uç</button></div>
         <div class="row"><button class="btn sm" id="padReset">Başlangıç yerine al</button></div>
@@ -531,6 +532,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
         <label class="chk"><input type="checkbox" id="mirror"> Görüntü ayna (ön kamera sol-sağ ters kaydetti)</label>
         <p class="muted small">Normalde görüntüde solda kalan göz hastanın sağ gözüdür.</p>
         <div class="row"><button class="btn sm" id="boxReset">Kutuları sıfırla</button></div>
+        <button class="btn sm primary" id="kalGoBox" style="width:100%;margin-top:8px">📐 Çerçeve kalıbı: odak şakak · burun · aşağı · en uzak köşe</button>
       </div>
       <!-- 5 -->
       <div class="sp" data-for="pupil" hidden>
@@ -1559,7 +1561,7 @@ function afSnap(){
       }
       ratio.push(got); ex.push(e); dirs.push([dx,dy]);
     }
-    var valid=ratio.filter(function(x){return x===x;}).length; if(valid<N*0.7) return;
+    var valid=ratio.filter(function(x){return x===x;}).length; if(valid<N*0.5) return;
     // medyan süzgeç: aykırı ışınları komşularına göre düzelt, eksikleri doldur
     var out=[];
     for(var i2=0;i2<N;i2++){
@@ -1839,6 +1841,7 @@ $('ePad').addEventListener('input',function(){ var t=$('ePad').value.trim(), v=p
 $('padWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.sel={k:'nb',i:b.dataset.i}; Array.prototype.forEach.call($('padWho').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); $('selName').textContent=descLabel(S.sel); if(S.z>1) centerOn(handlePos(S.sel)); schedule(); });
 $('padReset').addEventListener('click',function(){ S.nbSet=false; S.pad=null; results(); schedule(); });
 $('eNbBtn').addEventListener('click',function(){ enterEdit('pad'); });
+['kalGoBox','kalGoRes'].forEach(function(id){ var e=$(id); if(e) e.addEventListener('click',function(){ if(S.edit) go('pad'); else enterEdit('pad'); setTimeout(function(){ try{ $('kalip').scrollIntoView({behavior:'smooth',block:'start'}); }catch(x){} },150); }); });
 $('eAskCard').addEventListener('click',function(){ $('easyCard').click(); });
 $('eAskNo').addEventListener('click',function(){ $('eAskF').hidden=false; });
 $('eFGo').addEventListener('click',function(){ var a=parseMm($('eFA').value), d=parseMm($('eFD').value), n=parseMm($('eFN').value); if(!(a>0) || !(d>=0)){ toast('Ekartman ve DBL değerlerini girin.'); return; }
