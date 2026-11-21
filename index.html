@@ -499,7 +499,15 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
       </div>
       <!-- 4 -->
       <div class="sp" data-for="pad" hidden>
-        <h2>Çerçeve kalıbı ve DBL</h2>
+        <h2>Cam kalıbı (noktalarla)</h2>
+        <div id="outBox" style="border:1px solid #35506f;border-radius:14px;padding:10px;margin-bottom:10px">
+          <p class="muted" style="margin:0 0 6px">Kutu yok: çerçevenin iç kenarı boyunca noktalar koyun. Program kalıbın eğimini bulur, ölçüleri göz bebeğinden bu eğik eksene göre alır.</p>
+          <div class="seg" id="outWho" role="group" aria-label="Hangi cam" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sağ cam</button><button data-i="b" aria-pressed="false">Sol cam</button></div>
+          <div class="row"><button class="btn sm primary" id="outAuto">🔍 Kalıbı otomatik bul</button><button class="btn sm" id="outAdd" aria-pressed="false">＋ Nokta ekle</button></div>
+          <div class="row"><button class="btn sm" id="outDel">Seçili noktayı sil</button><button class="btn sm" id="outClr">Temizle</button></div>
+          <p class="muted small" id="outHint" style="margin:6px 0 0">Noktaları kenara sürükleyin. Eksik yere nokta için “Nokta ekle”ye basıp dokunun. Yakınlaştırmak daha net ölçü verir.</p>
+        </div>
+        <h2 style="font-size:16px">DBL ve burun köprüsü</h2>
         <p class="muted">Yeşil iki noktayı, burunluğun (plaket) gözün iki yanında buruna değen iç uçlarına sürükleyin. Yakınlaştırarak daha kesin yerleştirin. Ölçü, kart ya da çerçeve etiketi ölçeğiyle hesaplanır.</p>
         <div class="seg" id="padWho" role="group" aria-label="Hangi uç" style="margin:6px 0"><button data-i="a" aria-pressed="true">Sol uç</button><button data-i="b" aria-pressed="false">Sağ uç</button></div>
         <div class="row"><button class="btn sm" id="padReset">Başlangıç yerine al</button></div>
@@ -1038,10 +1046,10 @@ var lp = $('loupe'), lctx = lp.getContext('2d');
 var TAU = Math.PI * 2;
 var COL = { a:'#22d3ee', b:'#fbbf24', cal:'#a3e635', pant:'#f472b6', pad:'#34d399' };
 var STEP_SETS = {
-  front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['pad','Burunluk'],['align','Hizala']],
+  front:[['photo','Foto'],['pupil','Kontrol'],['box','Kutu'],['scale','Ölçek'],['pad','Cam kalıbı'],['align','Hizala']],
   side:[['photo','Fotoğraf'],['align','Hizala'],['scale','Ölçek'],['pant','Pantoskopik'],['vertex','Verteks']]
 };
-var EDITSETS={front:[['pupil','Göz bebeği'],['box','Çerçeve kutusu'],['scale','Kart'],['pad','Burunluk']],side:[['pant','Pantoskopik'],['vertex','Verteks'],['scale','Kart']]};
+var EDITSETS={front:[['pupil','Göz bebeği'],['box','Çerçeve kutusu'],['scale','Kart'],['pad','Cam kalıbı']],side:[['pant','Pantoskopik'],['vertex','Verteks'],['scale','Kart']]};
 function vxStep(t){ return t==='vertex'||t==='pant'; }
 function easyOn(){ return !S.adv && !S.edit; }
 function stepList(){ return (S.edit&&!S.adv)?EDITSETS[S.mode]:STEP_SETS[S.mode]; }
@@ -1332,14 +1340,22 @@ function ov(c,TT,k,mode){
   ['a','b'].forEach(function(id){
     var b=S.box[id], col=COL[id];
     var p1=TT({x:b.x1,y:b.y1}), p2=TT({x:b.x2,y:b.y1}), p3=TT({x:b.x2,y:b.y2}), p4=TT({x:b.x1,y:b.y2});
-    halo(c,[p1,p2,p3,p4,p1],col,lw);
+    if(!(outHas(id)&&step!=='box')) halo(c,[p1,p2,p3,p4,p1],col,lw);
     var ln=S.lens&&S.lens[id];
     if(ln && Math.abs(ln.bb.x1-b.x1)<2 && Math.abs(ln.bb.y1-b.y1)<2 && Math.abs(ln.bb.x2-b.x2)<2 && Math.abs(ln.bb.y2-b.y2)<2){
       var lp=ln.pts.map(function(q){ return TT(q); }); lp.push(lp[0]);
       halo(c,lp,col,lw*0.8);
       for(var li=0;li<lp.length-1;li+=4) dot(c,lp[li],3.2,col);
     }
-    if(!ex && step!=='box' && (tags || step==='pad')){ [p1,p2,p3,p4].forEach(function(z){ sqHandle(c,z,7,col); }); }
+    if(!ex && step!=='box' && !outHas(id) && (tags || step==='pad')){ [p1,p2,p3,p4].forEach(function(z){ sqHandle(c,z,7,col); }); }
+    if(outHas(id) && (step==='pad'||ex||tags)){
+      var dn=catmull(S.out[id],6).map(function(q){ return TT(q); }); dn.push(dn[0]);
+      halo(c,dn,col,lw*0.9);
+      var curEye=(S.outWho||'a')===id;
+      S.out[id].forEach(function(q,qi){ if(!ex && step==='pad') dot(c,TT(q),(curEye&&qi===S.outSel)?10*k:6.5*k,(curEye&&qi===S.outSel)?'#ffffff':col); else dot(c,TT(q),3.2*k,col); });
+      var pu=TT(S.pup[id]), fp=null, fd=-1; dn.forEach(function(q){ var dd=Math.hypot(q.x-pu.x,q.y-pu.y); if(dd>fd){ fd=dd; fp=q; } });
+      if(fp){ halo(c,[pu,fp],'#ff5050',lw*0.9); dot(c,fp,4.5*k,'#ff5050'); }
+    }
     if(tags || step==='box'){
       var e = r ? r[id] : null, nm=lensName(id).toUpperCase();
       tag(c, e ? nm+'  A '+f1(R(e.w))+' · B '+f1(R(e.bb)) : nm, p1.x+4*k, p1.y+14*k, col, k, 'left');
@@ -1576,6 +1592,7 @@ function afSnap(){
   return total;
 }
 function afApply(P,irisPx){
+  S.out={a:[],b:[]}; S.outSel=null;
   S.askDone=false; S.pdOv=null; S.kv={}; S.adjD=0; S.pad=null; S.nbSet=false; try{ $('eAskF').hidden=true; }catch(e){}
   S.pup.a={x:P[0].x,y:P[0].y}; S.pup.b={x:P[1].x,y:P[1].y};
   var cardOk=S.calMode==='card' && S.calibrated && mmPerPx();
@@ -1629,7 +1646,7 @@ $('snapBtn').addEventListener('click',function(){ var n=0; try{ n=afSnap(); }cat
 $('autoGo').addEventListener('click',function(){ autoFind(function(){ go('pupil'); }); });
 
 /* ---------- geri al / ileri al ---------- */
-function udSnap(){ return JSON.stringify({pup:S.pup,box:S.box,noseX:S.noseX,noseCustom:S.noseCustom,cal:S.cal,sd:S.sd,lens:S.lens||null,calMode:S.calMode,irisMm:S.irisMm,calibrated:S.calibrated,nb:S.nb||null,nbSet:!!S.nbSet,pad:S.pad,adjD:S.adjD}); }
+function udSnap(){ return JSON.stringify({pup:S.pup,box:S.box,noseX:S.noseX,noseCustom:S.noseCustom,cal:S.cal,sd:S.sd,lens:S.lens||null,calMode:S.calMode,irisMm:S.irisMm,calibrated:S.calibrated,nb:S.nb||null,nbSet:!!S.nbSet,pad:S.pad,adjD:S.adjD,out:S.out||null}); }
 function udPush(){ var s=udSnap(); if(UD.u.length && UD.u[UD.u.length-1]===s) return; UD.u.push(s); if(UD.u.length>80) UD.u.shift(); UD.r=[]; try{ barUpdate(); }catch(e){} }
 function udApply(js){ var o=JSON.parse(js); Object.keys(o).forEach(function(k){ S[k]=o[k]; }); if(!o.lens) S.lens=null; try{ syncMode(); }catch(e){} if(S.mode==='side'){ try{ syncSideUI(); }catch(e){} } results(); schedule(); }
 function udUndo(){
@@ -1643,6 +1660,46 @@ function udRedo(){
   UD.u.push(cur); udApply(UD.r.pop()); barUpdate();
 }
 cv.addEventListener('pointerdown',udPush,true);
+(function(){
+  var OD=null;
+  function eyeId(){ return S.outWho||'a'; }
+  cv.addEventListener('pointerdown',function(e){
+    if(S.step!=='pad'||S.mode!=='front'||!S.base) return;
+    var id=eyeId(), pts=(S.out&&S.out[id])||[], pt=cpt(e), bi=-1, bd=1e9, tol=e.pointerType==='mouse'?14:28;
+    pts.forEach(function(p,i){ var q=T(p), d=Math.hypot(q.x-pt.x,q.y-pt.y); if(d<bd){ bd=d; bi=i; } });
+    if(bi>=0 && bd<tol){ S.outSel=bi; }
+    else if(S.outAdd){
+      var ip=U(pt.x,pt.y), at=pts.length;
+      if(pts.length>=3){ var md=1e9; for(var i=0;i<pts.length;i++){ var a=pts[i], b=pts[(i+1)%pts.length], vx=b.x-a.x, vy=b.y-a.y, L=vx*vx+vy*vy||1, t=Math.max(0,Math.min(1,((ip.x-a.x)*vx+(ip.y-a.y)*vy)/L)), d=Math.hypot(ip.x-(a.x+t*vx),ip.y-(a.y+t*vy)); if(d<md){ md=d; at=i+1; } } }
+      pts.splice(at,0,{x:ip.x,y:ip.y}); S.out[id]=pts; bi=at; S.outSel=at;
+    } else return;
+    OD={id:e.pointerId,eye:id,i:bi}; try{ cv.setPointerCapture(e.pointerId); }catch(x){}
+    e.stopImmediatePropagation(); e.preventDefault(); results(); schedule();
+  },false);
+  cv.addEventListener('pointermove',function(e){
+    if(!OD||e.pointerId!==OD.id) return; var pt=cpt(e), ip=U(pt.x,pt.y);
+    S.out[OD.eye][OD.i]={x:clamp(ip.x,0,S.W),y:clamp(ip.y,0,S.H)}; e.stopImmediatePropagation(); results(); schedule();
+  });
+  function up(e){ if(!OD||e.pointerId!==OD.id) return; OD=null; results(); schedule(); }
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  function sync(){
+    $('outWho').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.dataset.i===eyeId())); b.textContent=lensName(b.dataset.i)+' cam'; });
+    $('outAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('outAdd').textContent=S.outAdd?'✔ Nokta ekleme açık':'＋ Nokta ekle';
+  }
+  $('outWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.outWho=b.dataset.i; S.outSel=null; sync(); schedule(); });
+  $('outAdd').addEventListener('click',function(){ S.outAdd=!S.outAdd; sync(); });
+  $('outDel').addEventListener('click',function(){ var id=eyeId(), a=S.out[id]; if(!a.length) return; udPush(); a.splice(S.outSel!=null&&S.outSel<a.length?S.outSel:a.length-1,1); S.outSel=null; results(); schedule(); });
+  $('outClr').addEventListener('click',function(){ udPush(); S.out[eyeId()]=[]; S.outSel=null; results(); schedule(); });
+  $('outAuto').addEventListener('click',function(){
+    var id=eyeId(); udPush();
+    if(!(S.lens&&S.lens[id])){ try{ afSnap(); }catch(e){} }
+    var pts=[];
+    if(S.lens&&S.lens[id]){ var P=S.lens[id].pts; for(var i=0;i<P.length;i+=3) pts.push({x:P[i].x,y:P[i].y}); toast('Kalıp bulundu. Noktaları kenara göre düzeltin.'); }
+    else { var b=S.box[id], cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, rx=(b.x2-b.x1)/2*0.95, ry=(b.y2-b.y1)/2*0.95; for(var j=0;j<14;j++){ var t=2*Math.PI*j/14; pts.push({x:cx+rx*Math.cos(t),y:cy+ry*Math.sin(t)}); } toast('Kenar net bulunamadı. Noktaları elle kenara sürükleyin.'); }
+    S.out[id]=pts; S.outSel=null; results(); schedule();
+  });
+  window.__outSync=sync; sync();
+})();
 window.addEventListener('pointerup',function(){ var cur=udSnap(); if(UD.u.length && UD.u[UD.u.length-1]===cur){ UD.u.pop(); try{ barUpdate(); }catch(e){} } else { try{ barUpdate(); }catch(e){} } });
 document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('.sp button, #nudge button'); if(b && !b.closest('.seg')) udPush(); },true);
 /* ---------- kolay mod ---------- */
@@ -1657,7 +1714,7 @@ function barUpdate(){
   if(bar.dataset.h!==h){ bar.innerHTML=h; bar.dataset.h=h; }
   bar.style.gridTemplateColumns=cols;
 }
-var FIXSETS={front:[['pupil','👁 Göz bebekleri'],['box','▭ Çerçeve kutusu (cam şablonu)'],['scale','📏 Kart / ölçek'],['pad','↔ Burunluk']],side:[['pant','📐 Pantoskopik açı'],['vertex','↔ Verteks'],['scale','📏 Kart / ölçek']]};
+var FIXSETS={front:[['pupil','👁 Göz bebekleri'],['box','▭ Çerçeve kutusu (cam şablonu)'],['scale','📏 Kart / ölçek'],['pad','↔ Cam kalıbı']],side:[['pant','📐 Pantoskopik açı'],['vertex','↔ Verteks'],['scale','📏 Kart / ölçek']]};
 function fixRowUpdate(){
   var r=$('easyFixRow'); if(!r) return; var m=S.mode;
   if(r.dataset.m===m) return; r.dataset.m=m; r.textContent='';
@@ -1711,6 +1768,32 @@ function glasses(){
 function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni (ekartman)/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R((g.e.R.A+g.e.L.A)/2))+' mm | DBL: '+f1(R(g.dbl))+' mm'+(typeof kalipText==='function'&&kalipText()?'\n'+kalipText():''); }
 S.pdOv=null; S.kv={};
 var K_RNG={A:[42,70],D:[11,24]};
+S.out={a:[],b:[]}; S.outWho='a'; S.outSel=null; S.outAdd=false;
+function outHas(id){ return !!(S.out && S.out[id] && S.out[id].length>=3); }
+function catmull(P,n){
+  var N=P.length, o=[]; for(var i=0;i<N;i++){ var p0=P[(i-1+N)%N],p1=P[i],p2=P[(i+1)%N],p3=P[(i+2)%N];
+    for(var j=0;j<n;j++){ var t=j/n,t2=t*t,t3=t2*t;
+      o.push({x:0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+              y:0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)}); } }
+  return o;
+}
+function outMeas(id,r,kvA){
+  var pu=S.pup[id], cf=corrF(), mx=1, my=1;
+  if(r){ mx=r.mm*(cf.on?cf.x:1); my=r.mm*(cf.on?cf.y:1); } else if(!(kvA>0)) return null;
+  var dn=catmull(S.out[id],6).map(function(q){ return {dx:(q.x-pu.x)*mx, dy:(q.y-pu.y)*my}; });
+  var ns=(id==='a')?1:-1, best=null;
+  for(var a=-15;a<=15.01;a+=0.5){ var th=a*Math.PI/180, c=Math.cos(th), sn=Math.sin(th), u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
+    for(var i=0;i<dn.length;i++){ var u=dn[i].dx*c+dn[i].dy*sn, v=-dn[i].dx*sn+dn[i].dy*c; if(u<u0)u0=u; if(u>u1)u1=u; if(v<v0)v0=v; if(v>v1)v1=v; }
+    var ar=(u1-u0)*(v1-v0); if(!best||ar<best.ar) best={ar:ar,a:a}; }
+  var th2=best.a*Math.PI/180, c2=Math.cos(th2), s2=Math.sin(th2), pts=dn.map(function(q){ return {n:ns*(q.dx*c2+q.dy*s2), v:-q.dx*s2+q.dy*c2}; });
+  var nmin=1e9,nmax=-1e9,vmin=1e9,vmax=-1e9; pts.forEach(function(q){ if(q.n<nmin)nmin=q.n; if(q.n>nmax)nmax=q.n; if(q.v<vmin)vmin=q.v; if(q.v>vmax)vmax=q.v; });
+  var k=1; if(kvA>0){ k=kvA/(nmax-nmin); }
+  var temple=-nmin*k, nasal=nmax*k, low=vmax*k, up=-vmin*k, far=0;
+  pts.forEach(function(q){ var d=Math.hypot(q.n,q.v)*k; if(d>far) far=d; });
+  var A=temple+nasal;
+  return {A:A,B:low+up,dec:temple-A/2,temple:temple,nasal:nasal,low:low,up:up,pad:null,far:far,cap:2*far,tilt:best.a,
+    poly:pts.map(function(q){ return [q.n*k,q.v*k]; })};
+}
 function kalipCalc(){
   var kv=S.kv||{}, r=null, g=null; try{ g=glasses(); r=compute(); }catch(e){}
   if(!(S.calibrated&&r)) r=null;
@@ -1727,28 +1810,33 @@ function kalipCalc(){
   ['R','L'].forEach(function(E){
     var m=r?r[key[E]]:null, B=ok(kv.B)&&kv.B>0?kv.B:(m?m.bb:null), H=ok(kv.H)&&kv.H>=0?kv.H:(m?m.h:null);
     if(B==null && E==='R') miss.push('cam boyu'); if(H==null && E==='R') miss.push('odak yüksekliği');
+    var oid=key[E];
+    if(outHas(oid)){ var ol=outMeas(oid,r,ok(kv.A,K_RNG.A)?kv.A:null); if(ol){ ol.mono=pd!=null?(r&&!(kv.pd>0)?m.mono:(r?m.mono*(kv.pd/r.pd):pd/2)):(m?m.mono:null); o.e[E]=ol; return; } }
     if(pd==null||A==null||D==null||B==null||H==null){ o.e[E]=null; return; }
     var mono=pd/2; if(r && !(kv.pd>0)) mono=m.mono; else if(r && kv.pd>0) mono=m.mono*(kv.pd/r.pd);
     var dec=(A+D)/2-mono, tem=A/2+dec, nas=A/2-dec, low=H, up=B-H;
     var far=Math.max(Math.hypot(tem,low),Math.hypot(tem,up),Math.hypot(nas,low),Math.hypot(nas,up));
     o.e[E]={A:A,B:B,mono:mono,dec:dec,temple:tem,nasal:nas,low:low,up:up,pad:mono-D/2,far:far,cap:2*far};
   });
+  if(o.e.R&&o.e.L&&o.A==null) o.A=(o.e.R.A+o.e.L.A)/2;
   o.miss=miss.filter(function(x,i,a){return a.indexOf(x)===i});
   o.ok=!!(o.e.R&&o.e.L);
   return o;
 }
 function kalipSvg(c){
-  var W=c.A+c.dbl+c.A, sc=300/W, x0=20, H=Math.max(c.e.R.B,c.e.L.B), yb=24+H*sc, t='';
+  var dbl=(c.dbl==null?14:c.dbl), W=c.A+dbl+c.A, sc=300/W, x0=20, H=Math.max(c.e.R.B,c.e.L.B), yb=24+H*sc, t='';
   function txt(x,y,s,col,an,sz){ return '<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" fill="'+col+'" font-size="'+(sz||10)+'" text-anchor="'+(an||'middle')+'" font-family="monospace" font-weight="700">'+s+'</text>'; }
   var xs=x0, cols={R:'#35d0ff',L:'#ffc533'};
   ['R','L'].forEach(function(E){
     var e=c.e[E], w=e.A*sc, h=e.B*sc, x=xs, y=yb-h, rad=Math.min(w,h)*.28, nose=(E==='R');
     var px=x+w/2+(nose?1:-1)*e.dec*sc, py=yb-e.low*sc;
-    t+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="'+rad.toFixed(1)+'" fill="rgba(255,255,255,.06)" stroke="'+cols[E]+'" stroke-width="2"/>';
+    if(e.poly){ t+='<path d="'+e.poly.map(function(q,qi){ return (qi?'L':'M')+(px+(nose?1:-1)*q[0]*sc).toFixed(1)+','+(py+q[1]*sc).toFixed(1); }).join('')+'Z" fill="rgba(255,255,255,.06)" stroke="'+cols[E]+'" stroke-width="2"/>'; }
+    else t+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="'+rad.toFixed(1)+'" fill="rgba(255,255,255,.06)" stroke="'+cols[E]+'" stroke-width="2"/>';
     var tx=nose?x:x+w, nx=nose?x+w:x;
     // en uzun köşe
     var cxs=[tx,nx], cys=[y,yb], best=null,bd=-1;
     cxs.forEach(function(cx){ cys.forEach(function(cy){ var d=Math.hypot(cx-px,cy-py); if(d>bd){bd=d;best=[cx,cy];} }); });
+    if(e.poly){ bd=-1; e.poly.forEach(function(q){ var X=px+(nose?1:-1)*q[0]*sc, Y=py+q[1]*sc, d=Math.hypot(X-px,Y-py); if(d>bd){bd=d;best=[X,Y];} }); }
     t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+best[0].toFixed(1)+'" y2="'+best[1].toFixed(1)+'" stroke="#ff5d5d" stroke-width="1.6"/><circle cx="'+best[0].toFixed(1)+'" cy="'+best[1].toFixed(1)+'" r="3" fill="#ff5d5d"/>';
     t+=txt((px+best[0])/2+(best[0]<px?-2:2),(py+best[1])/2,f1(R(e.far)),'#ff8a8a',best[0]<px?'end':'start');
     t+='<line x1="'+(px-9).toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+(px+9).toFixed(1)+'" y2="'+py.toFixed(1)+'" stroke="'+cols[E]+'"/><line x1="'+px.toFixed(1)+'" y1="'+(py-9).toFixed(1)+'" x2="'+px.toFixed(1)+'" y2="'+(py+9).toFixed(1)+'" stroke="'+cols[E]+'"/>';
@@ -1759,16 +1847,16 @@ function kalipSvg(c){
     t+='<line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+px.toFixed(1)+'" y2="'+yb.toFixed(1)+'" stroke="#fff" stroke-dasharray="3 2"/>';
     t+=txt(px+(nose?-4:4),(py+yb)/2+3,f1(R(e.low)),'#fff',nose?'end':'start');
     t+=txt(x+w/2,yb+13,'ekartman '+f1(R(e.A))+' · boy '+f1(R(e.B)),cols[E]);
-    xs+=w+c.dbl*sc;
+    xs+=w+dbl*sc;
   });
   var gx=x0+c.A*sc;
-  t+='<line x1="'+gx.toFixed(1)+'" y1="'+(yb-8).toFixed(1)+'" x2="'+(gx+c.dbl*sc).toFixed(1)+'" y2="'+(yb-8).toFixed(1)+'" stroke="#fff" stroke-width="2"/>';
-  t+=txt(gx+c.dbl*sc/2,yb+27,'DBL '+f1(R(c.dbl)),'#fff');
+  t+='<line x1="'+gx.toFixed(1)+'" y1="'+(yb-8).toFixed(1)+'" x2="'+(gx+dbl*sc).toFixed(1)+'" y2="'+(yb-8).toFixed(1)+'" stroke="#fff" stroke-width="2"/>';
+  if(c.dbl!=null) t+=txt(gx+dbl*sc/2,yb+27,'DBL '+f1(R(c.dbl)),'#fff');
   t+=txt(170,12,'PD '+f1(R(c.pd)),'#cfe1ff',null,11);
   t+=txt(170,176,'yeşil: şakak · pembe: burun · beyaz: alt · kırmızı: en uzun köşe','#a9b8cc','middle',8);
   return t;
 }
-var K_STD=[60,65,70,75,80];
+var K_STD=[60,65,70,75,80,85,90,95];
 function kalipCap(c){ var m=Math.max(c.e.R.cap,c.e.L.cap), need=m+2, std=null; for(var i=0;i<K_STD.length;i++){ if(K_STD[i]>=need){ std=K_STD[i]; break; } } return {min:m,need:need,std:std}; }
 function kalipText(){
   var c=kalipCalc(); if(!c||!c.ok) return '';
@@ -1777,7 +1865,7 @@ function kalipText(){
   return 'Çerçeve kalıbı (odak = göz bebeği, mm)\nPD '+f1(R(c.pd))+' | Ekartman '+f1(R(c.A))+' | DBL '+f1(R(c.dbl))+'\n'+ln('R','Sağ')+'\n'+ln('L','Sol')+'\nMin. kurtarır çap '+f1(R(k.min))+' mm (2 mm payla '+f1(R(k.need))+')'+(k.std?' → '+k.std+' mm cam':'');
 }
 function kalipUpdate(){
-  var sv=$('kSvg'); if(!sv) return; var c=kalipCalc(), act=document.activeElement, kv=S.kv||{};
+  var sv=$('kSvg'); if(!sv) return; try{ if(window.__outSync) window.__outSync(); }catch(e){} var c=kalipCalc(), act=document.activeElement, kv=S.kv||{};
   var fm={kPD:'pd',kA:'A',kD:'D',kB:'B',kH:'H'};
   Object.keys(fm).forEach(function(id){ if(act!==$(id)) $(id).value = kv[fm[id]]!=null ? f1(kv[fm[id]]) : ''; });
   var e0=c.e.R||null;
@@ -1790,6 +1878,7 @@ function kalipUpdate(){
   function row(n,a,b,st){ return '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.08)'+(st||'')+'"><span>'+n+'</span><b style="text-align:center">'+a+'</b><b style="text-align:center">'+b+'</b></div>'; }
   var e1=c.e.R,e2=c.e.L, h='<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:4px;font-size:12px;opacity:.7"><span></span><span style="text-align:center">SAĞ</span><span style="text-align:center">SOL</span></div>';
   h+=row('Monoküler PD',f1(R(e1.mono)),f1(R(e2.mono)));
+  if(e1.tilt!=null||e2.tilt!=null) h+=row('Çerçeve eğimi (°)',e1.tilt!=null?f1(e1.tilt):'—',e2.tilt!=null?f1(e2.tilt):'—');
   h+=row('Odak → şakak',f1(R(e1.temple)),f1(R(e2.temple)));
   h+=row('Odak → burun kenarı',f1(R(e1.nasal)),f1(R(e2.nasal)));
   h+=row('Odak → alt (yükseklik)',f1(R(e1.low)),f1(R(e2.low)));
