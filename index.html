@@ -4862,13 +4862,14 @@ layout();
 
 <script>if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }</script>
 <script>(function(){
-var C={build:66,enforce:true,trialDays:7,pub:{"kty":"EC","x":"rKFAJSAU7GM1rNDR36q3iwrCYC2EY8MMw7KPKcOOJug","y":"4MnAbBM54tmbFMpAPdsrDgUQKud78jNfllio9DWTyXk","crv":"P-256"},vurl:'version.json'};
+var C={fb:'aysima-oneri-d18ef68327d75292',build:66,enforce:true,trialDays:20,pub:{"kty":"EC","x":"rKFAJSAU7GM1rNDR36q3iwrCYC2EY8MMw7KPKcOOJug","y":"4MnAbBM54tmbFMpAPdsrDgUQKud78jNfllio9DWTyXk","crv":"P-256"},vurl:'version.json'};
 var mem={};
 function g(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}}
 function s(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
 function u8(b){b=b.replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';var r=atob(b),a=new Uint8Array(r.length);for(var i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a}
 function nowMs(){var n=Date.now(),seen=+g('ao_seen')||0;if(n<seen)n=seen;else s('ao_seen',String(n));return n}
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var PERM={k:{}};try{PERM=JSON.parse(g('ao_perm')||'null')||{k:{}}}catch(e){PERM={k:{}}}
 var SET={};try{SET=JSON.parse(g('ao_set')||'{}')||{}}catch(e){SET={}}
 window.__SHOP=SET.shop||'';
 function shopName(){return SET.shop||'Optik'}
@@ -4886,6 +4887,18 @@ function verify(key){
     return JSON.parse(new TextDecoder().decode(u8(p[0])));
   },function(e){ throw (typeof e==='string'?e:'Anahtar geçersiz.'); });
 }
+
+/* deneme başlangıcı: 4 ayrı yerde saklanır, en eski olan geçerli sayılır */
+function idbOp(mode,v){return new Promise(function(res){try{var r=indexedDB.open('ao_s',1);r.onupgradeneeded=function(){r.result.createObjectStore('k')};r.onerror=function(){res(0)};r.onsuccess=function(){try{var st=r.result.transaction('k',mode==='w'?'readwrite':'readonly').objectStore('k');if(mode==='w'){st.put(v,'t0');res(v)}else{var q=st.get('t0');q.onsuccess=function(){res(+q.result||0)};q.onerror=function(){res(0)}}}catch(e){res(0)}}}catch(e){res(0)}})}
+function ckGet(){try{var m=document.cookie.match(/(?:^|; )ao_t0=(\d+)/);return m?+m[1]:0}catch(e){return 0}}
+function ckSet(v){try{document.cookie='ao_t0='+v+'; max-age=63072000; path=/; SameSite=Lax'}catch(e){}}
+function chGet(){return window.caches?caches.keys().then(function(ks){var m=0;ks.forEach(function(k){var x=/^ao-t0-(\d+)$/.exec(k);if(x&&(!m||+x[1]<m))m=+x[1]});return m},function(){return 0}):Promise.resolve(0)}
+function getT0(n){
+  return Promise.all([Promise.resolve(+g('ao_t0')||0),idbOp('r'),Promise.resolve(ckGet()),chGet()]).then(function(a){
+    var c=a.filter(function(x){return x>0&&x<=n+86400000});var t0=c.length?Math.min.apply(null,c):n;
+    if(+g('ao_t0')!==t0)s('ao_t0',String(t0));if(a[1]!==t0)idbOp('w',t0);if(a[2]!==t0)ckSet(t0);if(a[3]!==t0&&window.caches)caches.open('ao-t0-'+t0)['catch'](function(){});
+    return t0});
+}
 function status(){
   var key=g('ao_lic');
   var pr=key?verify(key).catch(function(){return null}):Promise.resolve(null);
@@ -4894,11 +4907,16 @@ function status(){
     if(d){
       var forever=String(d.e).indexOf('9999')===0;
       var left=forever?99999:Math.ceil((Date.parse(d.e+'T23:59:59')-n)/86400000);
-      return {k:left>=0?'lic':'exp',d:d,left:left,forever:forever};
+      var pm=(PERM.k||{})[d.i]||{};
+      var share=pm.paylas!==undefined?!!pm.paylas:(d.s===1||d.p==='Yönetici'||PERM.vs!==false);
+      if(pm.iptal&&d.p!=='Yönetici')return {k:'exp',d:d,left:-1,forever:forever,revoked:true,share:false};
+      return {k:left>=0?'lic':'exp',d:d,left:left,forever:forever,share:share&&left>=0};
     }
-    var t0=+g('ao_t0');if(!t0){t0=n;s('ao_t0',String(t0))}
-    var l=C.trialDays-Math.floor((n-t0)/86400000);
-    return {k:l>0?'trial':'trialend',left:l};
+    return getT0(n).then(function(t0){
+      var l=C.trialDays-Math.floor((n-t0)/86400000);
+      if(PERM.dn===false)return {k:'trialend',left:0,off:true,share:false};
+      return {k:l>0?'trial':'trialend',left:l,share:PERM.vs!==false&&l>0};
+    });
   });
 }
 
@@ -4941,7 +4959,7 @@ function overlay(html,locked){
 function licHtml(st){
   var h='';
   if(st.k==='lic')h='<span class="ok"><b>Lisanslı</b> · '+esc(st.d.n)+' · '+esc(st.d.p||'')+' · '+(st.forever?'süresiz':'bitiş '+esc(st.d.e)+' ('+st.left+' gün)')+'</span>';
-  else if(st.k==='exp')h='<span class="er"><b>Lisans süresi doldu</b> · '+esc(st.d.n)+' · '+esc(st.d.e)+'</span>';
+  else if(st.k==='exp')h='<span class="er"><b>'+(st.revoked?'Lisans iptal edildi':'Lisans süresi doldu')+'</b> · '+esc(st.d.n)+' · '+esc(st.d.e)+'</span>';
   else if(st.k==='trial')h='<span><b>Deneme sürümü</b> · '+st.left+' gün kaldı</span>';
   else h='<span class="er"><b>Deneme süresi bitti</b></span>';
   return h;
@@ -4959,13 +4977,33 @@ function activateUi(o,after){
     },function(e){m.className='msg er';m.textContent=String(e)});
   };
 }
+function contact(){var nm='<b>'+esc(PERM.ad||'Ekrem KARAHAN')+'</b>';var t=String(PERM.tel||'905465963444').replace(/\D/g,'');if(!t)return 'Lisans için ulaşın: '+nm;var sh=t.replace(/^90/,'0').replace(/^(\d{4})(\d{3})(\d{2})(\d{2})$/,'$1 $2 $3 $4');return 'Lisans için ulaşın: '+nm+' · <b>'+esc(sh)+'</b> · <a href="tel:+'+t+'">Ara</a> · <a href="https://wa.me/'+t+'" target="_blank" rel="noopener">WhatsApp</a>'}
+
+function openFeedback(st){
+  var o=overlay('<h2>Öneri / sorun bildir</h2><p class="mut">Yazdığınız mesaj doğrudan geliştiriciye iletilir. Hasta adı, T.C. kimlik no gibi kişisel bilgi yazmayın.</p>'+
+   '<label>MESAJINIZ</label><textarea id="aoFbT" maxlength="600" placeholder="Önerinizi veya karşılaştığınız sorunu yazın"></textarea><div class="mut" id="aoFbN" style="text-align:right">0/600</div>'+
+   '<div class="row"><button class="pri" id="aoFbS">Gönder</button><button id="aoFbW">WhatsApp ile yaz</button><button id="aoFbX">Kapat</button></div><div class="msg" id="aoFbM"></div>');
+  var ta=o.querySelector('#aoFbT'),m=o.querySelector('#aoFbM');
+  ta.oninput=function(){o.querySelector('#aoFbN').textContent=ta.value.length+'/600'};
+  function txt(){var who=(SET.shop||'?')+(st&&st.d?' / '+st.d.n+' ('+st.d.i+')':(st&&st.k?' / '+st.k:''));return '[Öneri] '+who+' / v'+C.build+'\n'+ta.value.trim()}
+  o.querySelector('#aoFbX').onclick=function(){o.remove()};
+  o.querySelector('#aoFbW').onclick=function(){if(!ta.value.trim()){m.className='msg er';m.textContent='Önce mesajı yazın.';return}var t=String(PERM.tel||'905465963444').replace(/\D/g,'');window.open('https://wa.me/'+t+'?text='+encodeURIComponent(txt()),'_blank')};
+  o.querySelector('#aoFbS').onclick=function(){
+    if(!ta.value.trim()){m.className='msg er';m.textContent='Önce mesajı yazın.';return}
+    var now=Date.now(),L=[];try{L=JSON.parse(g('ao_fbl')||'[]').filter(function(x){return now-x<86400000})}catch(e){L=[]}
+    if(L.length&&now-L[L.length-1]<30000){m.className='msg er';m.textContent='Lütfen birkaç saniye sonra tekrar deneyin.';return}
+    if(L.length>=5){m.className='msg er';m.textContent='Bugün çok mesaj gönderdiniz. WhatsApp ile yazabilirsiniz.';return}
+    m.className='msg';m.textContent='Gönderiliyor…';
+    fetch('https://ntfy.sh/'+C.fb,{method:'POST',body:txt()}).then(function(r){if(!r.ok)throw 0;L.push(now);s('ao_fbl',JSON.stringify(L));m.className='msg ok';m.textContent='Gönderildi, teşekkürler.';ta.value=''}).catch(function(){m.className='msg er';m.textContent='Gönderilemedi (internet olmayabilir). “WhatsApp ile yaz” düğmesini deneyin.'});
+  };
+}
 function lockScreen(st){
   var old=document.getElementById('aoLock');if(old)old.remove();
-  var t=st.k==='exp'?'Lisans süreniz doldu':'Deneme süresi bitti';
+  var t=st.off?'Deneme sürümü şu an kapalı':st.revoked?'Lisans iptal edildi':st.k==='exp'?'Lisans süreniz doldu':'Deneme süresi bitti';
   var o=overlay('<h2>'+t+'</h2><p>Yeni ölçüm yapmak için lisans anahtarı gerekir. Kayıtlarınız silinmez; anahtarı girince kaldığınız yerden devam edersiniz.</p>'+
    '<label>LİSANS ANAHTARI</label><textarea id="aoKey" placeholder="Satıcınızdan aldığınız anahtarı buraya yapıştırın"></textarea>'+
    '<div class="row"><button class="pri" id="aoAct">Etkinleştir</button></div><div class="msg" id="aoMsg"></div>'+
-   '<p class="mut">Anahtar için satıcınızla iletişime geçin.</p>',true);
+   '<p class="mut">'+contact()+'</p>',true);
   o.id='aoLock';activateUi(o);
 }
 function openSettings(){
@@ -4978,8 +5016,8 @@ function openSettings(){
     '<div class="row"><button class="pri" id="aoSave">Kaydet</button><button id="aoClose">Kapat</button></div><div class="msg" id="aoSm"></div>'+
     '<hr style="border:0;border-top:1px solid var(--line,#ccd4db);margin:14px 0">'+
     '<label>LİSANS ANAHTARI GİR / DEĞİŞTİR</label><textarea id="aoKey"></textarea>'+
-    '<div class="row"><button id="aoAct">Etkinleştir</button><button id="aoChk">Güncelleme kontrol et</button><button id="aoIn">📲 Ana ekrana ekle</button></div><div class="msg" id="aoMsg"></div>'+
-    '<p class="mut">Sürüm '+C.build+'. Ölçümler ve fotoğraflar yalnızca bu cihazda saklanır.</p>');
+    '<div class="row"><button id="aoAct">Etkinleştir</button><button id="aoChk">Güncelleme kontrol et</button><button id="aoIn">📲 Ana ekrana ekle</button><button id="aoFb">💬 Öneri / sorun bildir</button>'+(st.share?'<button id="aoSh">📤 Uygulamayı paylaş</button>':'')+'</div><div class="msg" id="aoMsg"></div>'+
+    '<p class="mut">'+contact()+'</p>'+'<p class="mut">Sürüm '+C.build+'. Ölçümler ve fotoğraflar yalnızca bu cihazda saklanır.</p>');
     activateUi(o);
     var logo=SET.logo||'';
     o.querySelector('#aoLogo').onchange=function(e){
@@ -4995,6 +5033,12 @@ function openSettings(){
     };
     o.querySelector('#aoClose').onclick=function(){o.remove()};
     o.querySelector('#aoIn').onclick=function(){o.remove();window.__aoInstall()};
+    o.querySelector('#aoFb').onclick=function(){o.remove();openFeedback(st)};
+    var shb=o.querySelector('#aoSh');if(shb){var b0=location.href.split('#')[0].replace(/[^\/]*$/,''),u=b0+'kurulum.html',v=b0+'tanitim.mp4',VF=null;
+      var tx='PD ve Yükseklik Ölçer\nTelefon, tablet ve bilgisayardan açılır, mağazadan indirme yok.\nKurulum: '+u+'\nTanıtım videosu: '+v;
+      try{fetch(v).then(function(r){return r.ok?r.blob():Promise.reject()}).then(function(bl){VF=new File([bl],'PD-Olcer-Tanitim.mp4',{type:'video/mp4'})}).catch(function(){})}catch(e){}
+      var fb=function(){if(navigator.share){navigator.share({text:tx}).catch(function(e){if(!e||e.name!=='AbortError')window.open('https://wa.me/?text='+encodeURIComponent(tx),'_blank')})}else window.open('https://wa.me/?text='+encodeURIComponent(tx),'_blank')};
+      shb.onclick=function(){if(VF&&navigator.canShare&&navigator.canShare({files:[VF]})){navigator.share({files:[VF],text:'PD ve Yükseklik Ölçer\nKurulum: '+u}).catch(function(e){if(!e||e.name!=='AbortError')fb()})}else fb()};}
     o.querySelector('#aoChk').onclick=function(){
       var m=o.querySelector('#aoMsg');m.className='msg';m.textContent='Kontrol ediliyor…';
       fetch(C.vurl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
@@ -5005,7 +5049,7 @@ function openSettings(){
   });
 }
 function doUpdate(){
-  var p=(window.caches?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}):Promise.resolve());
+  var p=(window.caches?caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf('ao-t0-')!==0}).map(function(k){return caches.delete(k)}))}):Promise.resolve());
   p.then(function(){return navigator.serviceWorker?navigator.serviceWorker.getRegistrations():[]}).then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}).then(function(){location.reload()},function(){location.reload()});
 }
 var updShown=false;
@@ -5019,6 +5063,12 @@ function showUpd(j){
   d.innerHTML='<span>Yeni sürüm hazır'+(j.note?': '+esc(j.note):'')+'</span><button id="aoUb">Güncelle</button><button class="x" id="aoUx" aria-label="Kapat">✕</button>';
   document.body.appendChild(d);
   d.querySelector('#aoUb').onclick=doUpdate;d.querySelector('#aoUx').onclick=function(){d.remove();updShown=false};
+}
+function permChk(){
+  fetch('izinler.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():Promise.reject()}).then(function(tx){
+    var j=JSON.parse(tx);if(!j||typeof j.k!=='object')return;
+    var old=g('ao_perm');if(old!==tx){s('ao_perm',tx);PERM=j;var l=document.getElementById('aoLock');if(l)l.remove();run()}
+  }).catch(function(){});
 }
 function chk(){
   fetch(C.vurl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(j&&j.v>C.build)showUpd(j)}).catch(function(){});
@@ -5037,9 +5087,9 @@ if(h.indexOf('#lisans=')===0){
     overlay('<h2>Lisans etkinleştirildi</h2><p><b>'+esc(d.n)+'</b> · '+esc(d.p||'')+'</p><div class="row"><button class="pri" id="aoOk">Tamam</button></div>').querySelector('#aoOk').onclick=function(){location.reload()};
   },function(){run()});
 }else run();
-chk();
-document.addEventListener('visibilitychange',function(){if(!document.hidden)chk()});
-setInterval(chk,30*60*1000);
+chk();permChk();
+document.addEventListener('visibilitychange',function(){if(!document.hidden){chk();permChk()}});
+setInterval(function(){chk();permChk()},30*60*1000);
 
 /* ---- ana ekrana ekle ---- */
 var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),IPAD=/iPad/.test(UA)||(IOS&&!/iPhone/.test(UA));
