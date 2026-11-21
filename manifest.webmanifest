@@ -1,6 +1,6 @@
 {
- "name": "Aysima Optik · PD ve Yükseklik Ölçer",
- "short_name": "Aysima Ölçüm",
+ "name": "PD ve Yükseklik Ölçer",
+ "short_name": "PD Ölçer",
  "lang": "tr",
  "start_url": "./index.html",
  "scope": "./",

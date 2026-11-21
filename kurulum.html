@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PD ve Yükseklik Ölçer · Kurulum</title>
+<meta name="description" content="Telefonunuza veya bilgisayarınıza tek dokunuşla kurun. Mağazadan indirme yok.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PD ve Yükseklik Ölçer · Kurulum">
+<meta property="og:description" content="Telefonunuza tek dokunuşla kurun. Mağazadan indirme yok.">
+<meta property="og:image" content="https://ekremkarahan4-design.github.io/aysima-olcum/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ekremkarahan4-design.github.io/aysima-olcum/kurulum.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#eef1f4;--surface:#fff;--ink:#141c24;--muted:#56636f;--line:#ccd4db;--accent:#1d4ed8}
+@media(prefers-color-scheme:dark){:root{--bg:#0f141a;--surface:#18202a;--ink:#eaeff4;--muted:#9aa7b4;--line:#2b3744;--accent:#6b93ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif;padding:16px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+main{max-width:560px;margin:0 auto}h1{font-size:22px;margin:8px 0 4px}p{margin:6px 0}.mut{color:var(--muted);font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}.card h2{font-size:16px;margin:0 0 8px}
+ol{margin:6px 0 0;padding-left:22px}li{margin:6px 0}
+.btn{display:block;width:100%;text-align:center;background:var(--accent);color:#fff;border:0;border-radius:14px;padding:15px 18px;font:700 17px system-ui,sans-serif;text-decoration:none;cursor:pointer;margin:8px 0}
+.btn.g{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.warn{background:#fff4d6;border:1px solid #e8c766;color:#7a5b00;border-radius:12px;padding:10px 12px;margin:12px 0;font-size:14px}
+#qr{display:flex;justify-content:center;padding:10px;background:#fff;border-radius:12px;width:max-content;margin:8px auto}
+.step{display:flex;gap:10px;align-items:flex-start;margin:10px 0}.step i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font:700 15px/28px system-ui;text-align:center;font-style:normal}
+[hidden]{display:none!important}
+</style></head><body><main>
+<h1>PD ve Yükseklik Ölçer</h1>
+<p class="mut" id="sub">Mağazadan indirme yok, birkaç dokunuşla kurulur.</p>
+
+<div class="warn" id="inapp" hidden></div>
+
+<div class="card" id="k-android" hidden>
+ <h2>Android telefon</h2>
+ <button class="btn" id="aInst" hidden>📲 Telefona yükle</button>
+ <div id="aSteps"><div class="step"><i>1</i><div>Sağ üstteki <b>⋮</b> menüsüne dokunun.</div></div><div class="step"><i>2</i><div><b>Uygulamayı yükle</b> veya <b>Ana ekrana ekle</b> seçin.</div></div><div class="step"><i>3</i><div><b>Yükle</b>'ye dokunun. Simge ana ekrana gelir.</div></div></div>
+ <a class="btn g" id="aChrome" href="#" hidden>Chrome'da aç</a>
+</div>
+
+<div class="card" id="k-ios" hidden>
+ <h2>iPhone / iPad</h2>
+ <div id="iSaf">
+  <div class="step"><i>1</i><div>Altta <b>Paylaş</b> düğmesine dokunun (kare ve yukarı ok). <span class="mut" id="iPadNote" hidden>iPad'de sağ üsttedir.</span></div></div>
+  <div class="step"><i>2</i><div>Aşağı kaydırıp <b>Ana Ekrana Ekle</b>'yi seçin.</div></div>
+  <div class="step"><i>3</i><div>Sağ üstte <b>Ekle</b>'ye dokunun.</div></div>
+ </div>
+ <div id="iOth" hidden><p>iPhone'da ana ekrana ekleme yalnızca <b>Safari</b> ile yapılır. Bağlantıyı kopyalayıp Safari'de açın.</p><button class="btn" id="iCp">Bağlantıyı kopyala</button><p class="mut" id="iCm"></p></div>
+</div>
+
+<div class="card" id="k-desk" hidden>
+ <h2>Bilgisayar</h2>
+ <button class="btn" id="dInst" hidden>💻 Bilgisayara yükle</button>
+ <div class="step"><i>1</i><div><b>Chrome</b> veya <b>Edge</b> kullanıyorsanız adres çubuğunun sağındaki <b>yükle</b> simgesine (ekran ve ok) tıklayın.</div></div>
+ <div class="step"><i>2</i><div>Hangi tarayıcı olursa olsun masaüstüne kısayol için aşağıdaki düğmeyi kullanın.</div></div>
+ <button class="btn g" id="dShort">🖥 Masaüstü kısayolu indir</button>
+ <p class="mut" id="dNote"></p>
+</div>
+
+<div class="card"><h2>Tanıtım videosu</h2><video controls playsinline preload="metadata" poster="og.png" src="tanitim.mp4" style="width:100%;border-radius:12px;background:#000"></video><p class="mut">Uygulamayı baştan sona ve cihazlara nasıl kurulduğunu gösterir.</p></div>
+<div class="card"><a class="btn" id="open" href="index.html">Uygulamayı hemen aç</a><p class="mut">Kurmadan da açılır. Kurarsanız ana ekrandan tam ekran çalışır.</p></div>
+
+<div class="card"><h2>Başka cihaza gönderin</h2><p class="mut">Telefonla bu kodu okutun veya bağlantıyı gönderin.</p><div id="qr"></div>
+<button class="btn" id="wa">WhatsApp ile gönder</button><button class="btn g" id="cp">Bağlantıyı kopyala</button><p class="mut" id="url" style="word-break:break-all;text-align:center"></p></div>
+
+<div class="card"><h2>İlk açılış</h2><p>Uygulama 20 gün deneme olarak açılır. Satın aldıktan sonra uygulamadaki <b>⚙ Ayarlar</b> bölümüne lisans anahtarınızı yapıştırın veya size gönderilen lisans bağlantısına dokunun.</p><p class="mut">Ölçümler ve fotoğraflar yalnızca cihazınızda saklanır. Yeni sürüm çıkınca uygulama sizi uyarır.</p></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var $=function(i){return document.getElementById(i)};
+var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),and=/Android/.test(ua);
+var ipad=/iPad/.test(ua)||(ios&&!/iPhone/.test(ua));
+var inapp=/FBAN|FBAV|Instagram|Line\/|WhatsApp|Telegram|; wv\)|Snapchat|MicroMessenger/.test(ua);
+var saf=ios&&/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)&&!inapp;
+var base=location.href.replace(/kurulum\.html.*$/,'');var link=base+'kurulum.html';
+var standalone=false;try{standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){}
+$('open').href=base+'index.html';$('url').textContent=link;
+if(standalone){$('sub').textContent='Uygulama zaten kurulu. Bu sayfayı başkalarına göndermek için aşağıdaki düğmeleri kullanın.'}
+else if(ios){$('k-ios').hidden=false;if(saf){}else{$('iSaf').hidden=true;$('iOth').hidden=false}if(ipad)$('iPadNote').hidden=false;}
+else if(and){$('k-android').hidden=false;
+  if(inapp){var w=$('inapp');w.hidden=false;w.textContent='Bu sayfa WhatsApp veya başka bir uygulamanın içinde açıldı. Kurulum için Chrome\'da açın.';var a=$('aChrome');a.hidden=false;a.href='intent://'+link.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end'}
+}else{$('k-desk').hidden=false}
+var dp=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;if(and){$('aInst').hidden=false;$('aSteps').hidden=true}else if(!ios){$('dInst').hidden=false}});
+function inst(){if(dp){dp.prompt();dp=null}}$('aInst').onclick=inst;$('dInst').onclick=inst;
+window.addEventListener('appinstalled',function(){$('sub').textContent='Kuruldu. Ana ekrandaki veya masaüstündeki simgeden açın.'});
+function dl(name,text,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},500)}
+$('dShort').onclick=function(){
+  var mac=/Mac/.test(navigator.platform)&&!ios;
+  if(mac){dl('PD-Olcer.webloc','<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>URL</key><string>'+base+'index.html</string></dict></plist>');$('dNote').textContent='Dosyayı masaüstüne sürükleyin, çift tıklayınca açılır.'}
+  else{dl('PD Olcer.url','[InternetShortcut]\r\nURL='+base+'index.html\r\nIconIndex=0\r\n');$('dNote').textContent='İnen "PD Olcer" dosyasını masaüstüne taşıyın, çift tıklayınca açılır.'}
+};
+var msg='PD ve Yükseklik Ölçer\nTelefonunuza kurmak için dokunun:\n'+link;
+$('wa').onclick=function(){window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank')};
+$('cp').onclick=function(){try{navigator.clipboard.writeText(link).then(function(){$('cp').textContent='Kopyalandı ✓'})}catch(e){}};
+$('iCp').onclick=function(){try{navigator.clipboard.writeText(link).then(function(){$('iCm').textContent='Kopyalandı. Safari\'yi açıp adres çubuğuna yapıştırın.'},function(){$('iCm').textContent=link})}catch(e){$('iCm').textContent=link}};
+try{new QRCode($('qr'),{text:link,width:180,height:180})}catch(e){}
+</script></main></body></html>
