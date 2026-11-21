@@ -1690,14 +1690,23 @@ cv.addEventListener('pointerdown',udPush,true);
   $('outAdd').addEventListener('click',function(){ S.outAdd=!S.outAdd; sync(); });
   $('outDel').addEventListener('click',function(){ var id=eyeId(), a=S.out[id]; if(!a.length) return; udPush(); a.splice(S.outSel!=null&&S.outSel<a.length?S.outSel:a.length-1,1); S.outSel=null; results(); schedule(); });
   $('outClr').addEventListener('click',function(){ udPush(); S.out[eyeId()]=[]; S.outSel=null; results(); schedule(); });
-  $('outAuto').addEventListener('click',function(){
-    var id=eyeId(); udPush();
+  function outMake(id,quiet){
     if(!(S.lens&&S.lens[id])){ try{ afSnap(); }catch(e){} }
     var pts=[];
-    if(S.lens&&S.lens[id]){ var P=S.lens[id].pts; for(var i=0;i<P.length;i+=3) pts.push({x:P[i].x,y:P[i].y}); toast('Kalıp bulundu. Noktaları kenara göre düzeltin.'); }
-    else { var b=S.box[id], cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, rx=(b.x2-b.x1)/2*0.95, ry=(b.y2-b.y1)/2*0.95; for(var j=0;j<14;j++){ var t=2*Math.PI*j/14; pts.push({x:cx+rx*Math.cos(t),y:cy+ry*Math.sin(t)}); } toast('Kenar net bulunamadı. Noktaları elle kenara sürükleyin.'); }
-    S.out[id]=pts; S.outSel=null; results(); schedule();
-  });
+    if(S.lens&&S.lens[id]){ var P=S.lens[id].pts; for(var i=0;i<P.length;i+=3) pts.push({x:P[i].x,y:P[i].y}); if(!quiet) toast('Kalıp bulundu. Noktaları kenara göre düzeltin.'); }
+    else { var b=S.box[id], cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, rx=(b.x2-b.x1)/2*0.95, ry=(b.y2-b.y1)/2*0.95; for(var j=0;j<14;j++){ var t=2*Math.PI*j/14; pts.push({x:cx+rx*Math.cos(t),y:cy+ry*Math.sin(t)}); } if(!quiet) toast('Kenar net bulunamadı. Noktaları elle kenara sürükleyin.'); }
+    S.out[id]=pts; S.outSel=null;
+  }
+  $('outAuto').addEventListener('click',function(){ udPush(); outMake(eyeId()); results(); schedule(); });
+  var _go=go;
+  go=function(step){
+    _go.apply(this,arguments);
+    if(step==='pad' && S.mode==='front' && S.base){
+      var made=false; ['a','b'].forEach(function(id){ if(!outHas(id)){ outMake(id,true); made=true; } });
+      if(made){ toast('Cam kalıbı noktaları konuldu. Noktaları çerçevenin iç kenarına sürükleyin.'); results(); schedule(); }
+      setTimeout(function(){ try{ $('outBox').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} },200);
+    }
+  };
   window.__outSync=sync; sync();
 })();
 window.addEventListener('pointerup',function(){ var cur=udSnap(); if(UD.u.length && UD.u[UD.u.length-1]===cur){ UD.u.pop(); try{ barUpdate(); }catch(e){} } else { try{ barUpdate(); }catch(e){} } });
