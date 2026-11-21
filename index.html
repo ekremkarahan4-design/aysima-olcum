@@ -378,9 +378,11 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <button class="chip" data-z="2" aria-pressed="false">2×</button>
           <button class="chip" data-z="3" aria-pressed="false">3×</button>
           <button class="chip" data-z="4" aria-pressed="false">4×</button>
+          <button class="chip" data-z="6" aria-pressed="false">6×</button>
+          <button class="chip" data-z="8" aria-pressed="false">8×</button>
         </div>
         <span class="lbl" id="panHint" hidden>Boş yere dokunup sürükleyerek kaydırın</span>
-        <div id="outQuick" style="display:none;gap:8px;width:100%;margin-top:8px"><button class="btn sm" id="qAdd" aria-pressed="false" style="flex:1">＋ Nokta ekle</button><button class="btn sm" id="qDel" style="flex:1">🗑 Noktayı sil</button></div>
+        <div id="outQuick" style="display:none;gap:8px;width:100%;margin-top:8px"><button class="btn sm" id="qAdd" aria-pressed="false" style="flex:1">＋ Nokta ekle</button><button class="btn sm" id="qDel" style="flex:1">🗑 Noktayı sil</button><button class="btn sm" id="qFit" style="flex:1">🔍 Cama sığdır</button></div>
       </div>
     </section>
 
@@ -1726,6 +1728,14 @@ cv.addEventListener('pointerdown',udPush,true);
   var OD=null;
   function outLoupe(id,q,sideX){ try{ showLoupe({p:{x:q.x,y:q.y},kind:'cross',poly:(S.out[id].length>=3?catmull(S.out[id],6):null)},COL[id],sideX); }catch(e){} }
   function eyeId(){ return S.outWho||'a'; }
+  function outFit(){
+    var id=eyeId(); if(!outHas(id)||!cvBox.w) return; var x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;
+    S.out[id].forEach(function(q){ x1=Math.min(x1,q.x); y1=Math.min(y1,q.y); x2=Math.max(x2,q.x); y2=Math.max(y2,q.y); });
+    var z=Math.min(cvBox.w/((x2-x1)*1.22), cvBox.h/((y2-y1)*1.22))/fit(); z=clamp(z,1,10); S.z=z; centerOn({x:(x1+x2)/2,y:(y1+y2)/2});
+    var ch=document.querySelectorAll('#zoomChips .chip'); for(var i=0;i<ch.length;i++) ch[i].setAttribute('aria-pressed','false');
+    $('panHint').hidden=z<=1; schedule();
+  }
+  window.__outFit=outFit;
   window.__outDown=function(e){
     if(S.step!=='pad'||S.mode!=='front'||!S.base) return false;
     var id=eyeId(), pts=(S.out&&S.out[id])||[], pt=cpt(e), bi=-1, bd=1e9, tol=e.pointerType==='mouse'?14:28;
@@ -1757,8 +1767,9 @@ cv.addEventListener('pointerdown',udPush,true);
     $('outWho').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.dataset.i===eyeId())); b.textContent=lensName(b.dataset.i)+' cam'; });
     $('outAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('outAdd').textContent=S.outAdd?'✔ Nokta ekleme açık':'＋ Nokta ekle'; $('qAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('qAdd').textContent=S.outAdd?'✔ Ekleme açık: dokun':'＋ Nokta ekle';
   }
-  $('outWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.outWho=b.dataset.i; S.outSel=null; sync(); schedule(); });
+  $('outWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.outWho=b.dataset.i; S.outSel=null; sync(); outFit(); schedule(); });
   $('outAdd').addEventListener('click',function(){ S.outAdd=!S.outAdd; sync(); });
+  $('qFit').addEventListener('click',function(){ outFit(); });
   $('qAdd').addEventListener('click',function(){ $('outAdd').click(); });
   $('qDel').addEventListener('click',function(){ $('outDel').click(); });
   $('outDel').addEventListener('click',function(){ var id=eyeId(), a=S.out[id]; if(!a.length) return; if(S.outSel==null||S.outSel>=a.length){ toast('Önce silmek istediğiniz noktaya dokunun.'); return; } udPush(); a.splice(S.outSel,1); S.outSel=null; results(); schedule(); });
@@ -1776,7 +1787,7 @@ cv.addEventListener('pointerdown',udPush,true);
     _go.apply(this,arguments);
     try{ $('outQuick').style.display=(step==='pad'&&S.mode==='front')?'flex':'none'; }catch(e){}
     if(step==='pad' && S.mode==='front' && S.base){
-      if(!outHas('a')||!outHas('b')){ toast('Çerçeve kalıbı aranıyor…'); setTimeout(function(){ ['a','b'].forEach(function(id){ if(!outHas(id)) outMake(id,true); }); toast('Kalıp noktaları kondu. Küçük düzeltmeleri siz yapın.'); results(); schedule(); },60); }
+      if(!outHas('a')||!outHas('b')){ toast('Çerçeve kalıbı aranıyor…'); setTimeout(function(){ ['a','b'].forEach(function(id){ if(!outHas(id)) outMake(id,true); }); toast('Kalıp noktaları kondu. Küçük düzeltmeleri siz yapın.'); results(); schedule(); outFit(); },60); } else { outFit(); }
       setTimeout(function(){ try{ $('outBox').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} },200);
     }
   };
