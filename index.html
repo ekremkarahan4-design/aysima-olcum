@@ -380,6 +380,7 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <button class="chip" data-z="4" aria-pressed="false">4×</button>
         </div>
         <span class="lbl" id="panHint" hidden>Boş yere dokunup sürükleyerek kaydırın</span>
+        <div id="outQuick" style="display:none;gap:8px;width:100%;margin-top:8px"><button class="btn sm" id="qAdd" aria-pressed="false" style="flex:1">＋ Nokta ekle</button><button class="btn sm" id="qDel" style="flex:1">🗑 Noktayı sil</button></div>
       </div>
     </section>
 
@@ -1434,6 +1435,7 @@ function showLoupe(info,color,sideX){
   var sx=info.p.x-half, sy=info.p.y-half, sw=half*2;
   var ix0=Math.max(0,sx), iy0=Math.max(0,sy), ix1=Math.min(S.W,sx+sw), iy1=Math.min(S.H,sy+sw);
   if(ix1>ix0 && iy1>iy0) lctx.drawImage(S.base,ix0,iy0,ix1-ix0,iy1-iy0,(ix0-sx)*m,(iy0-sy)*m,(ix1-ix0)*m,(iy1-iy0)*m);
+  if(info.poly){ var pl=info.poly.map(function(q){ return {x:(q.x-sx)*m,y:(q.y-sy)*m}; }); pl.push(pl[0]); halo(lctx,pl,color,1.8); }
   var c=L/2, g=9;
   function ln(x1,y1,x2,y2){ halo(lctx,[{x:x1,y:y1},{x:x2,y:y2}],color,1.4); }
   if(info.kind==='cross'){ ln(0,c,c-g,c); ln(c+g,c,L,c); ln(c,0,c,c-g); ln(c,c+g,c,L); }
@@ -1463,6 +1465,7 @@ var drag=null;
 function cpt(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
 cv.addEventListener('pointerdown',function(e){
   if(!S.base || drag) return;
+  if(window.__outDown && window.__outDown(e)) return;
   var pt=cpt(e), hit=hitTest(pt,e.pointerType);
   try{ cv.setPointerCapture(e.pointerId); }catch(x){}
   if(hit){
@@ -1721,9 +1724,10 @@ function udRedo(){
 cv.addEventListener('pointerdown',udPush,true);
 (function(){
   var OD=null;
+  function outLoupe(id,q,sideX){ try{ showLoupe({p:{x:q.x,y:q.y},kind:'cross',poly:(S.out[id].length>=3?catmull(S.out[id],6):null)},COL[id],sideX); }catch(e){} }
   function eyeId(){ return S.outWho||'a'; }
-  cv.addEventListener('pointerdown',function(e){
-    if(S.step!=='pad'||S.mode!=='front'||!S.base) return;
+  window.__outDown=function(e){
+    if(S.step!=='pad'||S.mode!=='front'||!S.base) return false;
     var id=eyeId(), pts=(S.out&&S.out[id])||[], pt=cpt(e), bi=-1, bd=1e9, tol=e.pointerType==='mouse'?14:28;
     pts.forEach(function(p,i){ var q=T(p), d=Math.hypot(q.x-pt.x,q.y-pt.y); if(d<bd){ bd=d; bi=i; } });
     if(bi>=0 && bd<tol){ S.outSel=bi; }
@@ -1731,23 +1735,33 @@ cv.addEventListener('pointerdown',udPush,true);
       var ip=U(pt.x,pt.y), at=pts.length;
       if(pts.length>=3){ var md=1e9; for(var i=0;i<pts.length;i++){ var a=pts[i], b=pts[(i+1)%pts.length], vx=b.x-a.x, vy=b.y-a.y, L=vx*vx+vy*vy||1, t=Math.max(0,Math.min(1,((ip.x-a.x)*vx+(ip.y-a.y)*vy)/L)), d=Math.hypot(ip.x-(a.x+t*vx),ip.y-(a.y+t*vy)); if(d<md){ md=d; at=i+1; } } }
       pts.splice(at,0,{x:ip.x,y:ip.y}); S.out[id]=pts; bi=at; S.outSel=at;
-    } else return;
+    } else {
+      var ip2=U(pt.x,pt.y), ins=false;
+      ['a','b'].forEach(function(k2){ if(!outHas(k2)) return; var pl=catmull(S.out[k2],6), inn=false;
+        for(var i2=0,j2=pl.length-1;i2<pl.length;j2=i2++){ if(((pl[i2].y>ip2.y)!==(pl[j2].y>ip2.y)) && (ip2.x<(pl[j2].x-pl[i2].x)*(ip2.y-pl[i2].y)/(pl[j2].y-pl[i2].y)+pl[i2].x)) inn=!inn; }
+        if(inn) ins=true; });
+      if(ins){ e.preventDefault(); return true; }
+      return false;
+    }
     OD={id:e.pointerId,eye:id,i:bi}; try{ cv.setPointerCapture(e.pointerId); }catch(x){}
-    e.stopImmediatePropagation(); e.preventDefault(); results(); schedule();
-  },false);
+    outLoupe(id,S.out[id][bi],pt.x);
+    e.stopImmediatePropagation(); e.preventDefault(); results(); schedule(); return true;
+  };
   cv.addEventListener('pointermove',function(e){
     if(!OD||e.pointerId!==OD.id) return; var pt=cpt(e), ip=U(pt.x,pt.y);
-    S.out[OD.eye][OD.i]={x:clamp(ip.x,0,S.W),y:clamp(ip.y,0,S.H)}; e.stopImmediatePropagation(); results(); schedule();
+    S.out[OD.eye][OD.i]={x:clamp(ip.x,0,S.W),y:clamp(ip.y,0,S.H)}; outLoupe(OD.eye,S.out[OD.eye][OD.i],pt.x); e.stopImmediatePropagation(); results(); schedule();
   });
-  function up(e){ if(!OD||e.pointerId!==OD.id) return; OD=null; results(); schedule(); }
+  function up(e){ if(!OD||e.pointerId!==OD.id) return; OD=null; hideLoupe(); results(); schedule(); }
   cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   function sync(){
     $('outWho').querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.dataset.i===eyeId())); b.textContent=lensName(b.dataset.i)+' cam'; });
-    $('outAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('outAdd').textContent=S.outAdd?'✔ Nokta ekleme açık':'＋ Nokta ekle';
+    $('outAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('outAdd').textContent=S.outAdd?'✔ Nokta ekleme açık':'＋ Nokta ekle'; $('qAdd').setAttribute('aria-pressed',String(!!S.outAdd)); $('qAdd').textContent=S.outAdd?'✔ Ekleme açık: dokun':'＋ Nokta ekle';
   }
   $('outWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.outWho=b.dataset.i; S.outSel=null; sync(); schedule(); });
   $('outAdd').addEventListener('click',function(){ S.outAdd=!S.outAdd; sync(); });
-  $('outDel').addEventListener('click',function(){ var id=eyeId(), a=S.out[id]; if(!a.length) return; udPush(); a.splice(S.outSel!=null&&S.outSel<a.length?S.outSel:a.length-1,1); S.outSel=null; results(); schedule(); });
+  $('qAdd').addEventListener('click',function(){ $('outAdd').click(); });
+  $('qDel').addEventListener('click',function(){ $('outDel').click(); });
+  $('outDel').addEventListener('click',function(){ var id=eyeId(), a=S.out[id]; if(!a.length) return; if(S.outSel==null||S.outSel>=a.length){ toast('Önce silmek istediğiniz noktaya dokunun.'); return; } udPush(); a.splice(S.outSel,1); S.outSel=null; results(); schedule(); });
   $('outClr').addEventListener('click',function(){ udPush(); S.out[eyeId()]=[]; S.outSel=null; results(); schedule(); });
   function outMake(id,quiet){
     if(!(S.lens&&S.lens[id])){ try{ afSnap(); }catch(e){} }
@@ -1760,6 +1774,7 @@ cv.addEventListener('pointerdown',udPush,true);
   var _go=go;
   go=function(step){
     _go.apply(this,arguments);
+    try{ $('outQuick').style.display=(step==='pad'&&S.mode==='front')?'flex':'none'; }catch(e){}
     if(step==='pad' && S.mode==='front' && S.base){
       if(!outHas('a')||!outHas('b')){ toast('Çerçeve kalıbı aranıyor…'); setTimeout(function(){ ['a','b'].forEach(function(id){ if(!outHas(id)) outMake(id,true); }); toast('Kalıp noktaları kondu. Küçük düzeltmeleri siz yapın.'); results(); schedule(); },60); }
       setTimeout(function(){ try{ $('outBox').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} },200);
