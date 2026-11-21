@@ -395,16 +395,17 @@ select{font:500 15px var(--font);min-height:44px;padding:0 8px;border:1px solid 
           <div id="easyF">
             <div class="epd"><small>PD TOPLAM</small><b id="eP">—</b><em>mm</em></div>
             <div class="etbl"><div class="etr"><span></span><span class="eh ea">SAĞ</span><span class="eh eb2">SOL</span></div><div class="etr"><span>Monoküler PD</span><b class="ea" id="eR">—</b><b class="eb2" id="eL">—</b></div><div class="etr"><span>Yükseklik</span><b class="ea" id="eRH">—</b><b class="eb2" id="eLH">—</b></div></div>
-            <div class="etbl" id="eGl" style="margin-top:8px"><div class="etr" style="grid-template-columns:1.5fr 1fr 1fr"><span>Cam eni / boyu</span><b class="ea" id="eA">—</b><b class="eb2" id="eB">—</b></div>
+            <div class="etbl" id="eGl" style="margin-top:8px"><div class="etr" style="grid-template-columns:1.5fr 1fr 1fr"><span>Ekartman / cam boyu</span><b class="ea" id="eA">—</b><b class="eb2" id="eB">—</b></div>
               <div class="etr" style="grid-template-columns:1.5fr 1fr 1fr"><span>Çapraz (min. cam çapı)</span><b class="ea" id="eEDr">—</b><b class="eb2" id="eEDl">—</b></div>
-              <div class="etr" style="grid-template-columns:1.3fr 1fr"><span>Ekartman (mm)</span><input type="text" inputmode="decimal" id="eDBL" class="plain" autocomplete="off" placeholder="—" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div>
+              <div class="etr" style="grid-template-columns:1.3fr 1fr"><span>Ekartman (cam eni, mm)</span><input type="text" inputmode="decimal" id="eEk" class="plain" autocomplete="off" placeholder="42–70" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div>
+              <div class="etr" style="grid-template-columns:1.3fr 1fr"><span>DBL (burun köprüsü, mm)</span><input type="text" inputmode="decimal" id="eDBL" class="plain" autocomplete="off" placeholder="—" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div>
               <div class="etr" style="grid-template-columns:1.3fr 1fr"><span id="ePadL">Burunluk (mm)</span><input type="text" inputmode="decimal" id="ePad" class="plain" autocomplete="off" placeholder="—" style="text-align:center;font:700 22px var(--mono);width:100%;box-sizing:border-box"></div></div>
           </div>
           <button class="btn sm" id="eNbBtn" style="width:100%;margin-top:8px">📍 Burunluğu ve cam köşelerini fotoğrafta göster / ayarla</button>
           <div id="eAsk" class="tile" hidden style="margin-top:8px"><b>Ölçek için kartınız var mı?</b>
             <div class="tiles" style="grid-template-columns:1fr 1fr;margin:8px 0"><button class="btn sm primary" id="eAskCard">📏 Kart var</button><button class="btn sm" id="eAskNo">Kart yok</button></div>
             <div id="eAskF" hidden><small class="muted">Çerçeve koluna yazılı ölçüleri girin (örnek 52□18):</small>
-              <div class="grid2" style="margin-top:6px"><label class="f">Cam eni (mm)<input type="text" inputmode="decimal" id="eFA" value="52" autocomplete="off"></label><label class="f">Ekartman (mm)<input type="text" inputmode="decimal" id="eFD" value="18" autocomplete="off"></label></div>
+              <div class="grid2" style="margin-top:6px"><label class="f">Ekartman (mm)<input type="text" inputmode="decimal" id="eFA" value="52" autocomplete="off"></label><label class="f">DBL (mm)<input type="text" inputmode="decimal" id="eFD" value="18" autocomplete="off"></label></div>
               <label class="f" style="margin-top:6px">Burunluk (mm, biliyorsanız)<input type="text" inputmode="decimal" id="eFN" placeholder="boş bırakılabilir" autocomplete="off"></label>
               <div class="tiles" style="grid-template-columns:1fr 1fr;margin-top:8px"><button class="btn sm primary" id="eFGo">Etikete göre ölç</button><button class="btn sm" id="eFSkip">Atla (göz bebeği ölçeği)</button></div></div></div>
           <button class="btn sm" id="eSidePhoto" style="width:100%;margin-top:8px">↔ Yan fotoğraf çek (isteğe bağlı, verteks)</button>
@@ -1687,7 +1688,7 @@ function easyUpdate(){
     }
     (function(){ var g=!side?glasses():null; $('eGl').hidden=!g; $('eSidePhoto').hidden=side; $('eNbBtn').hidden=side;
       $('eAsk').hidden = side || (S.calMode==='card' && S.calibrated) || !!S.askDone;
-      if(g){ $('eA').textContent=f1(R(g.e.R.A))+' / '+f1(R(g.e.L.A)); $('eB').textContent=f1(R(g.e.R.B))+' / '+f1(R(g.e.L.B)); $('eEDr').textContent=f1(R(g.e.R.ed)); $('eEDl').textContent=f1(R(g.e.L.ed)); if(document.activeElement!==$('eDBL')) $('eDBL').value=f1(R(g.dbl)).replace('—',''); if(document.activeElement!==$('ePad')) $('ePad').value=f1(R(g.pad)).replace('—',''); $('ePadL').textContent=g.padGuess?'Burunluk (mm, tahmini)':'Burunluk (mm)'; } })();
+      if(g){ $('eA').textContent=f1(R(g.e.R.A))+' / '+f1(R(g.e.L.A)); $('eB').textContent=f1(R(g.e.R.B))+' / '+f1(R(g.e.L.B)); $('eEDr').textContent=f1(R(g.e.R.ed)); $('eEDl').textContent=f1(R(g.e.L.ed)); if(document.activeElement!==$('eDBL')) $('eDBL').value=f1(R(g.dbl)).replace('—',''); if(document.activeElement!==$('eEk')){ var _k=(S.kv&&S.kv.A!=null)?S.kv.A:(g.e.R.A+g.e.L.A)/2; $('eEk').value=f1(R(_k)).replace('—',''); } if(document.activeElement!==$('ePad')) $('ePad').value=f1(R(g.pad)).replace('—',''); $('ePadL').textContent=g.padGuess?'Burunluk (mm, tahmini)':'Burunluk (mm)'; } })();
     $('easyNote').textContent=note; $('editLive').textContent=live;
     if(document.activeElement!==$('easyName') && $('easyName').value!==$('name').value) $('easyName').value=$('name').value;
   }
@@ -1705,7 +1706,7 @@ function glasses(){
   nbEnsure(); var cf=corrF(), padM=Math.abs(S.nb.b.x-S.nb.a.x)*r.mm*(cf.on?cf.x:1);
   o.pad = S.pad!=null ? S.pad : (S.nbSet ? padM : d); o.padGuess = S.pad==null && !S.nbSet; return o;
 }
-function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R(g.dbl))+' mm | Burunluk: '+(g.padGuess?'~':'')+f1(R(g.pad))+' mm'+(typeof kalipText==='function'&&kalipText()?'\n'+kalipText():''); }
+function glText(){ var g=glasses(); if(!g) return ''; return 'Cam eni (ekartman)/boyu: '+f1(R(g.e.R.A))+'×'+f1(R(g.e.R.B))+' | '+f1(R(g.e.L.A))+'×'+f1(R(g.e.L.B))+' mm\nÇapraz (min. cam çapı): Sağ '+f1(R(g.e.R.ed))+' | Sol '+f1(R(g.e.L.ed))+' mm\nEkartman: '+f1(R((g.e.R.A+g.e.L.A)/2))+' mm | DBL: '+f1(R(g.dbl))+' mm | Burunluk: '+(g.padGuess?'~':'')+f1(R(g.pad))+' mm'+(typeof kalipText==='function'&&kalipText()?'\n'+kalipText():''); }
 S.pdOv=null; S.kv={};
 var K_RNG={A:[42,70],D:[11,24]};
 function kalipCalc(){
@@ -1833,6 +1834,7 @@ $('easyDir').addEventListener('click',function(e){ var b=e.target.closest('butto
 $('easyFind').addEventListener('click',function(){ autoFind(function(){ go('easy'); }); });
 $('easyCard').addEventListener('click',function(){ S.calMode='card'; syncMode(); enterEdit('scale'); });
 $('eDBL').addEventListener('input',function(){ var v=parseMm($('eDBL').value), r=compute(); if(!r) return; if(v>=0 && isFinite(v)){ S.adjD=v-r.dbl; results(); } });
+$('eEk').addEventListener('input',function(){ var t=$('eEk').value.trim(), v=parseMm(t); if(!S.kv) S.kv={}; S.kv.A=(t===''||!isFinite(v))?null:v; $('eEk').style.borderColor=(S.kv.A!=null&&!(S.kv.A>=42&&S.kv.A<=70))?'#ff5d5d':''; results(); });
 $('ePad').addEventListener('input',function(){ var t=$('ePad').value.trim(), v=parseMm(t); if(t===''){ S.pad=null; results(); } else if(v>=0 && isFinite(v)){ S.pad=v; results(); } });
 ['eDBL','ePad'].forEach(function(id){ $(id).addEventListener('blur',function(){ results(); }); $(id).addEventListener('keydown',function(e){ if(e.key==='Enter') $(id).blur(); }); });
 $('padWho').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; S.sel={k:'nb',i:b.dataset.i}; Array.prototype.forEach.call($('padWho').querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed',String(x===b)); }); $('selName').textContent=descLabel(S.sel); if(S.z>1) centerOn(handlePos(S.sel)); schedule(); });
@@ -1840,7 +1842,7 @@ $('padReset').addEventListener('click',function(){ S.nbSet=false; S.pad=null; re
 $('eNbBtn').addEventListener('click',function(){ enterEdit('pad'); });
 $('eAskCard').addEventListener('click',function(){ $('easyCard').click(); });
 $('eAskNo').addEventListener('click',function(){ $('eAskF').hidden=false; });
-$('eFGo').addEventListener('click',function(){ var a=parseMm($('eFA').value), d=parseMm($('eFD').value), n=parseMm($('eFN').value); if(!(a>0) || !(d>=0)){ toast('Cam eni ve ekartmanı girin.'); return; }
+$('eFGo').addEventListener('click',function(){ var a=parseMm($('eFA').value), d=parseMm($('eFD').value), n=parseMm($('eFN').value); if(!(a>0) || !(d>=0)){ toast('Ekartman ve DBL değerlerini girin.'); return; }
   S.frameA=a; S.frameD=d; $('fA').value=f1(a); $('fD').value=f1(d); if(n>0) S.pad=n; S.adjD=0; S.calMode='frame'; S.calibrated=true; S.askDone=true; syncMode(); results(); schedule(); toast('Çerçeve etiketine göre ölçüldü.'); });
 $('eFSkip').addEventListener('click',function(){ S.askDone=true; $('eAsk').hidden=true; });
 $('eSidePhoto').addEventListener('click',function(){ setMode('side'); $('btnCam').click(); });
@@ -2294,7 +2296,7 @@ function findPatient(d,name,tc){
 }
 function recLine(r){
   if(r.kind==='v') return 'Verteks '+r.vd+' mm  ·  pant. '+r.pt;
-  return 'PD '+r.pd+'  ·  mono '+r.mR+' / '+r.mL+'  ·  yük. '+r.hR+' / '+r.hL+(r.dbl?'  ·  ekartman '+r.dbl:'')+(r.edR?'  ·  çapraz '+r.edR+' / '+r.edL:'')+(r.pad?'  ·  burunluk '+r.pad:'');
+  return 'PD '+r.pd+'  ·  mono '+r.mR+' / '+r.mL+'  ·  yük. '+r.hR+' / '+r.hL+(r.wR?'  ·  ekartman '+r.wR+(r.wL&&r.wL!==r.wR?'/'+r.wL:''):'')+(r.dbl?'  ·  DBL '+r.dbl:'')+(r.edR?'  ·  çapraz '+r.edR+' / '+r.edL:'')+(r.pad?'  ·  burunluk '+r.pad:'');
 }
 function updateStamp(){ $('stamp').textContent='Kayıt tarihi: '+fmtDate(new Date().toISOString()); }
 function saveRecord(){
